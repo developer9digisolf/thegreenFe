@@ -1,0 +1,20 @@
+{
+    "extends": "../tsconfig.react.json",
+    "compilerOptions": {
+        "composite": true,
+        "outDir": "./dist",
+        "noFallthroughCasesInSwitch": true,
+        "downlevelIteration": true,
+        "declaration": true,
+        "emitDeclarationOnly": false,
+        "sourceMap": true
+    },
+    "include": [
+        "src",
+        "src/*",
+        "src/**/*",
+        "package.json",
+        "index.ts",
+        "rollup.config.js"
+    ]
+}

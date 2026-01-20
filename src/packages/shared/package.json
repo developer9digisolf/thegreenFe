@@ -1,0 +1,34 @@
+{
+  "name": "@doar/shared",
+  "version": "1.0.0",
+  "license": "MIT",
+  "main": "index.js",
+  "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "start": "tsc -p tsconfig.json -w",
+    "build": "tsc -b",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
+    "clean": "rimraf dist *.tsbuildinfo node_modules",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint --ignore-path .eslintignore . --ext ts --ext tsx --ext js --ext jsx",
+    "lint:fix": "yarn format & yarn lint --fix"
+  },
+  "peerDependencies": {
+    "@styled-system/theme-get": "^5.1.2",
+    "dayjs": "^1.11.4",
+    "react": "^18.2.0",
+    "react-feather": "^2.0.10",
+    "react-transition-group": "^4.4.4",
+    "styled-components": "^5.3.5",
+    "styled-system": "^5.1.5",
+    "tinycolor2": "^1.4.2",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "eslint-plugin-react": "^7.30.1",
+    "eslint-plugin-react-hooks": "^4.6.0"
+  }
+}

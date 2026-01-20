@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Green Spa - Voucher Terjual</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f8fafc;
+            --bg-input: #f1f5f9;
+            --bg-sidebar: #0f172a;
+            --bg-sidebar-hover: #1e293b;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --text-sidebar: #94a3b8;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+            --spa-green: #059669;
+            --spa-green-light: #10b981;
+            --spa-green-bg: #ecfdf5;
+            --spa-green-border: #a7f3d0;
+            --accent-blue: #3b82f6;
+            --accent-blue-light: #dbeafe;
+            --accent-purple: #8b5cf6;
+            --accent-purple-light: #ede9fe;
+            --accent-red: #ef4444;
+            --accent-red-light: #fee2e2;
+            --accent-yellow: #eab308;
+            --accent-yellow-light: #fef9c3;
+            --accent-orange: #f97316;
+            --accent-orange-light: #ffedd5;
+            --accent-cyan: #06b6d4;
+            --accent-cyan-light: #cffafe;
+            --gradient-spa: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .app-container { display: flex; min-height: 100vh; }
+
+        /* ========== SIDEBAR ========== */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-sidebar);
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .sidebar-logo-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--gradient-spa);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .sidebar-logo-text {
+            font-size: 20px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .sidebar-logo-text span { color: var(--spa-green-light); }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 16px 0;
+            overflow-y: auto;
+        }
+
+        .nav-section { margin-bottom: 8px; }
+
+        .nav-section-title {
+            padding: 12px 24px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            color: var(--text-sidebar);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-sidebar-hover);
+            color: #fff;
+        }
+
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--spa-green-light);
+            border-left-color: var(--spa-green-light);
+        }
+
+        .nav-item i { width: 20px; font-size: 16px; }
+        .nav-item-text { font-size: 14px; font-weight: 500; }
+
+        .nav-item-badge {
+            margin-left: auto;
+            background: var(--spa-green);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* ========== MAIN CONTENT ========== */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 24px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--gradient-spa);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--spa-green);
+            color: var(--spa-green);
+        }
+
+        /* ========== STATS ROW ========== */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+
+        .stat-icon.green { background: var(--spa-green-bg); color: var(--spa-green); }
+        .stat-icon.blue { background: var(--accent-blue-light); color: var(--accent-blue); }
+        .stat-icon.orange { background: var(--accent-orange-light); color: var(--accent-orange); }
+        .stat-icon.red { background: var(--accent-red-light); color: var(--accent-red); }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* ========== CARD ========== */
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .card-body { padding: 0; }
+
+        /* ========== FILTERS ========== */
+        .filters {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-box input {
+            padding: 10px 14px 10px 40px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            width: 250px;
+            transition: all 0.2s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--spa-green);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .filter-select {
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            background: var(--bg-card);
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--spa-green);
+        }
+
+        /* ========== TABLE ========== */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 14px 16px;
+            text-align: left;
+        }
+
+        .data-table th {
+            background: var(--bg-main);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table td {
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .data-table tr:hover td {
+            background: var(--bg-card-hover);
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ========== VOUCHER SPECIFIC ========== */
+        .voucher-code {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--bg-main);
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .voucher-code i {
+            color: var(--spa-green);
+            cursor: pointer;
+        }
+
+        .voucher-code i:hover {
+            color: var(--spa-green-light);
+        }
+
+        .package-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .package-tag.hemat { background: var(--accent-cyan-light); color: var(--accent-cyan); }
+        .package-tag.premium { background: var(--spa-green-bg); color: var(--spa-green); }
+        .package-tag.vip { background: var(--accent-orange-light); color: var(--accent-orange); }
+        .package-tag.signature { background: var(--accent-purple-light); color: var(--accent-purple); }
+
+        .service-name {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .buyer-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .buyer-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--spa-green-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 11px;
+            color: var(--spa-green);
+        }
+
+        .buyer-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .buyer-phone {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .date-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .date-info.expired {
+            color: var(--accent-red);
+        }
+
+        .date-info.soon {
+            color: var(--accent-orange);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-green { background: var(--spa-green-bg); color: var(--spa-green); }
+        .badge-blue { background: var(--accent-blue-light); color: var(--accent-blue); }
+        .badge-red { background: var(--accent-red-light); color: var(--accent-red); }
+        .badge-yellow { background: var(--accent-yellow-light); color: #a16207; }
+
+        .used-info {
+            font-size: 12px;
+        }
+
+        .used-info .used-by {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .used-info .used-date {
+            color: var(--text-muted);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-action {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+
+        .btn-action:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--spa-green);
+            color: var(--spa-green);
+        }
+
+        .btn-action.print:hover {
+            background: var(--accent-blue-light);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        /* ========== PAGINATION ========== */
+        .table-footer {
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .table-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .page-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--spa-green);
+        }
+
+        .page-btn.active {
+            background: var(--spa-green);
+            border-color: var(--spa-green);
+            color: #fff;
+        }
+
+        /* ========== MODAL ========== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow: hidden;
+            transform: translateY(-20px);
+            transition: transform 0.3s;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+
+        .modal-overlay.show .modal {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--spa-green-bg);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: none;
+            background: var(--bg-card);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--accent-red-light);
+            color: var(--accent-red);
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            max-height: calc(90vh - 160px);
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            background: var(--bg-main);
+        }
+
+        /* ========== VOUCHER DETAIL ========== */
+        .voucher-detail-card {
+            background: var(--gradient-spa);
+            border-radius: 16px;
+            padding: 24px;
+            color: white;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .voucher-detail-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .voucher-detail-code {
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .voucher-detail-package {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .voucher-detail-service {
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 15px;
+            font-weight: 600;
+            position: relative;
+        }
+
+        .detail-section {
+            margin-bottom: 20px;
+        }
+
+        .detail-section-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: var(--text-secondary);
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="dashboard.html" class="sidebar-logo">
+                    <div class="sidebar-logo-icon">
+                        <i class="fa-solid fa-spa" style="color: white;"></i>
+                    </div>
+                    <div class="sidebar-logo-text">The <span>Green</span> Spa</div>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Menu Utama</div>
+                    <a href="dashboard.html" class="nav-item">
+                        <i class="fa-solid fa-grid-2"></i>
+                        <span class="nav-item-text">Dashboard</span>
+                    </a>
+                    <a href="pos-mockup-v3.html" class="nav-item">
+                        <i class="fa-solid fa-cash-register"></i>
+                        <span class="nav-item-text">Point of Sale</span>
+                        <span class="nav-item-badge">POS</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Master Data</div>
+                    <a href="master-member.html" class="nav-item">
+                        <i class="fa-solid fa-users"></i>
+                        <span class="nav-item-text">Member</span>
+                    </a>
+                    <a href="master-service.html" class="nav-item">
+                        <i class="fa-solid fa-hand-sparkles"></i>
+                        <span class="nav-item-text">Layanan</span>
+                    </a>
+                    <a href="master-therapist.html" class="nav-item">
+                        <i class="fa-solid fa-user-nurse"></i>
+                        <span class="nav-item-text">Therapist</span>
+                    </a>
+                    <a href="master-package.html" class="nav-item">
+                        <i class="fa-solid fa-ticket"></i>
+                        <span class="nav-item-text">Paket Voucher</span>
+                    </a>
+                    <a href="vouchers.html" class="nav-item active">
+                        <i class="fa-solid fa-tags"></i>
+                        <span class="nav-item-text">Voucher Terjual</span>
+                    </a>
+                    <a href="master-room.html" class="nav-item">
+                        <i class="fa-solid fa-door-open"></i>
+                        <span class="nav-item-text">Ruangan</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Pengaturan</div>
+                    <a href="master-branch.html" class="nav-item">
+                        <i class="fa-solid fa-building"></i>
+                        <span class="nav-item-text">Cabang</span>
+                    </a>
+                    <a href="master-commission.html" class="nav-item">
+                        <i class="fa-solid fa-percent"></i>
+                        <span class="nav-item-text">Komisi</span>
+                    </a>
+                    <a href="master-shift.html" class="nav-item">
+                        <i class="fa-solid fa-clock"></i>
+                        <span class="nav-item-text">Shift Kerja</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Voucher Terjual</h1>
+                    <p class="page-subtitle">Daftar semua voucher individual yang sudah diterbitkan</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary">
+                        <i class="fa-solid fa-file-export"></i>
+                        Export
+                    </button>
+                    <a href="master-package.html" class="btn btn-primary">
+                        <i class="fa-solid fa-box"></i>
+                        Master Paket
+                    </a>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="fa-solid fa-ticket"></i>
+                    </div>
+                    <div class="stat-value">284</div>
+                    <div class="stat-label">Voucher Aktif</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <i class="fa-solid fa-check-circle"></i>
+                    </div>
+                    <div class="stat-value">156</div>
+                    <div class="stat-label">Voucher Terpakai</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div class="stat-value">12</div>
+                    <div class="stat-label">Expired Segera (7 hari)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red">
+                        <i class="fa-solid fa-times-circle"></i>
+                    </div>
+                    <div class="stat-value">23</div>
+                    <div class="stat-label">Voucher Expired</div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Daftar Voucher</h3>
+                    <div class="filters">
+                        <div class="search-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" placeholder="Cari kode voucher...">
+                        </div>
+                        <select class="filter-select">
+                            <option value="">Semua Paket</option>
+                            <option value="hemat">Paket Hemat Traditional</option>
+                            <option value="premium">Paket Premium Aroma</option>
+                            <option value="vip">Paket VIP Traditional</option>
+                            <option value="signature">Paket Signature</option>
+                        </select>
+                        <select class="filter-select">
+                            <option value="">Semua Status</option>
+                            <option value="active">Aktif</option>
+                            <option value="used">Terpakai</option>
+                            <option value="expired">Expired</option>
+                        </select>
+                        <select class="filter-select">
+                            <option value="">Semua Member</option>
+                            <option value="sarah">Sarah Wijaya</option>
+                            <option value="budi">Budi Santoso</option>
+                            <option value="rina">Rina Kusuma</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Kode Voucher</th>
+                                <th>Paket / Layanan</th>
+                                <th>Pembeli</th>
+                                <th>Tgl Beli</th>
+                                <th>Expired</th>
+                                <th>Status</th>
+                                <th>Dipakai Oleh</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Voucher Aktif -->
+                            <tr>
+                                <td>
+                                    <div class="voucher-code">
+                                        VCH-240115-0001
+                                        <i class="fa-regular fa-copy" title="Copy"></i>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="package-tag hemat">
+                                        <i class="fa-solid fa-tag"></i>
+                                        Paket Hemat
+                                    </div>
+                                    <div class="service-name">Traditional Massage 60'</div>
+                                </td>
+                                <td>
+                                    <div class="buyer-info">
+                                        <div class="buyer-avatar">SW</div>
+                                        <div>
+                                            <div class="buyer-name">Sarah Wijaya</div>
+                                            <div class="buyer-phone">0812-3456-7890</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="date-info">15 Jan 2024</span></td>
+                                <td><span class="date-info">15 Apr 2024</span></td>
+                                <td><span class="badge badge-green"><i class="fa-solid fa-circle" style="font-size: 6px;"></i> Aktif</span></td>
+                                <td><span style="color: var(--text-muted);">-</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-action" title="Detail" onclick="openModal('detailModal')"><i class="fa-solid fa-eye"></i></button>
+                                        <button class="btn-action print" title="Print"><i class="fa-solid fa-print"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="voucher-code">
+                                        VCH-240115-0002
+                                        <i class="fa-regular fa-copy" title="Copy"></i>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="package-tag hemat">
+                                        <i class="fa-solid fa-tag"></i>
+                                        Paket Hemat
+                                    </div>
+                                    <div class="service-name">Traditional Massage 60'</div>
+                                </td>
+                                <td>
+                                    <div class="buyer-info">
+                                        <div class="buyer-avatar">SW</div>
+                                        <div>
+                                            <div class="buyer-name">Sarah Wijaya</div>
+                                            <div class="buyer-phone">0812-3456-7890</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="date-info">15 Jan 2024</span></td>
+                                <td><span class="date-info soon">22 Jan 2024</span></td>
+                                <td><span class="badge badge-yellow"><i class="fa-solid fa-clock" style="font-size: 10px;"></i> Segera Exp</span></td>
+                                <td><span style="color: var(--text-muted);">-</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-action" title="Detail"><i class="fa-solid fa-eye"></i></button>
+                                        <button class="btn-action print" title="Print"><i class="fa-solid fa-print"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- Voucher Terpakai -->
+                            <tr>
+                                <td>
+                                    <div class="voucher-code" style="opacity: 0.7;">
+                                        VCH-240115-0003
+                                        <i class="fa-regular fa-copy" title="Copy"></i>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="package-tag hemat" style="opacity: 0.7;">
+                                        <i class="fa-solid fa-tag"></i>
+                                        Paket Hemat
+                                    </div>
+                                    <div class="service-name">Traditional Massage 60'</div>
+                                </td>
+                                <td>
+                                    <div class="buyer-info">
+                                        <div class="buyer-avatar">SW</div>
+                                        <div>
+                                            <div class="buyer-name">Sarah Wijaya</div>
+                                            <div class="buyer-phone">0812-3456-7890</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="date-info">15 Jan 2024</span></td>
+                                <td><span class="date-info">15 Apr 2024</span></td>
+                                <td><span class="badge badge-blue"><i class="fa-solid fa-check" style="font-size: 10px;"></i> Terpakai</span></td>
+                                <td>
+                                    <div class="used-info">
+                                        <div class="used-by">Rina (teman)</div>
+                                        <div class="used-date">20 Jan 2024</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-action" title="Detail"><i class="fa-solid fa-eye"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- Voucher Premium -->
+                            <tr>
+                                <td>
+                                    <div class="voucher-code">
+                                        VCH-240120-0010
+                                        <i class="fa-regular fa-copy" title="Copy"></i>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="package-tag premium">
+                                        <i class="fa-solid fa-crown"></i>
+                                        Paket Premium
+                                    </div>
+                                    <div class="service-name">Aromatherapy 90'</div>
+                                </td>
+                                <td>
+                                    <div class="buyer-info">
+                                        <div class="buyer-avatar" style="background: var(--accent-blue-light); color: var(--accent-blue);">BS</div>
+                                        <div>
+                                            <div class="buyer-name">Budi Santoso</div>
+                                            <div class="buyer-phone">0812-9876-5432</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="date-info">20 Jan 2024</span></td>
+                                <td><span class="date-info">20 Jul 2024</span></td>
+                                <td><span class="badge badge-green"><i class="fa-solid fa-circle" style="font-size: 6px;"></i> Aktif</span></td>
+                                <td><span style="color: var(--text-muted);">-</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-action" title="Detail"><i class="fa-solid fa-eye"></i></button>
+                                        <button class="btn-action print" title="Print"><i class="fa-solid fa-print"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- Voucher Signature Terpakai -->
+                            <tr>
+                                <td>
+                                    <div class="voucher-code" style="opacity: 0.7;">
+                                        VCH-240110-0005
+                                        <i class="fa-regular fa-copy" title="Copy"></i>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="package-tag signature" style="opacity: 0.7;">
+                                        <i class="fa-solid fa-star"></i>
+                                        Paket Signature
+                                    </div>
+                                    <div class="service-name">Signature Green Spa 120'</div>
+                                </td>
+                                <td>
+                                    <div class="buyer-info">
+                                        <div class="buyer-avatar" style="background: var(--accent-purple-light); color: var(--accent-purple);">RK</div>
+                                        <div>
+                                            <div class="buyer-name">Rina Kusuma</div>
+                                            <div class="buyer-phone">0813-5554-4433</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="date-info">10 Jan 2024</span></td>
+                                <td><span class="date-info">10 Apr 2024</span></td>
+                                <td><span class="badge badge-blue"><i class="fa-solid fa-check" style="font-size: 10px;"></i> Terpakai</span></td>
+                                <td>
+                                    <div class="used-info">
+                                        <div class="used-by">Rina Kusuma</div>
+                                        <div class="used-date">25 Jan 2024</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-action" title="Detail"><i class="fa-solid fa-eye"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- Voucher VIP -->
+                            <tr>
+                                <td>
+                                    <div class="voucher-code">
+                                        VCH-240205-0001
+                                        <i class="fa-regular fa-copy" title="Copy"></i>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="package-tag vip">
+                                        <i class="fa-solid fa-gem"></i>
+                                        Paket VIP
+                                    </div>
+                                    <div class="service-name">Traditional Massage 60'</div>
+                                </td>
+                                <td>
+                                    <div class="buyer-info">
+                                        <div class="buyer-avatar" style="background: var(--accent-orange-light); color: var(--accent-orange);">DH</div>
+                                        <div>
+                                            <div class="buyer-name">Diana Hartono</div>
+                                            <div class="buyer-phone">0812-6667-7788</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="date-info">05 Feb 2024</span></td>
+                                <td><span class="date-info">05 Feb 2025</span></td>
+                                <td><span class="badge badge-green"><i class="fa-solid fa-circle" style="font-size: 6px;"></i> Aktif</span></td>
+                                <td><span style="color: var(--text-muted);">-</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-action" title="Detail"><i class="fa-solid fa-eye"></i></button>
+                                        <button class="btn-action print" title="Print"><i class="fa-solid fa-print"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- Voucher Expired -->
+                            <tr>
+                                <td>
+                                    <div class="voucher-code" style="opacity: 0.5;">
+                                        VCH-231101-0008
+                                        <i class="fa-regular fa-copy" title="Copy"></i>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="package-tag hemat" style="opacity: 0.5;">
+                                        <i class="fa-solid fa-tag"></i>
+                                        Paket Hemat
+                                    </div>
+                                    <div class="service-name" style="opacity: 0.5;">Traditional Massage 60'</div>
+                                </td>
+                                <td>
+                                    <div class="buyer-info" style="opacity: 0.7;">
+                                        <div class="buyer-avatar" style="background: var(--accent-red-light); color: var(--accent-red);">AP</div>
+                                        <div>
+                                            <div class="buyer-name">Andi Prasetyo</div>
+                                            <div class="buyer-phone">0813-7778-8899</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="date-info" style="opacity: 0.7;">01 Nov 2023</span></td>
+                                <td><span class="date-info expired">01 Feb 2024</span></td>
+                                <td><span class="badge badge-red"><i class="fa-solid fa-times" style="font-size: 10px;"></i> Expired</span></td>
+                                <td><span style="color: var(--text-muted);">-</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-action" title="Detail"><i class="fa-solid fa-eye"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-footer">
+                    <div class="table-info">Menampilkan 1-7 dari 463 voucher</div>
+                    <div class="pagination">
+                        <button class="page-btn"><i class="fa-solid fa-chevron-left"></i></button>
+                        <button class="page-btn active">1</button>
+                        <button class="page-btn">2</button>
+                        <button class="page-btn">3</button>
+                        <button class="page-btn">...</button>
+                        <button class="page-btn">67</button>
+                        <button class="page-btn"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Detail Voucher</h3>
+                <button class="modal-close" onclick="closeModal('detailModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="voucher-detail-card">
+                    <div class="voucher-detail-code">VCH-240115-0001</div>
+                    <div class="voucher-detail-package">Paket Hemat Traditional</div>
+                    <div class="voucher-detail-service">
+                        <i class="fa-solid fa-spa"></i>
+                        Traditional Massage 60 menit
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-title">Informasi Pembelian</div>
+                    <div class="detail-row">
+                        <span class="detail-label">Pembeli</span>
+                        <span class="detail-value">Sarah Wijaya</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">No. Telepon</span>
+                        <span class="detail-value">0812-3456-7890</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Tanggal Beli</span>
+                        <span class="detail-value">15 Januari 2024</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Tanggal Expired</span>
+                        <span class="detail-value">15 April 2024</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Status</span>
+                        <span class="detail-value"><span class="badge badge-green">Aktif</span></span>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-title">Informasi Penggunaan</div>
+                    <div class="detail-row">
+                        <span class="detail-label">Dipakai Oleh</span>
+                        <span class="detail-value" style="color: var(--text-muted);">Belum digunakan</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Tanggal Pakai</span>
+                        <span class="detail-value" style="color: var(--text-muted);">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Therapist</span>
+                        <span class="detail-value" style="color: var(--text-muted);">-</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('detailModal')">Tutup</button>
+                <button class="btn btn-primary">
+                    <i class="fa-solid fa-print"></i>
+                    Print Voucher
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openModal(id) {
+            document.getElementById(id).classList.add('show');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+        });
+
+        // Copy voucher code
+        document.querySelectorAll('.voucher-code i').forEach(icon => {
+            icon.addEventListener('click', function() {
+                const code = this.parentElement.textContent.trim().split('\n')[0].trim();
+                navigator.clipboard.writeText(code);
+                
+                // Show feedback
+                const originalIcon = this.className;
+                this.className = 'fa-solid fa-check';
+                this.style.color = 'var(--spa-green)';
+                
+                setTimeout(() => {
+                    this.className = originalIcon;
+                    this.style.color = '';
+                }, 1500);
+            });
+        });
+    </script>
+</body>
+</html>

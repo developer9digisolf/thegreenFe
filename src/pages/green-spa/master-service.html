@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Green Spa - Master Layanan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f8fafc;
+            --bg-input: #f1f5f9;
+            --bg-sidebar: #0f172a;
+            --bg-sidebar-hover: #1e293b;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --text-sidebar: #94a3b8;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+            --spa-green: #059669;
+            --spa-green-light: #10b981;
+            --spa-green-bg: #ecfdf5;
+            --spa-green-border: #a7f3d0;
+            --accent-blue: #3b82f6;
+            --accent-blue-light: #dbeafe;
+            --accent-purple: #8b5cf6;
+            --accent-purple-light: #ede9fe;
+            --accent-red: #ef4444;
+            --accent-red-light: #fee2e2;
+            --accent-yellow: #eab308;
+            --accent-yellow-light: #fef9c3;
+            --accent-orange: #f97316;
+            --accent-orange-light: #ffedd5;
+            --accent-cyan: #06b6d4;
+            --accent-cyan-light: #cffafe;
+            --accent-pink: #ec4899;
+            --accent-pink-light: #fce7f3;
+            --gradient-spa: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .app-container { display: flex; min-height: 100vh; }
+
+        /* ========== SIDEBAR ========== */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-sidebar);
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .sidebar-logo-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--gradient-spa);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .sidebar-logo-text {
+            font-size: 20px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .sidebar-logo-text span { color: var(--spa-green-light); }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 16px 0;
+            overflow-y: auto;
+        }
+
+        .nav-section { margin-bottom: 8px; }
+
+        .nav-section-title {
+            padding: 12px 24px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            color: var(--text-sidebar);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-sidebar-hover);
+            color: #fff;
+        }
+
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--spa-green-light);
+            border-left-color: var(--spa-green-light);
+        }
+
+        .nav-item i { width: 20px; font-size: 16px; }
+        .nav-item-text { font-size: 14px; font-weight: 500; }
+
+        .nav-item-badge {
+            margin-left: auto;
+            background: var(--spa-green);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* ========== MAIN CONTENT ========== */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 24px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--gradient-spa);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--spa-green);
+            color: var(--spa-green);
+        }
+
+        /* ========== STATS ROW ========== */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+
+        .stat-icon.green { background: var(--spa-green-bg); color: var(--spa-green); }
+        .stat-icon.blue { background: var(--accent-blue-light); color: var(--accent-blue); }
+        .stat-icon.purple { background: var(--accent-purple-light); color: var(--accent-purple); }
+        .stat-icon.orange { background: var(--accent-orange-light); color: var(--accent-orange); }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* ========== CARD ========== */
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .card-body { padding: 0; }
+
+        /* ========== FILTERS ========== */
+        .filters {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-box input {
+            padding: 10px 14px 10px 40px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            width: 280px;
+            transition: all 0.2s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--spa-green);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .filter-select {
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            background: var(--bg-card);
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--spa-green);
+        }
+
+        /* ========== TABLE ========== */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 16px 20px;
+            text-align: left;
+        }
+
+        .data-table th {
+            background: var(--bg-main);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table td {
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .data-table tr:hover td {
+            background: var(--bg-card-hover);
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ========== SERVICE SPECIFIC ========== */
+        .service-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .service-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .service-icon.massage { background: var(--accent-purple-light); color: var(--accent-purple); }
+        .service-icon.aroma { background: var(--accent-pink-light); color: var(--accent-pink); }
+        .service-icon.stone { background: var(--accent-orange-light); color: var(--accent-orange); }
+        .service-icon.tissue { background: var(--accent-blue-light); color: var(--accent-blue); }
+        .service-icon.reflex { background: var(--accent-cyan-light); color: var(--accent-cyan); }
+        .service-icon.scrub { background: var(--spa-green-bg); color: var(--spa-green); }
+        .service-icon.facial { background: var(--accent-pink-light); color: var(--accent-pink); }
+        .service-icon.signature { background: var(--gradient-spa); color: white; }
+
+        .service-name {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .service-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .category-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .category-tag.massage { background: var(--accent-purple-light); color: var(--accent-purple); }
+        .category-tag.therapy { background: var(--accent-orange-light); color: var(--accent-orange); }
+        .category-tag.bodycare { background: var(--spa-green-bg); color: var(--spa-green); }
+        .category-tag.facial { background: var(--accent-pink-light); color: var(--accent-pink); }
+        .category-tag.paket { background: var(--accent-cyan-light); color: var(--accent-cyan); }
+
+        .duration-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .duration-tag i {
+            color: var(--spa-green);
+        }
+
+        .price-tag {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--spa-green);
+        }
+
+        .commission-tag {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .commission-tag strong {
+            color: var(--accent-blue);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-green { background: var(--spa-green-bg); color: var(--spa-green); }
+        .badge-red { background: var(--accent-red-light); color: var(--accent-red); }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-action {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--spa-green);
+            color: var(--spa-green);
+        }
+
+        .btn-action.delete:hover {
+            background: var(--accent-red-light);
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        /* ========== PAGINATION ========== */
+        .table-footer {
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .table-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .page-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--spa-green);
+        }
+
+        .page-btn.active {
+            background: var(--spa-green);
+            border-color: var(--spa-green);
+            color: #fff;
+        }
+
+        /* ========== MODAL ========== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 560px;
+            max-height: 90vh;
+            overflow: hidden;
+            transform: translateY(-20px);
+            transition: transform 0.3s;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+
+        .modal-overlay.show .modal {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--spa-green-bg);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: none;
+            background: var(--bg-card);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--accent-red-light);
+            color: var(--accent-red);
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            max-height: calc(90vh - 160px);
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            background: var(--bg-main);
+        }
+
+        /* ========== FORM ========== */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .form-label .required {
+            color: var(--accent-red);
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.2s;
+            background: var(--bg-card);
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--spa-green);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-row.three {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group .input-prefix {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .input-group .input-suffix {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .input-group .form-input.has-prefix {
+            padding-left: 50px;
+        }
+
+        .input-group .form-input.has-suffix {
+            padding-right: 60px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="dashboard.html" class="sidebar-logo">
+                    <div class="sidebar-logo-icon">
+                        <i class="fa-solid fa-spa" style="color: white;"></i>
+                    </div>
+                    <div class="sidebar-logo-text">The <span>Green</span> Spa</div>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Menu Utama</div>
+                    <a href="dashboard.html" class="nav-item">
+                        <i class="fa-solid fa-grid-2"></i>
+                        <span class="nav-item-text">Dashboard</span>
+                    </a>
+                    <a href="pos-mockup-v3.html" class="nav-item">
+                        <i class="fa-solid fa-cash-register"></i>
+                        <span class="nav-item-text">Point of Sale</span>
+                        <span class="nav-item-badge">POS</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Master Data</div>
+                    <a href="master-member.html" class="nav-item">
+                        <i class="fa-solid fa-users"></i>
+                        <span class="nav-item-text">Member</span>
+                    </a>
+                    <a href="master-service.html" class="nav-item active">
+                        <i class="fa-solid fa-hand-sparkles"></i>
+                        <span class="nav-item-text">Layanan</span>
+                    </a>
+                    <a href="master-therapist.html" class="nav-item">
+                        <i class="fa-solid fa-user-nurse"></i>
+                        <span class="nav-item-text">Therapist</span>
+                    </a>
+                    <a href="master-package.html" class="nav-item">
+                        <i class="fa-solid fa-ticket"></i>
+                        <span class="nav-item-text">Paket Voucher</span>
+                    </a>
+                    <a href="vouchers.html" class="nav-item">
+                        <i class="fa-solid fa-tags"></i>
+                        <span class="nav-item-text">Voucher Terjual</span>
+                    </a>
+                    <a href="master-room.html" class="nav-item">
+                        <i class="fa-solid fa-door-open"></i>
+                        <span class="nav-item-text">Ruangan</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Pengaturan</div>
+                    <a href="master-branch.html" class="nav-item">
+                        <i class="fa-solid fa-building"></i>
+                        <span class="nav-item-text">Cabang</span>
+                    </a>
+                    <a href="master-commission.html" class="nav-item">
+                        <i class="fa-solid fa-percent"></i>
+                        <span class="nav-item-text">Komisi</span>
+                    </a>
+                    <a href="master-shift.html" class="nav-item">
+                        <i class="fa-solid fa-clock"></i>
+                        <span class="nav-item-text">Shift Kerja</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Master Layanan</h1>
+                    <p class="page-subtitle">Kelola daftar layanan spa yang tersedia</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal('addServiceModal')">
+                    <i class="fa-solid fa-plus"></i>
+                    Tambah Layanan
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="fa-solid fa-spa"></i>
+                    </div>
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">Total Layanan</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <i class="fa-solid fa-hand-sparkles"></i>
+                    </div>
+                    <div class="stat-value">5</div>
+                    <div class="stat-label">Kategori Massage</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple">
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                    <div class="stat-value">Traditional</div>
+                    <div class="stat-label">Layanan Terlaris</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <i class="fa-solid fa-money-bill-wave"></i>
+                    </div>
+                    <div class="stat-value">Rp 213K</div>
+                    <div class="stat-label">Rata-rata Harga</div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Daftar Layanan</h3>
+                    <div class="filters">
+                        <div class="search-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" placeholder="Cari layanan...">
+                        </div>
+                        <select class="filter-select">
+                            <option value="">Semua Kategori</option>
+                            <option value="massage">Massage</option>
+                            <option value="therapy">Therapy</option>
+                            <option value="bodycare">Body Care</option>
+                            <option value="facial">Facial</option>
+                            <option value="paket">Paket</option>
+                        </select>
+                        <select class="filter-select">
+                            <option value="">Semua Status</option>
+                            <option value="active">Aktif</option>
+                            <option value="inactive">Nonaktif</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Layanan</th>
+                                <th>Kategori</th>
+                                <th>Durasi</th>
+                                <th>Harga</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="service-info">
+                                        <div class="service-icon massage">
+                                            <i class="fa-solid fa-hand-holding-heart"></i>
+                                        </div>
+                                        <div>
+                                            <div class="service-name">Traditional Massage</div>
+                                            <div class="service-desc">Pijat tradisional untuk relaksasi otot</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="category-tag massage">
+                                        <i class="fa-solid fa-hands"></i>
+                                        Massage
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="duration-tag">
+                                        <i class="fa-regular fa-clock"></i>
+                                        60 menit
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="price-tag">Rp 150.000</span>
+                                </td>
+                                <td><span class="badge badge-green">Aktif</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-action" title="Edit" onclick="openModal('addServiceModal')"><i class="fa-solid fa-pen"></i></button>
+                                        <button class="btn-action delete" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="service-info">
+                                        <div class="service-icon aroma">
+                                            <i class="fa-solid fa-spa"></i>
+                                        </div>
+                                        <div>
+                                            <div class="service-name">Aromatherapy Massage</div>
+                                            <div class="service-desc">Pijat dengan minyak aromaterapi</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="category-tag massage">
+                                        <i class="fa-solid fa-hands"></i>
+                                        Massage
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="duration-tag">
+                                        <i class="fa-regular fa-clock"></i>
+                                        90 menit
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="price-tag">Rp 220.000</span>
+                                </td>
+                                <td><span class="badge badge-green">Aktif</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-action" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                                        <button class="btn-action delete" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="service-info">
+                                        <div class="service-icon stone">
+                                            <i class="fa-solid fa-gem"></i>
+                                        </div>
+                                        <div>
+                                            <div class="service-name">Hot Stone Therapy</div>
+                                            <div class="service-desc">Terapi dengan batu panas vulkanik</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="category-tag therapy">
+                                        <i class="fa-solid fa-heart-pulse"></i>
+                                        Therapy
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="duration-tag">
+                                        <i class="fa-regular fa-clock"></i>
+                                        90 menit
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="price-tag">Rp 280.000</span>
+                                </td>
+                                <td><span class="badge badge-green">Aktif</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-action" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                                        <button class="btn-action delete" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="service-info">
+                                        <div class="service-icon tissue">
+                                            <i class="fa-solid fa-hands"></i>
+                                        </div>
+                                        <div>
+                                            <div class="service-name">Deep Tissue Massage</div>
+                                            <div class="service-desc">Pijat dalam untuk otot tegang</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="category-tag massage">
+                                        <i class="fa-solid fa-hands"></i>
+                                        Massage
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="duration-tag">
+                                        <i class="fa-regular fa-clock"></i>
+                                        60 menit
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="price-tag">Rp 180.000</span>
+                                </td>
+                                <td><span class="badge badge-green">Aktif</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-action" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                                        <button class="btn-action delete" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="service-info">
+                                        <div class="service-icon reflex">
+                                            <i class="fa-solid fa-shoe-prints"></i>
+                                        </div>
+                                        <div>
+                                            <div class="service-name">Reflexology</div>
+                                            <div class="service-desc">Pijat refleksi kaki dan tangan</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="category-tag therapy">
+                                        <i class="fa-solid fa-heart-pulse"></i>
+                                        Therapy
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="duration-tag">
+                                        <i class="fa-regular fa-clock"></i>
+                                        45 menit
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="price-tag">Rp 120.000</span>
+                                </td>
+                                <td><span class="badge badge-green">Aktif</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-action" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                                        <button class="btn-action delete" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="service-info">
+                                        <div class="service-icon scrub">
+                                            <i class="fa-solid fa-droplet"></i>
+                                        </div>
+                                        <div>
+                                            <div class="service-name">Full Body Scrub</div>
+                                            <div class="service-desc">Lulur seluruh badan dengan bahan alami</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="category-tag bodycare">
+                                        <i class="fa-solid fa-pump-soap"></i>
+                                        Body Care
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="duration-tag">
+                                        <i class="fa-regular fa-clock"></i>
+                                        60 menit
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="price-tag">Rp 200.000</span>
+                                </td>
+                                <td><span class="badge badge-green">Aktif</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-action" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                                        <button class="btn-action delete" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="service-info">
+                                        <div class="service-icon facial">
+                                            <i class="fa-solid fa-face-smile"></i>
+                                        </div>
+                                        <div>
+                                            <div class="service-name">Facial Treatment</div>
+                                            <div class="service-desc">Perawatan wajah lengkap</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="category-tag facial">
+                                        <i class="fa-solid fa-face-smile"></i>
+                                        Facial
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="duration-tag">
+                                        <i class="fa-regular fa-clock"></i>
+                                        60 menit
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="price-tag">Rp 175.000</span>
+                                </td>
+                                <td><span class="badge badge-green">Aktif</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-action" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                                        <button class="btn-action delete" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="service-info">
+                                        <div class="service-icon signature">
+                                            <i class="fa-solid fa-crown"></i>
+                                        </div>
+                                        <div>
+                                            <div class="service-name">Signature Green Spa</div>
+                                            <div class="service-desc">Paket lengkap: massage + scrub + facial</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="category-tag paket">
+                                        <i class="fa-solid fa-gift"></i>
+                                        Paket
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="duration-tag">
+                                        <i class="fa-regular fa-clock"></i>
+                                        120 menit
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="price-tag">Rp 350.000</span>
+                                </td>
+                                <td><span class="badge badge-green">Aktif</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-action" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                                        <button class="btn-action delete" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-footer">
+                    <div class="table-info">Menampilkan 1-8 dari 8 layanan</div>
+                    <div class="pagination">
+                        <button class="page-btn"><i class="fa-solid fa-chevron-left"></i></button>
+                        <button class="page-btn active">1</button>
+                        <button class="page-btn"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Service Modal -->
+    <div class="modal-overlay" id="addServiceModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Tambah Layanan Baru</h3>
+                <button class="modal-close" onclick="closeModal('addServiceModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Nama Layanan <span class="required">*</span></label>
+                    <input type="text" class="form-input" placeholder="Contoh: Traditional Massage">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Kategori <span class="required">*</span></label>
+                        <select class="form-select">
+                            <option value="">-- Pilih Kategori --</option>
+                            <option value="massage">Massage</option>
+                            <option value="therapy">Therapy</option>
+                            <option value="bodycare">Body Care</option>
+                            <option value="facial">Facial</option>
+                            <option value="paket">Paket</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Durasi <span class="required">*</span></label>
+                        <div class="input-group">
+                            <input type="number" class="form-input has-suffix" placeholder="60">
+                            <span class="input-suffix">menit</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Harga <span class="required">*</span></label>
+                    <div class="input-group">
+                        <span class="input-prefix">Rp</span>
+                        <input type="text" class="form-input has-prefix" placeholder="150.000">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Deskripsi</label>
+                    <textarea class="form-textarea" rows="3" placeholder="Deskripsi singkat layanan..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select class="form-select">
+                        <option value="active">Aktif</option>
+                        <option value="inactive">Nonaktif</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('addServiceModal')">Batal</button>
+                <button class="btn btn-primary">
+                    <i class="fa-solid fa-check"></i>
+                    Simpan Layanan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openModal(id) {
+            document.getElementById(id).classList.add('show');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

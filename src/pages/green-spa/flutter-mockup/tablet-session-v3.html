@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Green Spa - Session Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-dark: #2d4a47;
+            --primary: #3d5a56;
+            --cream: #f5e6c8;
+            --cream-dark: #e8d4a8;
+            --bg-main: #e8ebe9;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --text-muted: #999999;
+            --border-color: #e0e0e0;
+            --accent-red: #e53935;
+            --accent-green: #27ae60;
+            --accent-blue: #2196f3;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--primary-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .page-title {
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .page-title i { color: var(--cream); }
+
+        .tablet-frame {
+            width: 1100px;
+            background: var(--bg-main);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+        }
+
+        .top-bar {
+            background: var(--primary-dark);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .top-bar-left { display: flex; align-items: center; gap: 12px; color: white; }
+        .logo-icon {
+            width: 36px; height: 36px;
+            background: var(--cream);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--primary-dark);
+        }
+        .logo-text { font-weight: 700; font-size: 16px; }
+        .top-bar-right { display: flex; align-items: center; gap: 16px; color: white; font-size: 14px; }
+        .top-bar-right i { color: var(--cream); }
+
+        .main-content { padding: 20px; }
+
+        /* Top Row: Timer + Session Details */
+        .top-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Timer */
+        .timer-section {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            border-left: 5px solid var(--primary-dark);
+        }
+        .timer-icon {
+            width: 56px; height: 56px;
+            margin: 0 auto 12px;
+            border: 3px solid var(--cream-dark);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .timer-icon i { font-size: 24px; color: var(--cream-dark); }
+        .timer-display {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--cream-dark);
+            letter-spacing: 4px;
+            margin-bottom: 16px;
+            font-variant-numeric: tabular-nums;
+        }
+        .timer-display.running { color: var(--accent-green); }
+        .timer-display.warning { color: var(--accent-red); animation: pulse-red 1s infinite; }
+        @keyframes pulse-red { 0%,100%{opacity:1;} 50%{opacity:0.7;} }
+
+        .btn-start {
+            background: var(--primary-dark);
+            color: white;
+            border: none;
+            padding: 12px 36px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        .btn-start:hover { background: var(--primary); transform: scale(1.02); }
+        .btn-start.running { background: var(--accent-red); }
+        .btn-start.paused { background: var(--accent-green); }
+        .timer-duration { margin-top: 12px; color: var(--primary); font-size: 13px; }
+
+        /* Session Details Card */
+        .session-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 24px;
+            border-left: 5px solid var(--primary-dark);
+        }
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+        .card-title i { color: var(--primary); }
+
+        .session-grid-vertical {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .session-item-small .info-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+        .session-item-small .info-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-badge.scheduled { background: #e8f5e9; color: #2e7d32; }
+        .status-badge.in-progress { background: #fff3e0; color: #ef6c00; }
+        .status-badge.completed { background: #e3f2fd; color: #1565c0; }
+
+        /* Cards Row */
+        .cards-row {
+            display: grid;
+            grid-template-columns: 1fr 1.8fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 24px;
+            border-left: 5px solid var(--primary-dark);
+        }
+
+        .info-item { margin-bottom: 14px; }
+        .info-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .info-value { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+        .info-value.code { font-family: monospace; font-size: 16px; }
+        .info-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+        /* Body Preferences */
+        .pref-subtitle { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+        .pref-hint { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+
+        .body-views {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .body-view { text-align: center; }
+        .body-view-label { font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px; }
+        .body-diagram {
+            background: #fafafa;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            min-height: 380px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Body Image Container */
+        .body-image-container {
+            position: relative;
+            height: 340px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .body-image {
+            height: 100%;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+        }
+
+        /* Body Zone Markers */
+        .body-zone {
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 3px solid rgba(0,0,0,0.2);
+            background: rgba(255,255,255,0.9);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            transition: all 0.2s;
+            z-index: 10;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        .body-zone:hover {
+            transform: scale(1.2);
+            z-index: 20;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+
+        .body-zone.avoid {
+            border-color: var(--accent-red);
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .body-zone.focus {
+            border-color: var(--accent-blue);
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        /* Front Body Zone Positions - adjusted for PNG image */
+        .f-head { top: 2%; left: 50%; transform: translateX(-50%); }
+        .f-neck { top: 10%; left: 50%; transform: translateX(-50%); }
+        .f-shoulder-l { top: 14%; left: 28%; }
+        .f-shoulder-r { top: 14%; right: 28%; }
+        .f-chest { top: 22%; left: 50%; transform: translateX(-50%); }
+        .f-arm-up-l { top: 24%; left: 16%; }
+        .f-arm-up-r { top: 24%; right: 16%; }
+        .f-abdomen { top: 32%; left: 50%; transform: translateX(-50%); }
+        .f-arm-lo-l { top: 38%; left: 10%; }
+        .f-arm-lo-r { top: 38%; right: 10%; }
+        .f-hip-l { top: 40%; left: 38%; }
+        .f-hip-r { top: 40%; right: 38%; }
+        .f-hand-l { top: 50%; left: 6%; }
+        .f-hand-r { top: 50%; right: 6%; }
+        .f-thigh-l { top: 54%; left: 38%; }
+        .f-thigh-r { top: 54%; right: 38%; }
+        .f-knee-l { top: 68%; left: 38%; }
+        .f-knee-r { top: 68%; right: 38%; }
+        .f-calf-l { top: 80%; left: 38%; }
+        .f-calf-r { top: 80%; right: 38%; }
+        .f-foot-l { top: 94%; left: 38%; }
+        .f-foot-r { top: 94%; right: 38%; }
+
+        /* Back Body Zone Positions */
+        .b-head { top: 2%; left: 50%; transform: translateX(-50%); }
+        .b-neck { top: 10%; left: 50%; transform: translateX(-50%); }
+        .b-shoulder-l { top: 14%; left: 28%; }
+        .b-shoulder-r { top: 14%; right: 28%; }
+        .b-upper-back { top: 22%; left: 50%; transform: translateX(-50%); }
+        .b-arm-up-l { top: 24%; left: 16%; }
+        .b-arm-up-r { top: 24%; right: 16%; }
+        .b-middle-back { top: 30%; left: 50%; transform: translateX(-50%); }
+        .b-lower-back { top: 38%; left: 50%; transform: translateX(-50%); }
+        .b-arm-lo-l { top: 38%; left: 10%; }
+        .b-arm-lo-r { top: 38%; right: 10%; }
+        .b-hip-l { top: 42%; left: 38%; }
+        .b-hip-r { top: 42%; right: 38%; }
+        .b-glute-l { top: 48%; left: 40%; }
+        .b-glute-r { top: 48%; right: 40%; }
+        .b-hand-l { top: 50%; left: 6%; }
+        .b-hand-r { top: 50%; right: 6%; }
+        .b-thigh-l { top: 58%; left: 38%; }
+        .b-thigh-r { top: 58%; right: 38%; }
+        .b-knee-l { top: 70%; left: 38%; }
+        .b-knee-r { top: 70%; right: 38%; }
+        .b-calf-l { top: 82%; left: 38%; }
+        .b-calf-r { top: 82%; right: 38%; }
+        .b-foot-l { top: 94%; left: 38%; }
+        .b-foot-r { top: 94%; right: 38%; }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-top: 16px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .legend-box {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: white;
+        }
+        .legend-box.normal { background: #f5f5f5; border-color: rgba(0,0,0,0.2); }
+        .legend-box.avoid { background: var(--accent-red); border-color: var(--accent-red); }
+        .legend-box.focus { background: var(--accent-blue); border-color: var(--accent-blue); }
+
+        /* Selected Areas Summary */
+        .selected-summary {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .selected-summary-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-right: 8px;
+        }
+
+        .selected-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .selected-tag.avoid {
+            background: #ffebee;
+            color: var(--accent-red);
+        }
+
+        .selected-tag.focus {
+            background: #e3f2fd;
+            color: var(--accent-blue);
+        }
+
+        .selected-tag i {
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        .selected-tag i:hover {
+            opacity: 1;
+        }
+
+        .bottom-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .btn-secondary {
+            background: white;
+            color: var(--primary-dark);
+            border: 2px solid var(--primary-dark);
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover { background: var(--primary-dark); color: white; }
+        .btn-primary-action {
+            background: var(--primary-dark);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary-action:hover { background: var(--primary); }
+
+        .hint-text {
+            text-align: center;
+            color: rgba(255,255,255,0.6);
+            font-size: 13px;
+            margin-top: 16px;
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--text-primary);
+            color: white;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast.avoid { background: var(--accent-red); }
+        .toast.focus { background: var(--accent-blue); }
+        .toast.success { background: var(--accent-green); }
+    </style>
+</head>
+<body>
+    <h1 class="page-title">
+        <i class="fa-solid fa-spa"></i>
+        The Green Spa - Session Management
+    </h1>
+
+    <div class="tablet-frame">
+        <div class="top-bar">
+            <div class="top-bar-left">
+                <div class="logo-icon"><i class="fa-solid fa-spa"></i></div>
+                <span class="logo-text">The Green Spa</span>
+            </div>
+            <div class="top-bar-right">
+                <span><i class="fa-solid fa-tablet-screen-button"></i> Office Tablet</span>
+                <span><i class="fa-solid fa-clock"></i> <span id="currentTime">14:30</span></span>
+                <span><i class="fa-solid fa-calendar"></i> 17 Jan 2026</span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Top Row: Timer + Session Details -->
+            <div class="top-row">
+                <div class="timer-section">
+                    <div class="timer-icon"><i class="fa-regular fa-clock"></i></div>
+                    <div class="timer-display" id="timerDisplay">00:00:00</div>
+                    <button class="btn-start" id="btnStart" onclick="toggleTimer()">
+                        <i class="fa-solid fa-play" id="btnIcon"></i>
+                        <span id="btnText">Start Session</span>
+                    </button>
+                    <div class="timer-duration">Scheduled Duration: <strong>90 minutes</strong></div>
+                </div>
+
+                <div class="session-card">
+                    <h3 class="card-title"><i class="fa-solid fa-clipboard-list"></i> Session Details</h3>
+                    <div class="session-grid-vertical">
+                        <div class="session-item-small">
+                            <div class="info-label">Session Type</div>
+                            <div class="info-value">Walk In</div>
+                        </div>
+                        <div class="session-item-small">
+                            <div class="info-label">Status</div>
+                            <span class="status-badge scheduled" id="statusBadge">Scheduled</span>
+                        </div>
+                        <div class="session-item-small">
+                            <div class="info-label">Therapist</div>
+                            <div class="info-value">Maya Putri</div>
+                        </div>
+                        <div class="session-item-small">
+                            <div class="info-label">Created</div>
+                            <div class="info-value">17/01/2026</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards Row -->
+            <div class="cards-row">
+                <!-- Customer Information -->
+                <div class="card">
+                    <h3 class="card-title"><i class="fa-solid fa-user"></i> Customer Information</h3>
+                    <div class="info-item">
+                        <div class="info-label">Member Code</div>
+                        <div class="info-value code">MEM-0001</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Name</div>
+                        <div class="info-value">ANDI</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Phone</div>
+                        <div class="info-value">081283823448</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Service</div>
+                        <div class="info-value">Javanese Massage 90 min</div>
+                        <div class="info-sub">Javanese Massage</div>
+                    </div>
+                </div>
+
+                <!-- Customer Preferences -->
+                <div class="card">
+                    <h3 class="card-title"><i class="fa-solid fa-hand-dots"></i> Customer Preferences</h3>
+                    <div class="pref-subtitle">Body Massage Preferences</div>
+                    <div class="pref-hint">Tap markers to toggle: Normal → Avoid (red) → Focus (blue) → Normal</div>
+
+                    <div class="body-views">
+                        <!-- Front View -->
+                        <div class="body-view">
+                            <div class="body-view-label">Front View</div>
+                            <div class="body-diagram">
+                                <div class="body-image-container">
+                                    <img src="../images/male_front.png" alt="Body Front" class="body-image">
+                                    
+                                    <!-- Front Body Zone Markers -->
+                                    <div class="body-zone f-head" data-zone="Kepala" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-neck" data-zone="Leher" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-shoulder-l" data-zone="Bahu Kiri" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-shoulder-r" data-zone="Bahu Kanan" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-chest avoid" data-zone="Dada" onclick="toggleZone(this)">✕</div>
+                                    <div class="body-zone f-arm-up-l" data-zone="Lengan Atas Kiri" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-arm-up-r" data-zone="Lengan Atas Kanan" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-abdomen avoid" data-zone="Perut" onclick="toggleZone(this)">✕</div>
+                                    <div class="body-zone f-arm-lo-l" data-zone="Lengan Bawah Kiri" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-arm-lo-r" data-zone="Lengan Bawah Kanan" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-hip-l" data-zone="Pinggul Kiri" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-hip-r" data-zone="Pinggul Kanan" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-hand-l" data-zone="Tangan Kiri" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-hand-r" data-zone="Tangan Kanan" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-thigh-l" data-zone="Paha Kiri" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-thigh-r" data-zone="Paha Kanan" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-knee-l" data-zone="Lutut Kiri" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-knee-r" data-zone="Lutut Kanan" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-calf-l" data-zone="Betis Kiri" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-calf-r" data-zone="Betis Kanan" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-foot-l" data-zone="Kaki Kiri" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone f-foot-r" data-zone="Kaki Kanan" onclick="toggleZone(this)"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Back View -->
+                        <div class="body-view">
+                            <div class="body-view-label">Back View</div>
+                            <div class="body-diagram">
+                                <div class="body-image-container">
+                                    <img src="../images/male_back.png" alt="Body Back" class="body-image">
+                                    
+                                    <!-- Back Body Zone Markers -->
+                                    <div class="body-zone b-head" data-zone="Kepala Belakang" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-neck" data-zone="Tengkuk" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-shoulder-l focus" data-zone="Bahu Kiri (Blk)" onclick="toggleZone(this)">+</div>
+                                    <div class="body-zone b-shoulder-r focus" data-zone="Bahu Kanan (Blk)" onclick="toggleZone(this)">+</div>
+                                    <div class="body-zone b-upper-back focus" data-zone="Punggung Atas" onclick="toggleZone(this)">+</div>
+                                    <div class="body-zone b-arm-up-l" data-zone="Lengan Atas Kiri (Blk)" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-arm-up-r" data-zone="Lengan Atas Kanan (Blk)" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-middle-back" data-zone="Punggung Tengah" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-lower-back" data-zone="Pinggang Bawah" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-arm-lo-l" data-zone="Lengan Bawah Kiri (Blk)" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-arm-lo-r" data-zone="Lengan Bawah Kanan (Blk)" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-hip-l" data-zone="Pinggul Kiri (Blk)" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-hip-r" data-zone="Pinggul Kanan (Blk)" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-glute-l" data-zone="Bokong Kiri" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-glute-r" data-zone="Bokong Kanan" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-hand-l" data-zone="Tangan Kiri (Blk)" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-hand-r" data-zone="Tangan Kanan (Blk)" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-thigh-l" data-zone="Paha Kiri (Blk)" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-thigh-r" data-zone="Paha Kanan (Blk)" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-knee-l" data-zone="Lutut Kiri (Blk)" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-knee-r" data-zone="Lutut Kanan (Blk)" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-calf-l avoid" data-zone="Betis Kiri (Blk)" onclick="toggleZone(this)">✕</div>
+                                    <div class="body-zone b-calf-r" data-zone="Betis Kanan (Blk)" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-foot-l" data-zone="Kaki Kiri (Blk)" onclick="toggleZone(this)"></div>
+                                    <div class="body-zone b-foot-r" data-zone="Kaki Kanan (Blk)" onclick="toggleZone(this)"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-box normal"></div>
+                            <span>Normal</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-box avoid">✕</div>
+                            <span>Do Not Massage</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-box focus">+</div>
+                            <span>Focus Area</span>
+                        </div>
+                    </div>
+
+                    <!-- Selected Areas Summary -->
+                    <div class="selected-summary" id="selectedSummary">
+                        <span class="selected-summary-label">Selected:</span>
+                        <!-- Tags will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-actions">
+                <button class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back to Scan</button>
+                <button class="btn-secondary" onclick="savePreferences()"><i class="fa-solid fa-save"></i> Save Preferences</button>
+                <button class="btn-primary-action" onclick="completeSession()"><i class="fa-solid fa-check-circle"></i> Complete Session</button>
+            </div>
+        </div>
+    </div>
+
+    <p class="hint-text">Tap on body zone markers to mark areas • Red = Avoid • Blue = Focus</p>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <i class="fa-solid fa-check-circle"></i>
+        <span id="toastMessage">Success!</span>
+    </div>
+
+    <script>
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('currentTime').textContent = `${hours}:${minutes}`;
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Timer functionality
+        let timerInterval = null;
+        let isRunning = false;
+        let isPaused = false;
+        let seconds = 0;
+        const scheduledDuration = 90 * 60;
+
+        function toggleTimer() {
+            const btn = document.getElementById('btnStart');
+            const btnIcon = document.getElementById('btnIcon');
+            const btnText = document.getElementById('btnText');
+            const display = document.getElementById('timerDisplay');
+            const statusBadge = document.getElementById('statusBadge');
+
+            if (!isRunning) {
+                isRunning = true;
+                isPaused = false;
+                btn.classList.add('running');
+                btn.classList.remove('paused');
+                btnIcon.className = 'fa-solid fa-pause';
+                btnText.textContent = 'Pause';
+                display.classList.add('running');
+                display.classList.remove('warning');
+                statusBadge.className = 'status-badge in-progress';
+                statusBadge.textContent = 'In Progress';
+
+                timerInterval = setInterval(() => {
+                    seconds++;
+                    updateDisplay();
+                    if (seconds >= scheduledDuration - 300) {
+                        display.classList.add('warning');
+                        display.classList.remove('running');
+                    }
+                }, 1000);
+            } else if (!isPaused) {
+                isPaused = true;
+                btn.classList.remove('running');
+                btn.classList.add('paused');
+                btnIcon.className = 'fa-solid fa-play';
+                btnText.textContent = 'Resume';
+                clearInterval(timerInterval);
+            } else {
+                isPaused = false;
+                btn.classList.add('running');
+                btn.classList.remove('paused');
+                btnIcon.className = 'fa-solid fa-pause';
+                btnText.textContent = 'Pause';
+                timerInterval = setInterval(() => {
+                    seconds++;
+                    updateDisplay();
+                }, 1000);
+            }
+        }
+
+        function updateDisplay() {
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            document.getElementById('timerDisplay').textContent =
+                hrs.toString().padStart(2, '0') + ':' +
+                mins.toString().padStart(2, '0') + ':' +
+                secs.toString().padStart(2, '0');
+        }
+
+        // Body zone states: 0 = normal, 1 = avoid, 2 = focus
+        let zoneStates = {};
+
+        // Initialize states from existing markers
+        document.querySelectorAll('.body-zone.avoid').forEach(z => {
+            zoneStates[z.dataset.zone] = 1;
+        });
+        document.querySelectorAll('.body-zone.focus').forEach(z => {
+            zoneStates[z.dataset.zone] = 2;
+        });
+
+        function toggleZone(zone) {
+            const zoneName = zone.dataset.zone;
+            
+            if (!zoneStates[zoneName]) {
+                zoneStates[zoneName] = 0;
+            }
+            
+            // Cycle: normal (0) → avoid (1) → focus (2) → normal (0)
+            zoneStates[zoneName] = (zoneStates[zoneName] + 1) % 3;
+            
+            zone.classList.remove('avoid', 'focus');
+            zone.textContent = '';
+            
+            if (zoneStates[zoneName] === 1) {
+                zone.classList.add('avoid');
+                zone.textContent = '✕';
+                showToast(`${zoneName} - Hindari`, 'avoid');
+            } else if (zoneStates[zoneName] === 2) {
+                zone.classList.add('focus');
+                zone.textContent = '+';
+                showToast(`${zoneName} - Fokus`, 'focus');
+            } else {
+                showToast(`${zoneName} - Normal`, '');
+            }
+            
+            updateSelectedSummary();
+        }
+
+        function updateSelectedSummary() {
+            const container = document.getElementById('selectedSummary');
+            let html = '<span class="selected-summary-label">Selected:</span>';
+            
+            let hasItems = false;
+            
+            for (const [zone, state] of Object.entries(zoneStates)) {
+                if (state === 1) {
+                    html += `<span class="selected-tag avoid"><i class="fa-solid fa-ban"></i> ${zone}</span>`;
+                    hasItems = true;
+                } else if (state === 2) {
+                    html += `<span class="selected-tag focus"><i class="fa-solid fa-bullseye"></i> ${zone}</span>`;
+                    hasItems = true;
+                }
+            }
+            
+            if (!hasItems) {
+                html += '<span style="color: var(--text-muted); font-size: 13px;">No areas selected</span>';
+            }
+            
+            container.innerHTML = html;
+        }
+
+        // Initialize summary on load
+        updateSelectedSummary();
+
+        function savePreferences() {
+            showToast('Preferences saved successfully!', 'success');
+        }
+
+        function completeSession() {
+            if (isRunning) {
+                clearInterval(timerInterval);
+                isRunning = false;
+            }
+            const statusBadge = document.getElementById('statusBadge');
+            statusBadge.className = 'status-badge completed';
+            statusBadge.textContent = 'Completed';
+            
+            // Collect selected areas
+            const avoidAreas = [];
+            const focusAreas = [];
+            
+            for (const [zone, state] of Object.entries(zoneStates)) {
+                if (state === 1) avoidAreas.push(zone);
+                if (state === 2) focusAreas.push(zone);
+            }
+            
+            let message = 'Session completed!\n\nTotal time: ' + document.getElementById('timerDisplay').textContent;
+            message += '\n\nAreas to AVOID: ' + (avoidAreas.length > 0 ? avoidAreas.join(', ') : 'None');
+            message += '\n\nFOCUS Areas: ' + (focusAreas.length > 0 ? focusAreas.join(', ') : 'None');
+            
+            alert(message);
+        }
+
+        function showToast(message, type = '') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toastMessage.textContent = message;
+            toast.className = 'toast';
+            if (type) toast.classList.add(type);
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

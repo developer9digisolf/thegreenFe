@@ -1,0 +1,83 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@afx/components/*": [
+        "./src/components/*"
+      ],
+      "@afx/controllers/*": [
+        "./src/controllers/*"
+      ],
+      "@afx/interfaces/*": [
+        "./src/interfaces/*"
+      ],
+      "@afx/views/*": [
+        "./src/views/*"
+      ],
+      "@afx/utils/*": [
+        "./src/utilities/*"
+      ],
+      "@afx/services/*": [
+        "./src/services/*"
+      ],
+      "@afx/models/*": [
+        "./src/models/configs/*"
+      ],
+      "@afx/model-reg": [
+        "./src/models/registry.model.tsx"
+      ],
+      "@afx/store/core": [
+        "./src/models/main.provider.tsx"
+      ],
+      "@afx/assets/fonts/*": [
+        "./src/assets/fonts/*"
+      ],
+      "@afx/assets/images/*": [
+        "./src/assets/images/*"
+      ],
+      "@afx/assets/gifs/*": [
+        "./src/assets/gif/*"
+      ],
+      "@afx/mock-data/*": [
+        "./src/data-mock/*"
+      ],
+      "@doar/components": [
+        "./src/packages/components"
+      ],
+      "@doar/shared/*": [
+        "./src/packages/shared/*"
+      ]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "dist/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
