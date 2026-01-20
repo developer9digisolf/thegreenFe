@@ -12,8 +12,11 @@ interface IRequestPayloads<T = any> {
 }
 
 interface IResponsePayloads<T = any> {
+  success: boolean
+  message: string
   data: T
-  meta: { success: boolean; code: string | number; message: string }
+  pagination?: any
+  meta?: any // Keep meta for backward compatibility if needed, but TheGreenApi doesn't use it
 }
 
 const getQueryByName = (name: string, url: string) => {
@@ -32,8 +35,8 @@ export default async function request<T = any, R = any>({
   responseType = 'json',
   data
 }: IRequestPayloads<R>): Promise<IResponsePayloads<T>> {
-    const [token] = UseStorages.getItem('EXAMPLE@UTOKEN').data
-  const baseUrl = process.env.BASEURL
+  const [token] = UseStorages.getItem('THEGREEN@TOKEN').data
+  const baseUrl = process.env.BASEURL || "http://localhost:5000/api/"
 
   let extendedItems: any = {}
 
@@ -63,48 +66,16 @@ export default async function request<T = any, R = any>({
         responseType,
         ...extendedItems
       })
-      .then(response => resolve(response.data))
+      .then(response => {
+        // TheGreenApi returns { success, message, data } directly
+        // Adapter for old structure if needed:
+        // if (response.data.meta) resolve(response.data)
+
+        // Return the whole body
+        resolve(response.data)
+      })
       .catch(error => {
-        const msg = error?.response?.data?.meta
-        const newMsg = []
-        if (
-          msg?.message &&
-          typeof msg?.message === 'object' &&
-          !Array.isArray(msg?.message)
-        ) {
-          for (const a in msg?.message) {
-            newMsg.push(msg?.message?.[a])
-          }
-          newMsg.flat()
-        } else if (typeof msg?.message === 'string') {
-          newMsg.push(msg?.message)
-        }
-
-        if (
-          error?.response?.data?.meta?.code == '40100' &&
-          globalThis?.window?.location?.pathname !== 'auth/login'
-        ) {
-          const [authKey] = UseStorages.getItem('EXAMPLE@UNIQAUTH', true).data
-
-          if (authKey != randomAuthKey) {
-            UseStorages.setItem('EXAMPLE@UNIQAUTH', randomAuthKey, true)
-            typeof window !== 'undefined' &&
-              Modal.warning({
-                title: 'Not Authenticated',
-                content: 'Please login first',
-                onOk: () => {
-                  if (globalThis?.window?.location?.replace) {
-                    globalThis.window.location.replace(
-                      `${window.location.origin}/auth/login`
-                    )
-                  }
-                  UseStorages.dropAll()
-                },
-                onCancel: undefined
-              })
-          }
-        }
-        return reject(error?.response?.data)
+        return reject(error?.response?.data || error.message)
       })
   )
 }
