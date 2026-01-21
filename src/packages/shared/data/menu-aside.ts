@@ -251,6 +251,20 @@ const asideMenus = [
             },
         ],
     },
+    {
+        id: 5,
+        label: "Master Data",
+        url: "/",
+        Icon: Layers,
+        submenu: [
+            {
+                id: 51,
+                label: "Service Categories",
+                url: "/green-spa/master-service-category",
+                Icon: Layers,
+            },
+        ],
+    },
 ];
 
 export default asideMenus;

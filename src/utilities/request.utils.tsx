@@ -67,15 +67,39 @@ export default async function request<T = any, R = any>({
         ...extendedItems
       })
       .then(response => {
-        // TheGreenApi returns { success, message, data } directly
-        // Adapter for old structure if needed:
-        // if (response.data.meta) resolve(response.data)
+        const payload = response.data
 
-        // Return the whole body
-        resolve(response.data)
+        // Check if it follows the TheGreenApi structure containing 'meta'
+        if (payload && payload.meta) {
+          const { meta, data } = payload
+          const result: any = {
+            success: meta.success,
+            message: meta.message,
+            data: data
+          }
+
+          // Handle Paginated Data
+          if (data && data.pageInfo && Array.isArray(data.pageData)) {
+            result.data = data.pageData
+            result.pagination = data.pageInfo
+          }
+
+          resolve(result)
+        } else {
+          // Fallback for direct responses
+          resolve(payload)
+        }
       })
       .catch(error => {
-        return reject(error?.response?.data || error.message)
+        const errPayload = error?.response?.data
+        if (errPayload && errPayload.meta) {
+          return reject({
+            success: errPayload.meta.success,
+            message: errPayload.meta.message || error.message,
+            data: errPayload.data
+          })
+        }
+        return reject(errPayload || error.message)
       })
   )
 }

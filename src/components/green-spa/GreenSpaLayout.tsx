@@ -90,6 +90,14 @@ export default function GreenSpaLayout({
                                 {!isCollapsed && <span className="nav-item-text">Member</span>}
                             </Link>
                             <Link
+                                href="/dashboard/master/service-categories"
+                                className={`nav-item ${isActive("/dashboard/master/service-categories")}`}
+                                title="Kategori Layanan"
+                            >
+                                <i className="fa-solid fa-list-check"></i>
+                                {!isCollapsed && <span className="nav-item-text">Kategori Layanan</span>}
+                            </Link>
+                            <Link
                                 href="/dashboard/master/services"
                                 className={`nav-item ${isActive("/dashboard/master/services")}`}
                                 title="Layanan"

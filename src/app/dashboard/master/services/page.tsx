@@ -264,7 +264,7 @@ export default function MasterServices() {
                                         </span>
                                     </td>
                                     <td>
-                                        <span className="price-tag">{formatCurrency(service.price)}</span>
+                                        <span className="price-tag" suppressHydrationWarning>{formatCurrency(service.price)}</span>
                                     </td>
                                     <td>
                                         <span className={`badge ${service.status === "active" ? "badge-green" : "badge-red"}`}>

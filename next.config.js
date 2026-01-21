@@ -26,7 +26,7 @@ const nextConfig = {
   env: {
     STORAGE_ENCRYPTION_KEY: 'example2x0x2x3',
     ENCRYPTION_PREF_KEY: 'xxlSIOACC2733cjsjhaj',
-    BASEURL: 'https://localhost/v1/',
+    BASEURL: 'http://localhost:5100/api/',
   },
   async rewrites() {
     return {}
