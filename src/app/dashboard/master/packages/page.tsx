@@ -258,10 +258,11 @@ export default function MasterPackages() {
                                                 style={{
                                                     color: pkg.status === "inactive" ? "var(--text-muted)" : "var(--text-primary)",
                                                 }}
+                                                suppressHydrationWarning
                                             >
                                                 {formatCurrency(pkg.price)}
                                             </div>
-                                            <div className="price-per">{formatCurrency(pkg.price / pkg.voucherCount)}/voucher</div>
+                                            <div className="price-per" suppressHydrationWarning>{formatCurrency(pkg.price / pkg.voucherCount)}/voucher</div>
                                         </div>
                                     </td>
                                     <td>
@@ -535,7 +536,7 @@ export default function MasterPackages() {
                                             <i className="fa-solid fa-calendar"></i>
                                             Berlaku {selectedPackage.validityDays} hari
                                         </div>
-                                        <div className="detail-meta-item">
+                                        <div className="detail-meta-item" suppressHydrationWarning>
                                             <i className="fa-solid fa-tag"></i>
                                             {formatCurrency(selectedPackage.price)} (hemat {selectedPackage.discount})
                                         </div>

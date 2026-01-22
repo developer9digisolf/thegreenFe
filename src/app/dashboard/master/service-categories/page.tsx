@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Select } from "antd";
 import { ServiceCategoryGetAllService, ServiceCategoryCreateService, ServiceCategoryUpdateService, ServiceCategoryDeleteService } from "@afx/services/service-category.service";
 import { IServiceCategory, ICreateServiceCategoryRequest, IUpdateServiceCategoryRequest } from "@afx/interfaces/service-category.iface";
 
@@ -335,14 +336,15 @@ export default function MasterServiceCategories() {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Status</label>
-                                <select
-                                    className="form-select"
+                                <Select
+                                    style={{ width: '100%', height: '40px' }}
                                     value={formData.isActive ? "active" : "inactive"}
-                                    onChange={(e) => setFormData({ ...formData, isActive: e.target.value === "active" })}
-                                >
-                                    <option value="active">Aktif</option>
-                                    <option value="inactive">Nonaktif</option>
-                                </select>
+                                    onChange={(value) => setFormData({ ...formData, isActive: value === "active" })}
+                                    options={[
+                                        { label: "Aktif", value: "active" },
+                                        { label: "Nonaktif", value: "inactive" }
+                                    ]}
+                                />
                             </div>
                         </div>
                     </div>

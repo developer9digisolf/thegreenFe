@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Select, Checkbox, Row, Col } from "antd";
 
 interface Therapist {
     id: string;
@@ -234,20 +235,28 @@ export default function MasterTherapists() {
                             <i className="fa-solid fa-magnifying-glass"></i>
                             <input type="text" placeholder="Cari therapist..." />
                         </div>
-                        <select className="filter-select">
-                            <option value="">Semua Keahlian</option>
-                            <option value="massage">Massage</option>
-                            <option value="therapy">Therapy</option>
-                            <option value="bodycare">Body Care</option>
-                            <option value="facial">Facial</option>
-                        </select>
-                        <select className="filter-select">
-                            <option value="">Semua Status</option>
-                            <option value="available">Tersedia</option>
-                            <option value="busy">Sibuk</option>
-                            <option value="off">Istirahat</option>
-                            <option value="leave">Cuti</option>
-                        </select>
+                        <Select
+                            placeholder="Semua Keahlian"
+                            style={{ width: 150, height: 40 }}
+                            allowClear
+                            options={[
+                                { value: "massage", label: "Massage" },
+                                { value: "therapy", label: "Therapy" },
+                                { value: "bodycare", label: "Body Care" },
+                                { value: "facial", label: "Facial" }
+                            ]}
+                        />
+                        <Select
+                            placeholder="Semua Status"
+                            style={{ width: 150, height: 40 }}
+                            allowClear
+                            options={[
+                                { value: "available", label: "Tersedia" },
+                                { value: "busy", label: "Sibuk" },
+                                { value: "off", label: "Istirahat" },
+                                { value: "leave", label: "Cuti" }
+                            ]}
+                        />
                     </div>
                 </div>
                 <div className="card-body">
@@ -344,6 +353,7 @@ export default function MasterTherapists() {
                                             <div
                                                 className="commission-total"
                                                 style={{ color: therapist.status === "leave" ? "var(--text-muted)" : "var(--spa-green)" }}
+                                                suppressHydrationWarning
                                             >
                                                 {formatCurrency(therapist.commissionMonth)}
                                             </div>
@@ -427,11 +437,15 @@ export default function MasterTherapists() {
                                 <label className="form-label">
                                     Jenis Kelamin <span className="required">*</span>
                                 </label>
-                                <select className="form-select" defaultValue={selectedTherapist?.gender || ""}>
-                                    <option value="">-- Pilih --</option>
-                                    <option value="female">Perempuan</option>
-                                    <option value="male">Laki-laki</option>
-                                </select>
+                                <Select
+                                    style={{ width: '100%', height: '40px' }}
+                                    placeholder="-- Pilih --"
+                                    defaultValue={selectedTherapist?.gender}
+                                    options={[
+                                        { value: "female", label: "Perempuan" },
+                                        { value: "male", label: "Laki-laki" }
+                                    ]}
+                                />
                             </div>
                         </div>
 
@@ -467,65 +481,67 @@ export default function MasterTherapists() {
                             <label className="form-label">
                                 Keahlian <span className="required">*</span>
                             </label>
-                            <div className="skill-checkboxes">
-                                <label className={`skill-checkbox ${selectedTherapist?.skills.includes('massage') ? 'selected' : ''}`}>
-                                    <input type="checkbox" defaultChecked={selectedTherapist?.skills.includes('massage')} />
-                                    <span className="skill-checkbox-icon massage">
-                                        <i className="fa-solid fa-hands"></i>
-                                    </span>
-                                    <span className="skill-checkbox-text">Massage</span>
-                                    {selectedTherapist?.skills.includes('massage') && (
-                                        <span className="skill-checkbox-check">
-                                            <i className="fa-solid fa-check"></i>
-                                        </span>
-                                    )}
-                                </label>
-                                <label className={`skill-checkbox ${selectedTherapist?.skills.includes('therapy') ? 'selected' : ''}`}>
-                                    <input type="checkbox" defaultChecked={selectedTherapist?.skills.includes('therapy')} />
-                                    <span className="skill-checkbox-icon therapy">
-                                        <i className="fa-solid fa-heart-pulse"></i>
-                                    </span>
-                                    <span className="skill-checkbox-text">Therapy</span>
-                                    {selectedTherapist?.skills.includes('therapy') && (
-                                        <span className="skill-checkbox-check">
-                                            <i className="fa-solid fa-check"></i>
-                                        </span>
-                                    )}
-                                </label>
-                                <label className={`skill-checkbox ${selectedTherapist?.skills.includes('bodycare') ? 'selected' : ''}`}>
-                                    <input type="checkbox" defaultChecked={selectedTherapist?.skills.includes('bodycare')} />
-                                    <span className="skill-checkbox-icon bodycare">
-                                        <i className="fa-solid fa-pump-soap"></i>
-                                    </span>
-                                    <span className="skill-checkbox-text">Body Care</span>
-                                    {selectedTherapist?.skills.includes('bodycare') && (
-                                        <span className="skill-checkbox-check">
-                                            <i className="fa-solid fa-check"></i>
-                                        </span>
-                                    )}
-                                </label>
-                                <label className={`skill-checkbox ${selectedTherapist?.skills.includes('facial') ? 'selected' : ''}`}>
-                                    <input type="checkbox" defaultChecked={selectedTherapist?.skills.includes('facial')} />
-                                    <span className="skill-checkbox-icon facial">
-                                        <i className="fa-solid fa-face-smile"></i>
-                                    </span>
-                                    <span className="skill-checkbox-text">Facial</span>
-                                    {selectedTherapist?.skills.includes('facial') && (
-                                        <span className="skill-checkbox-check">
-                                            <i className="fa-solid fa-check"></i>
-                                        </span>
-                                    )}
-                                </label>
+                            <div style={{ marginTop: 8 }}>
+                                <Row gutter={[16, 16]}>
+                                    <Col span={12}>
+                                        <Checkbox
+                                            defaultChecked={selectedTherapist?.skills.includes('massage')}
+                                            style={{ width: '100%' }}
+                                        >
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                <i className="fa-solid fa-hands" style={{ color: '#8b5cf6' }}></i>
+                                                Massage
+                                            </span>
+                                        </Checkbox>
+                                    </Col>
+                                    <Col span={12}>
+                                        <Checkbox
+                                            defaultChecked={selectedTherapist?.skills.includes('therapy')}
+                                            style={{ width: '100%' }}
+                                        >
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                <i className="fa-solid fa-heart-pulse" style={{ color: '#ec4899' }}></i>
+                                                Therapy
+                                            </span>
+                                        </Checkbox>
+                                    </Col>
+                                    <Col span={12}>
+                                        <Checkbox
+                                            defaultChecked={selectedTherapist?.skills.includes('bodycare')}
+                                            style={{ width: '100%' }}
+                                        >
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                <i className="fa-solid fa-pump-soap" style={{ color: '#10b981' }}></i>
+                                                Body Care
+                                            </span>
+                                        </Checkbox>
+                                    </Col>
+                                    <Col span={12}>
+                                        <Checkbox
+                                            defaultChecked={selectedTherapist?.skills.includes('facial')}
+                                            style={{ width: '100%' }}
+                                        >
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                <i className="fa-solid fa-face-smile" style={{ color: '#f59e0b' }}></i>
+                                                Facial
+                                            </span>
+                                        </Checkbox>
+                                    </Col>
+                                </Row>
                             </div>
                         </div>
 
                         <div className="form-group">
                             <label className="form-label">Status</label>
-                            <select className="form-select" defaultValue={selectedTherapist?.status || "available"}>
-                                <option value="available">Tersedia</option>
-                                <option value="off">Istirahat</option>
-                                <option value="leave">Cuti</option>
-                            </select>
+                            <Select
+                                style={{ width: '100%', height: '40px' }}
+                                defaultValue={selectedTherapist?.status || "available"}
+                                options={[
+                                    { value: "available", label: "Tersedia" },
+                                    { value: "off", label: "Istirahat" },
+                                    { value: "leave", label: "Cuti" }
+                                ]}
+                            />
                         </div>
                     </div>
                     <div className="modal-footer">
@@ -578,7 +594,7 @@ export default function MasterTherapists() {
                                     <div className="detail-stat-label">Sesi Bulan Ini</div>
                                 </div>
                                 <div className="detail-stat">
-                                    <div className="detail-stat-value" style={{ color: "var(--spa-green)" }}>
+                                    <div className="detail-stat-value" style={{ color: "var(--spa-green)" }} suppressHydrationWarning>
                                         {formatCurrency(selectedTherapist.commissionMonth)}
                                     </div>
                                     <div className="detail-stat-label">Komisi Bulan Ini</div>
