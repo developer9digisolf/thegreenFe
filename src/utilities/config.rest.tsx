@@ -17,7 +17,13 @@ export const rest = {
     service: "services",
     serviceActive: "services/active",
     serviceDetail: "services/:id",
+    serviceDetailFull: "services/:id/detail",
     serviceByCategory: "services/category/:categoryId",
+
+    // Service Variants
+    serviceVariants: "services/variants",
+    serviceVariantsByService: "services/:serviceId/variants",
+    serviceVariantDetail: "services/variants/:variantId",
 
     // Members
     member: "members",

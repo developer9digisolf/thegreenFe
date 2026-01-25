@@ -1,11 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Select } from "antd";
-import { IService, ICreateServiceRequest, IUpdateServiceRequest } from "@afx/interfaces/service.iface";
-import { ServiceGetAllService, ServiceCreateService, ServiceUpdateService, ServiceDeleteService } from "@afx/services/service.service";
+import { Select, InputNumber, message } from "antd";
+import { IService, IServiceDetail, ICreateServiceRequest, IUpdateServiceRequest, ICreateServiceVariantRequest, IServiceVariant } from "@afx/interfaces/service.iface";
+import { ServiceGetAllService, ServiceGetDetailService, ServiceCreateService, ServiceUpdateService, ServiceDeleteService, VariantAddService, VariantUpdateService, VariantDeleteService } from "@afx/services/service.service";
 import { ServiceCategoryGetActiveService } from "@afx/services/service-category.service";
 import { IServiceCategory } from "@afx/interfaces/service-category.iface";
+
+interface VariantFormData {
+    id?: number;
+    label: string;
+    duration: number;
+    price: number;
+    sortOrder: number;
+    isActive: boolean;
+    isNew?: boolean;
+    isDeleted?: boolean;
+}
 
 export default function MasterServices() {
     const [services, setServices] = useState<IService[]>([]);
@@ -18,18 +29,26 @@ export default function MasterServices() {
     });
     const [searchText, setSearchText] = useState("");
     const [filterCategory, setFilterCategory] = useState<number | undefined>(undefined);
-    const [filterStatus, setFilterStatus] = useState<string | undefined>(undefined);
 
     const [showAddModal, setShowAddModal] = useState(false);
-    const [selectedService, setSelectedService] = useState<IService | null>(null);
-    const [formData, setFormData] = useState<Partial<ICreateServiceRequest & { isActive: boolean }>>({
+    const [selectedService, setSelectedService] = useState<IServiceDetail | null>(null);
+    const [formData, setFormData] = useState<{
+        name: string;
+        categoryId: number | undefined;
+        description: string;
+        icon: string;
+        sortOrder: number;
+        isActive: boolean;
+    }>({
         name: "",
         categoryId: undefined,
-        duration: 60,
-        price: 0,
         description: "",
+        icon: "",
+        sortOrder: 0,
         isActive: true
     });
+    const [variants, setVariants] = useState<VariantFormData[]>([]);
+    const [saving, setSaving] = useState(false);
 
     // Fetch Data
     const fetchData = async (page = 1, search?: string, categoryId?: number) => {
@@ -80,77 +99,197 @@ export default function MasterServices() {
         fetchData(1, searchText, value);
     };
 
-    // Handlers
+    // Modal Handlers
     const handleOpenCreateModal = () => {
         setSelectedService(null);
         setFormData({
             name: "",
             categoryId: undefined,
-            duration: 60,
-            price: 0,
             description: "",
+            icon: "",
+            sortOrder: 0,
             isActive: true
         });
+        // Start with one empty variant
+        setVariants([{
+            label: "",
+            duration: 60,
+            price: 0,
+            sortOrder: 0,
+            isActive: true,
+            isNew: true
+        }]);
         setShowAddModal(true);
     };
 
-    const handleOpenEditModal = (service: IService) => {
-        setSelectedService(service);
-        setFormData({
-            name: service.name,
-            categoryId: service.categoryId,
-            duration: service.duration,
-            price: service.price,
-            description: service.description || "",
-            isActive: service.isActive
-        });
-        setShowAddModal(true);
+    const handleOpenEditModal = async (service: IService) => {
+        try {
+            setLoading(true);
+            const res = await ServiceGetDetailService(service.id);
+            if (res.success && res.data) {
+                setSelectedService(res.data);
+                setFormData({
+                    name: res.data.name,
+                    categoryId: res.data.categoryId,
+                    description: res.data.description || "",
+                    icon: res.data.icon || "",
+                    sortOrder: res.data.sortOrder,
+                    isActive: res.data.isActive
+                });
+                setVariants(res.data.variants.map(v => ({
+                    id: v.id,
+                    label: v.label || "",
+                    duration: v.duration,
+                    price: v.price,
+                    sortOrder: v.sortOrder,
+                    isActive: v.isActive,
+                    isNew: false,
+                    isDeleted: false
+                })));
+                setShowAddModal(true);
+            }
+        } catch (error) {
+            console.error("Failed to fetch service detail:", error);
+            message.error("Gagal mengambil detail layanan");
+        } finally {
+            setLoading(false);
+        }
     };
 
+    // Variant Handlers
+    const handleAddVariant = () => {
+        const maxSort = variants.length > 0 ? Math.max(...variants.map(v => v.sortOrder)) : -1;
+        setVariants([...variants, {
+            label: "",
+            duration: 60,
+            price: 0,
+            sortOrder: maxSort + 1,
+            isActive: true,
+            isNew: true
+        }]);
+    };
+
+    const handleRemoveVariant = (index: number) => {
+        const variant = variants[index];
+        if (variant.id && !variant.isNew) {
+            // Mark existing variant as deleted
+            const updated = [...variants];
+            updated[index] = { ...variant, isDeleted: true };
+            setVariants(updated);
+        } else {
+            // Remove new variant from array
+            setVariants(variants.filter((_, i) => i !== index));
+        }
+    };
+
+    const handleVariantChange = (index: number, field: keyof VariantFormData, value: any) => {
+        const updated = [...variants];
+        updated[index] = { ...updated[index], [field]: value };
+        setVariants(updated);
+    };
+
+    // Save Handler
     const handleSave = async () => {
-        if (!formData.name || !formData.categoryId || !formData.price || !formData.duration) {
-            alert("Mohon lengkapi data wajib (Nama, Kategori, Durasi, Harga)");
+        // Validation
+        if (!formData.name?.trim()) {
+            message.warning("Nama layanan wajib diisi");
+            return;
+        }
+        if (!formData.categoryId) {
+            message.warning("Kategori wajib dipilih");
             return;
         }
 
+        const activeVariants = variants.filter(v => !v.isDeleted);
+        if (activeVariants.length === 0) {
+            message.warning("Minimal harus ada 1 variasi harga");
+            return;
+        }
+
+        for (const v of activeVariants) {
+            if (!v.duration || v.duration <= 0) {
+                message.warning("Durasi harus lebih dari 0");
+                return;
+            }
+            if (v.price < 0) {
+                message.warning("Harga tidak boleh negatif");
+                return;
+            }
+        }
+
+        setSaving(true);
         try {
             if (selectedService) {
-                // Update
-                const payload: IUpdateServiceRequest = {
-                    name: formData.name,
+                // UPDATE MODE
+                // 1. Update service info
+                const updatePayload: IUpdateServiceRequest = {
+                    name: formData.name.trim(),
                     categoryId: formData.categoryId,
-                    duration: Number(formData.duration),
-                    price: Number(formData.price),
-                    description: formData.description,
+                    description: formData.description?.trim() || undefined,
+                    icon: formData.icon?.trim() || undefined,
+                    sortOrder: formData.sortOrder,
                     isActive: formData.isActive
                 };
-                const res = await ServiceUpdateService(selectedService.id, payload);
-                if (res.success) {
-                    setShowAddModal(false);
-                    fetchData(pagination.current, searchText, filterCategory);
-                } else {
-                    alert(res.message || "Gagal mengupdate layanan");
+                await ServiceUpdateService(selectedService.id, updatePayload);
+
+                // 2. Handle variants
+                for (const v of variants) {
+                    if (v.isDeleted && v.id) {
+                        // Delete existing variant
+                        await VariantDeleteService(v.id);
+                    } else if (v.isNew && !v.isDeleted) {
+                        // Add new variant
+                        await VariantAddService(selectedService.id, {
+                            label: v.label?.trim() || undefined,
+                            duration: v.duration,
+                            price: v.price,
+                            sortOrder: v.sortOrder
+                        });
+                    } else if (v.id && !v.isDeleted) {
+                        // Update existing variant
+                        await VariantUpdateService(v.id, {
+                            label: v.label?.trim() || undefined,
+                            duration: v.duration,
+                            price: v.price,
+                            sortOrder: v.sortOrder,
+                            isActive: v.isActive
+                        });
+                    }
                 }
+
+                message.success("Layanan berhasil diperbarui");
             } else {
-                // Create
-                const payload: ICreateServiceRequest = {
-                    name: formData.name,
+                // CREATE MODE
+                const createPayload: ICreateServiceRequest = {
                     categoryId: formData.categoryId,
-                    duration: Number(formData.duration),
-                    price: Number(formData.price),
-                    description: formData.description
+                    name: formData.name.trim(),
+                    description: formData.description?.trim() || undefined,
+                    icon: formData.icon?.trim() || undefined,
+                    sortOrder: formData.sortOrder,
+                    variants: activeVariants.map(v => ({
+                        label: v.label?.trim() || undefined,
+                        duration: v.duration,
+                        price: v.price,
+                        sortOrder: v.sortOrder
+                    }))
                 };
-                const res = await ServiceCreateService(payload);
+
+                const res = await ServiceCreateService(createPayload);
                 if (res.success) {
-                    setShowAddModal(false);
-                    fetchData(1, searchText, filterCategory);
+                    message.success("Layanan berhasil ditambahkan");
                 } else {
-                    alert(res.message || "Gagal membuat layanan");
+                    message.error(res.message || "Gagal membuat layanan");
+                    return;
                 }
             }
+
+            setShowAddModal(false);
+            fetchData(pagination.current, searchText, filterCategory);
         } catch (error: any) {
             console.error(error);
-            alert(error.message || "Terjadi kesalahan saat menyimpan");
+            message.error(error.message || "Terjadi kesalahan saat menyimpan");
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -160,13 +299,14 @@ export default function MasterServices() {
         try {
             const res = await ServiceDeleteService(id);
             if (res.success) {
+                message.success("Layanan berhasil dihapus");
                 fetchData(pagination.current, searchText, filterCategory);
             } else {
-                alert(res.message || "Gagal menghapus layanan");
+                message.error(res.message || "Gagal menghapus layanan");
             }
         } catch (error: any) {
             console.error(error);
-            alert(error.message || "Terjadi kesalahan saat menghapus");
+            message.error(error.message || "Terjadi kesalahan saat menghapus");
         }
     };
 
@@ -179,16 +319,30 @@ export default function MasterServices() {
         }).format(amount);
     };
 
-    // Using category color/icon if available, else fallback
     const getCategoryDetails = (id: number) => {
         return categories.find(c => c.id === id) || { name: 'Unknown', color: '#ccc', icon: 'fa-solid fa-spa' };
     };
 
-    // Prepare options for Select
     const categoryOptions = categories.map(cat => ({
         label: cat.name,
         value: cat.id
     }));
+
+    const formatPriceRange = (service: IService) => {
+        if (!service.minPrice && !service.maxPrice) return "-";
+        if (service.minPrice === service.maxPrice) {
+            return formatCurrency(service.minPrice || 0);
+        }
+        return `${formatCurrency(service.minPrice || 0)} - ${formatCurrency(service.maxPrice || 0)}`;
+    };
+
+    const formatDurationRange = (service: IService) => {
+        if (!service.minDuration && !service.maxDuration) return "-";
+        if (service.minDuration === service.maxDuration) {
+            return `${service.minDuration} menit`;
+        }
+        return `${service.minDuration} - ${service.maxDuration} menit`;
+    };
 
     return (
         <>
@@ -256,6 +410,7 @@ export default function MasterServices() {
                                 <th style={{ width: '60px' }}>ID</th>
                                 <th>Layanan</th>
                                 <th>Kategori</th>
+                                <th>Variasi</th>
                                 <th>Durasi</th>
                                 <th>Harga</th>
                                 <th>Status</th>
@@ -265,13 +420,13 @@ export default function MasterServices() {
                         <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan={7} style={{ textAlign: "center", padding: "20px" }}>
+                                    <td colSpan={8} style={{ textAlign: "center", padding: "20px" }}>
                                         Loading...
                                     </td>
                                 </tr>
                             ) : services.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} style={{ textAlign: "center", padding: "20px" }}>
+                                    <td colSpan={8} style={{ textAlign: "center", padding: "20px" }}>
                                         Tidak ada data layanan
                                     </td>
                                 </tr>
@@ -309,13 +464,20 @@ export default function MasterServices() {
                                                 </span>
                                             </td>
                                             <td>
-                                                <span className="duration-tag">
-                                                    <i className="fa-regular fa-clock"></i>
-                                                    {service.duration} menit
+                                                <span className="badge badge-blue">
+                                                    {service.variantCount} variasi
                                                 </span>
                                             </td>
                                             <td>
-                                                <span className="price-tag" suppressHydrationWarning>{formatCurrency(service.price)}</span>
+                                                <span className="duration-tag">
+                                                    <i className="fa-regular fa-clock"></i>
+                                                    {formatDurationRange(service)}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span className="price-tag" suppressHydrationWarning>
+                                                    {formatPriceRange(service)}
+                                                </span>
                                             </td>
                                             <td>
                                                 <span className={`badge ${service.isActive ? "badge-green" : "badge-red"}`}>
@@ -378,7 +540,7 @@ export default function MasterServices() {
 
             {/* Add/Edit Service Modal */}
             <div className={`modal-overlay ${showAddModal ? "show" : ""}`}>
-                <div className="modal">
+                <div className="modal" style={{ maxWidth: '700px' }}>
                     <div className="modal-header">
                         <h3 className="modal-title">
                             {selectedService ? "Edit Layanan" : "Tambah Layanan Baru"}
@@ -395,8 +557,8 @@ export default function MasterServices() {
                             <input
                                 type="text"
                                 className="form-input"
-                                placeholder="Contoh: Traditional Massage"
-                                value={formData.name || ""}
+                                placeholder="Contoh: Balinese Massage"
+                                value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             />
                         </div>
@@ -416,64 +578,130 @@ export default function MasterServices() {
                                     options={categoryOptions}
                                 />
                             </div>
-                            <div className="form-group">
-                                <label className="form-label">
-                                    Durasi (menit) <span className="required">*</span>
-                                </label>
-                                <div className="input-group">
-                                    <input
-                                        type="number"
-                                        className="form-input has-suffix"
-                                        placeholder="60"
-                                        value={formData.duration}
-                                        onChange={(e) => setFormData({ ...formData, duration: Number(e.target.value) })}
+                            {selectedService && (
+                                <div className="form-group">
+                                    <label className="form-label">Status</label>
+                                    <Select
+                                        style={{ width: '100%', height: '40px' }}
+                                        value={formData.isActive ? "active" : "inactive"}
+                                        onChange={(value) => setFormData({ ...formData, isActive: value === "active" })}
+                                        options={[
+                                            { label: "Aktif", value: "active" },
+                                            { label: "Nonaktif", value: "inactive" }
+                                        ]}
                                     />
-                                    <span className="input-suffix">menit</span>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">
-                                Harga <span className="required">*</span>
-                            </label>
-                            <div className="input-group">
-                                <span className="input-prefix">Rp</span>
-                                <input
-                                    type="number"
-                                    className="form-input has-prefix"
-                                    placeholder="150000"
-                                    value={formData.price}
-                                    onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                                />
-                            </div>
+                            )}
                         </div>
 
                         <div className="form-group">
                             <label className="form-label">Deskripsi</label>
                             <textarea
                                 className="form-textarea"
-                                rows={3}
+                                rows={2}
                                 placeholder="Deskripsi singkat layanan..."
-                                value={formData.description || ""}
+                                value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             ></textarea>
                         </div>
 
-                        {selectedService && (
-                            <div className="form-group">
-                                <label className="form-label">Status</label>
-                                <Select
-                                    style={{ width: '100%', height: '40px' }}
-                                    value={formData.isActive ? "active" : "inactive"}
-                                    onChange={(value) => setFormData({ ...formData, isActive: value === "active" })}
-                                    options={[
-                                        { label: "Aktif", value: "active" },
-                                        { label: "Nonaktif", value: "inactive" }
-                                    ]}
-                                />
+                        {/* Variants Section */}
+                        <div className="form-group">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                <label className="form-label" style={{ margin: 0 }}>
+                                    Variasi Harga <span className="required">*</span>
+                                </label>
+                                <button 
+                                    type="button" 
+                                    className="btn btn-secondary btn-sm"
+                                    onClick={handleAddVariant}
+                                    style={{ padding: '6px 12px', fontSize: '13px' }}
+                                >
+                                    <i className="fa-solid fa-plus"></i>
+                                    Tambah Variasi
+                                </button>
                             </div>
-                        )}
+
+                            <div className="variants-table">
+                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                    <thead>
+                                        <tr style={{ backgroundColor: '#f8f9fa' }}>
+                                            <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', width: '25%' }}>Label</th>
+                                            <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', width: '25%' }}>Durasi (menit)</th>
+                                            <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', width: '35%' }}>Harga</th>
+                                            <th style={{ padding: '10px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', width: '15%' }}>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {variants.filter(v => !v.isDeleted).length === 0 ? (
+                                            <tr>
+                                                <td colSpan={4} style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
+                                                    Belum ada variasi. Klik "Tambah Variasi" untuk menambahkan.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            variants.map((variant, index) => {
+                                                if (variant.isDeleted) return null;
+                                                return (
+                                                    <tr key={index} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                                                        <td style={{ padding: '8px' }}>
+                                                            <input
+                                                                type="text"
+                                                                className="form-input"
+                                                                placeholder="Standard"
+                                                                value={variant.label}
+                                                                onChange={(e) => handleVariantChange(index, 'label', e.target.value)}
+                                                                style={{ height: '36px' }}
+                                                            />
+                                                        </td>
+                                                        <td style={{ padding: '8px' }}>
+                                                            <InputNumber
+                                                                min={1}
+                                                                max={480}
+                                                                value={variant.duration}
+                                                                onChange={(value) => handleVariantChange(index, 'duration', value || 60)}
+                                                                style={{ width: '100%', height: '36px' }}
+                                                                addonAfter="menit"
+                                                            />
+                                                        </td>
+                                                        <td style={{ padding: '8px' }}>
+                                                            <InputNumber
+                                                                min={0}
+                                                                value={variant.price}
+                                                                onChange={(value) => handleVariantChange(index, 'price', value || 0)}
+                                                                style={{ width: '100%', height: '36px' }}
+                                                                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                                                                parser={(value) => Number(value?.replace(/\./g, '') || 0)}
+                                                                addonBefore="Rp"
+                                                            />
+                                                        </td>
+                                                        <td style={{ padding: '8px', textAlign: 'center' }}>
+                                                            <button
+                                                                type="button"
+                                                                className="btn-action delete"
+                                                                onClick={() => handleRemoveVariant(index)}
+                                                                title="Hapus variasi"
+                                                                disabled={variants.filter(v => !v.isDeleted).length <= 1}
+                                                                style={{
+                                                                    opacity: variants.filter(v => !v.isDeleted).length <= 1 ? 0.5 : 1,
+                                                                    cursor: variants.filter(v => !v.isDeleted).length <= 1 ? 'not-allowed' : 'pointer'
+                                                                }}
+                                                            >
+                                                                <i className="fa-solid fa-trash"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+                                <i className="fa-solid fa-info-circle" style={{ marginRight: '5px' }}></i>
+                                Minimal harus ada 1 variasi harga. Label bersifat opsional.
+                            </p>
+                        </div>
                     </div>
                     <div className="modal-footer">
                         <button
@@ -482,12 +710,26 @@ export default function MasterServices() {
                                 setShowAddModal(false);
                                 setSelectedService(null);
                             }}
+                            disabled={saving}
                         >
                             Batal
                         </button>
-                        <button className="btn btn-primary" onClick={handleSave}>
-                            <i className="fa-solid fa-check"></i>
-                            Simpan Layanan
+                        <button 
+                            className="btn btn-primary" 
+                            onClick={handleSave}
+                            disabled={saving}
+                        >
+                            {saving ? (
+                                <>
+                                    <i className="fa-solid fa-spinner fa-spin"></i>
+                                    Menyimpan...
+                                </>
+                            ) : (
+                                <>
+                                    <i className="fa-solid fa-check"></i>
+                                    Simpan Layanan
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>
