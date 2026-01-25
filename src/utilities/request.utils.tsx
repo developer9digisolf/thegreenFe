@@ -1,6 +1,4 @@
-import { Modal } from 'antd'
 import axios, { ResponseType } from 'axios'
-import UseStorages from './storage.util'
 
 interface IRequestPayloads<T = any> {
   url: string
@@ -16,16 +14,16 @@ interface IResponsePayloads<T = any> {
   message: string
   data: T
   pagination?: any
-  meta?: any // Keep meta for backward compatibility if needed, but TheGreenApi doesn't use it
+  meta?: any
 }
 
-const getQueryByName = (name: string, url: string) => {
-  const match = RegExp('[?&]' + name + '=([^&]*)').exec(url)
-
-  return match && decodeURIComponent(match[1].replace(/\+/g, ' '))
+// Get token directly from localStorage
+function getToken(): string | null {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('THEGREEN@TOKEN')
+  }
+  return null
 }
-
-const randomAuthKey = (Math.random() * 1738).toFixed(3)
 
 export default async function request<T = any, R = any>({
   url,
@@ -35,7 +33,7 @@ export default async function request<T = any, R = any>({
   responseType = 'json',
   data
 }: IRequestPayloads<R>): Promise<IResponsePayloads<T>> {
-  const [token] = UseStorages.getItem('THEGREEN@TOKEN').data
+  const token = getToken()
   const baseUrl = process.env.BASEURL || "http://localhost:5000/api/"
 
   let extendedItems: any = {}
@@ -60,7 +58,7 @@ export default async function request<T = any, R = any>({
               ? 'multipart/form-data'
               : 'application/json;charset=UTF-8',
           'Access-Control-Allow-Origin': '*',
-          Authorization: `Bearer ${token}`
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         method,
         responseType,
@@ -91,7 +89,39 @@ export default async function request<T = any, R = any>({
         }
       })
       .catch(error => {
+        const status = error?.response?.status
         const errPayload = error?.response?.data
+
+        // Handle 401 Unauthorized - redirect to login
+        if (status === 401) {
+          // Clear auth data
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('THEGREEN@TOKEN')
+            localStorage.removeItem('THEGREEN@USER')
+            
+            // Only redirect if not already on login page
+            if (!window.location.pathname.includes('/auth/login')) {
+              window.location.href = '/auth/login'
+            }
+          }
+          
+          return reject({
+            success: false,
+            message: errPayload?.meta?.message || 'Sesi Anda telah berakhir. Silakan login kembali.',
+            data: null
+          })
+        }
+
+        // Handle 403 Forbidden
+        if (status === 403) {
+          return reject({
+            success: false,
+            message: errPayload?.meta?.message || 'Anda tidak memiliki akses ke resource ini.',
+            data: null
+          })
+        }
+
+        // Handle other errors
         if (errPayload && errPayload.meta) {
           return reject({
             success: errPayload.meta.success,
@@ -99,7 +129,12 @@ export default async function request<T = any, R = any>({
             data: errPayload.data
           })
         }
-        return reject(errPayload || error.message)
+        
+        return reject({
+          success: false,
+          message: errPayload?.message || error.message || 'Terjadi kesalahan pada server',
+          data: null
+        })
       })
   )
 }

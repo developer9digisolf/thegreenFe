@@ -1,7 +1,10 @@
 export const rest = {
-    examplePost: "example",
-    exampleGet: "example",
-    exampleDel: "example/:ID",
+    // Auth
+    authLogin: "auth/login",
+    authRegister: "auth/register",
+    authMe: "auth/me",
+    authValidate: "auth/validate",
+    authLogout: "auth/logout",
 
     // Service Categories
     serviceCategory: "service-categories",

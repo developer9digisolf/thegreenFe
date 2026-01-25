@@ -41,6 +41,9 @@
       "@afx/services/*": [
         "./src/services/*"
       ],
+      "@afx/contexts/*": [
+        "./src/contexts/*"
+      ],
       "@afx/models/*": [
         "./src/models/configs/*"
       ],

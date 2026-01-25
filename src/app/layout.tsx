@@ -4,6 +4,7 @@ import './globals.css'
 import './font.css'
 import './styles.scss'
 import { ConfigProvider } from 'antd'
+import { AuthProvider } from '@afx/contexts/AuthContext'
 
 
 export default function MainLayout({
@@ -15,13 +16,17 @@ export default function MainLayout({
     <ConfigProvider
       theme={{
         token: {
-          colorPrimary: '#E7216E'
+          colorPrimary: '#059669'
         }
       }}
     >
       <html lang="en">
-        <title>Example</title>
-        <body>{children}</body>
+        <title>The Green Spa</title>
+        <body>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </body>
       </html>
     </ConfigProvider>
   )

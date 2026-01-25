@@ -3,8 +3,12 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Dropdown, message } from "antd";
+import type { MenuProps } from "antd";
 import { ThemeProvider, classicTheme } from "@doar/shared/styled";
-import "../../app/dashboard/green-spa.css"; // Import the CSS
+import { useAuth } from "@afx/contexts/AuthContext";
+import { getRoleName } from "@afx/interfaces/auth.iface";
+import "../../app/dashboard/green-spa.css";
 
 export default function GreenSpaLayout({
     children,
@@ -13,6 +17,10 @@ export default function GreenSpaLayout({
 }) {
     const pathname = usePathname();
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const { user, logout } = useAuth();
+
+    // Get role name (handles both string and number)
+    const roleName = user?.role !== undefined ? getRoleName(user.role) : 'User';
 
     // Auto-collapse on POS page
     useEffect(() => {
@@ -29,6 +37,59 @@ export default function GreenSpaLayout({
 
     const toggleSidebar = () => {
         setIsCollapsed(!isCollapsed);
+    };
+
+    const handleLogout = () => {
+        message.success("Logout berhasil");
+        logout();
+    };
+
+    const userMenuItems: MenuProps["items"] = [
+        {
+            key: "profile",
+            label: (
+                <div style={{ padding: "4px 0" }}>
+                    <div style={{ fontWeight: 600 }}>{user?.username}</div>
+                    <div style={{ fontSize: 12, color: "#666" }}>{user?.email || "-"}</div>
+                    <div style={{ fontSize: 11, color: "#059669", marginTop: 4 }}>
+                        <i className="fa-solid fa-shield-halved" style={{ marginRight: 4 }}></i>
+                        {roleName}
+                    </div>
+                </div>
+            ),
+            disabled: true,
+        },
+        { type: "divider" },
+        {
+            key: "settings",
+            label: "Pengaturan Akun",
+            icon: <i className="fa-solid fa-gear"></i>,
+        },
+        {
+            key: "logout",
+            label: "Logout",
+            icon: <i className="fa-solid fa-right-from-bracket"></i>,
+            danger: true,
+            onClick: handleLogout,
+        },
+    ];
+
+    const getRoleColor = (role?: string | number) => {
+        const name = role !== undefined ? getRoleName(role).toLowerCase() : '';
+        switch (name) {
+            case "owner":
+                return "#7c3aed";
+            case "admin":
+                return "#059669";
+            case "office":
+                return "#0891b2";
+            case "therapist":
+                return "#d97706";
+            case "member":
+                return "#6366f1";
+            default:
+                return "#6b7280";
+        }
     };
 
     return (
@@ -168,6 +229,29 @@ export default function GreenSpaLayout({
                         </div>
                     </nav>
 
+                    {/* User Profile Section */}
+                    <div className="sidebar-footer">
+                        <Dropdown menu={{ items: userMenuItems }} placement="topRight" trigger={["click"]}>
+                            <div className={`user-profile ${isCollapsed ? "collapsed" : ""}`}>
+                                <div
+                                    className="user-avatar"
+                                    style={{ backgroundColor: getRoleColor(user?.role) }}
+                                >
+                                    {user?.username?.charAt(0).toUpperCase() || "U"}
+                                </div>
+                                {!isCollapsed && (
+                                    <div className="user-info">
+                                        <div className="user-name">{user?.username}</div>
+                                        <div className="user-role">{roleName}</div>
+                                    </div>
+                                )}
+                                {!isCollapsed && (
+                                    <i className="fa-solid fa-chevron-up user-menu-icon"></i>
+                                )}
+                            </div>
+                        </Dropdown>
+                    </div>
+
                     {/* Toggle Button */}
                     <button
                         className="sidebar-toggle"
@@ -181,6 +265,80 @@ export default function GreenSpaLayout({
                 {/* Main Content */}
                 <main className={`main-content ${isCollapsed ? "expanded" : ""}`}>{children}</main>
             </div>
+
+            <style jsx global>{`
+                .sidebar-footer {
+                    padding: 12px;
+                    border-top: 1px solid rgba(255, 255, 255, 0.1);
+                    margin-top: auto;
+                }
+
+                .user-profile {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 10px 12px;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+
+                .user-profile:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                }
+
+                .user-profile.collapsed {
+                    justify-content: center;
+                    padding: 10px;
+                }
+
+                .user-avatar {
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-weight: 600;
+                    font-size: 14px;
+                    flex-shrink: 0;
+                }
+
+                .user-info {
+                    flex: 1;
+                    min-width: 0;
+                }
+
+                .user-name {
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: white;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .user-role {
+                    font-size: 11px;
+                    color: rgba(255, 255, 255, 0.7);
+                }
+
+                .user-menu-icon {
+                    color: rgba(255, 255, 255, 0.5);
+                    font-size: 12px;
+                }
+
+                .sidebar {
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .sidebar-nav {
+                    flex: 1;
+                    overflow-y: auto;
+                }
+            `}</style>
         </ThemeProvider>
     );
 }
