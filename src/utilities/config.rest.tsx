@@ -18,4 +18,20 @@ export const rest = {
     serviceActive: "services/active",
     serviceDetail: "services/:id",
     serviceByCategory: "services/category/:categoryId",
+
+    // Members
+    member: "members",
+    memberActive: "members/active",
+    memberDetail: "members/:id",
+    memberDetailFull: "members/:id/detail",
+    memberCheckPhone: "members/check-phone",
+    memberCheckEmail: "members/check-email",
+
+    // Therapists
+    therapist: "therapists",
+    therapistActive: "therapists/active",
+    therapistAvailable: "therapists/available",
+    therapistDetail: "therapists/:id",
+    therapistDetailFull: "therapists/:id/detail",
+    therapistCheckPhone: "therapists/check-phone",
 }

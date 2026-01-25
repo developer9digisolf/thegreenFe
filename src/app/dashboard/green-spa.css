@@ -177,6 +177,11 @@ body {
 
 .page-header {
     margin-bottom: 24px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
 }
 
 .page-title {
@@ -706,6 +711,52 @@ body {
 .badge-red {
     background: var(--accent-red-light);
     color: var(--accent-red);
+}
+
+.badge-gray {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.badge-orange {
+    background: var(--accent-orange-light);
+    color: var(--accent-orange);
+}
+
+.badge-cyan {
+    background: var(--accent-cyan-light);
+    color: var(--accent-cyan);
+}
+
+.badge-pink {
+    background: var(--accent-pink-light);
+    color: var(--accent-pink);
+}
+
+/* Service Info - Shared with Member */
+.service-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.service-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.service-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.text-sm {
+    font-size: 12px;
 }
 
 .voucher-count {

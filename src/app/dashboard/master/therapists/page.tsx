@@ -1,183 +1,177 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { Select, Checkbox, Row, Col } from "antd";
+import { useState, useEffect } from "react";
+import { Select, Rate, Tag, message } from "antd";
+import { 
+    GetTherapistsService, 
+    CreateTherapistService, 
+    UpdateTherapistService, 
+    DeleteTherapistService 
+} from "@afx/services/therapist.service";
+import { 
+    ITherapist, 
+    ICreateTherapistRequest, 
+    IUpdateTherapistRequest,
+    getQueueStatusName 
+} from "@afx/interfaces/therapist.iface";
+import { getGenderName } from "@afx/interfaces/member.iface";
 
-interface Therapist {
-    id: string;
-    name: string;
-    initials: string;
-    phone: string;
-    gender: "female" | "male";
-    joinDate?: string;
-    address?: string;
-    skills: ("massage" | "therapy" | "bodycare" | "facial")[];
-    rating: number;
-    ratingCount: number;
-    sessionsMonth: number;
-    commissionMonth: number;
-    status: "available" | "busy" | "off" | "leave";
-}
-
-const dummyTherapists: Therapist[] = [
-    {
-        id: "T001",
-        name: "Dewi Wulandari",
-        initials: "DW",
-        phone: "0812-3456-7890",
-        gender: "female",
-        skills: ["massage", "therapy", "bodycare"],
-        rating: 4.9,
-        ratingCount: 156,
-        sessionsMonth: 52,
-        commissionMonth: 2340000,
-        status: "available",
-    },
-    {
-        id: "T002",
-        name: "Sri Astuti",
-        initials: "SA",
-        phone: "0813-5554-3322",
-        gender: "female",
-        skills: ["massage", "facial"],
-        rating: 4.7,
-        ratingCount: 98,
-        sessionsMonth: 45,
-        commissionMonth: 1890000,
-        status: "busy",
-    },
-    {
-        id: "T003",
-        name: "Budi Prasetyo",
-        initials: "BP",
-        phone: "0815-7778-8899",
-        gender: "male",
-        skills: ["massage", "therapy"],
-        rating: 4.8,
-        ratingCount: 124,
-        sessionsMonth: 48,
-        commissionMonth: 2160000,
-        status: "available",
-    },
-    {
-        id: "T004",
-        name: "Nia Rahmawati",
-        initials: "NR",
-        phone: "0817-2223-4455",
-        gender: "female",
-        skills: ["facial", "bodycare"],
-        rating: 4.9,
-        ratingCount: 87,
-        sessionsMonth: 38,
-        commissionMonth: 1520000,
-        status: "available",
-    },
-    {
-        id: "T005",
-        name: "Yuni Susanti",
-        initials: "YS",
-        phone: "0818-6667-7788",
-        gender: "female",
-        skills: ["massage", "therapy", "bodycare", "facial"],
-        rating: 4.6,
-        ratingCount: 203,
-        sessionsMonth: 56,
-        commissionMonth: 2520000,
-        status: "busy",
-    },
-    {
-        id: "T006",
-        name: "Andi Hermawan",
-        initials: "AH",
-        phone: "0819-3334-5566",
-        gender: "male",
-        skills: ["massage", "therapy"],
-        rating: 4.8,
-        ratingCount: 145,
-        sessionsMonth: 43,
-        commissionMonth: 1935000,
-        status: "available",
-    },
-    {
-        id: "T007",
-        name: "Rina Nurhasanah",
-        initials: "RN",
-        phone: "0821-4445-6677",
-        gender: "female",
-        skills: ["massage"],
-        rating: 4.2,
-        ratingCount: 34,
-        sessionsMonth: 0,
-        commissionMonth: 0,
-        status: "leave",
-    },
-    {
-        id: "T008",
-        name: "Lina Marlina",
-        initials: "LM",
-        phone: "0822-5556-7788",
-        gender: "female",
-        skills: ["massage", "bodycare"],
-        rating: 4.9,
-        ratingCount: 112,
-        sessionsMonth: 60,
-        commissionMonth: 2700000,
-        status: "off",
-    },
+// Predefined skills based on service categories
+const SKILL_OPTIONS = [
+    { label: "Massage", value: "Massage" },
+    { label: "Therapy", value: "Therapy" },
+    { label: "Body Care", value: "Body Care" },
+    { label: "Facial", value: "Facial" },
+    { label: "Paket", value: "Paket" },
+    { label: "Traditional", value: "Traditional" },
+    { label: "Reflexology", value: "Reflexology" },
+    { label: "Aromatherapy", value: "Aromatherapy" }
 ];
 
 export default function MasterTherapists() {
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [showDetailModal, setShowDetailModal] = useState(false);
-    const [selectedTherapist, setSelectedTherapist] = useState<Therapist | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [therapists, setTherapists] = useState<ITherapist[]>([]);
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+    const [searchText, setSearchText] = useState("");
+    const [genderFilter, setGenderFilter] = useState<string>("");
 
-    const handleOpenDetailModal = (therapist: Therapist) => {
-        setSelectedTherapist(therapist);
-        setShowDetailModal(true);
-    };
+    const [showModal, setShowModal] = useState(false);
+    const [selectedTherapist, setSelectedTherapist] = useState<ITherapist | null>(null);
 
-    const handleOpenEditModal = (therapist: Therapist) => {
-        setSelectedTherapist(therapist);
-        setShowAddModal(true);
-    };
+    // Form state
+    const [formData, setFormData] = useState<Partial<ITherapist & { skills: string[] }>>({});
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
-            minimumFractionDigits: 0,
-        }).format(amount);
-    };
-
-    const getStatusBadgeClass = (status: string) => {
-        switch (status) {
-            case "available":
-                return "status-badge available";
-            case "busy":
-                return "status-badge busy";
-            case "off":
-                return "status-badge off";
-            case "leave":
-                return "status-badge leave";
-            default:
-                return "status-badge";
+    const fetchData = async (page = 1, pageSize = 10, search?: string, gender?: string) => {
+        setLoading(true);
+        try {
+            const params: any = { page, pageSize };
+            if (search) params.search = search;
+            if (gender) params.gender = gender;
+            
+            const res = await GetTherapistsService(params);
+            if (res.success) {
+                setTherapists(res.data);
+                setPagination({
+                    current: res.pagination?.currentPage || 1,
+                    pageSize: res.pagination?.pageSize || 10,
+                    total: res.pagination?.total || 0
+                });
+            }
+        } catch (err) {
+            console.error("Failed to fetch therapists", err);
+            message.error("Gagal memuat data therapist");
+        } finally {
+            setLoading(false);
         }
     };
 
-    const getStatusLabel = (status: string) => {
-        switch (status) {
-            case "available":
-                return "Tersedia";
-            case "busy":
-                return "Sibuk";
-            case "off":
-                return "Istirahat";
-            case "leave":
-                return "Cuti";
-            default:
-                return status;
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const handleSearch = () => {
+        fetchData(1, pagination.pageSize, searchText, genderFilter);
+    };
+
+    const handleOpenCreateModal = () => {
+        setSelectedTherapist(null);
+        setFormData({
+            name: "",
+            phone: "",
+            address: "",
+            gender: undefined,
+            skills: []
+        });
+        setShowModal(true);
+    };
+
+    const handleOpenEditModal = (therapist: ITherapist) => {
+        setSelectedTherapist(therapist);
+        setFormData({ 
+            ...therapist,
+            skills: therapist.skills || []
+        });
+        setShowModal(true);
+    };
+
+    const handleSave = async () => {
+        if (!formData.name) {
+            message.error("Nama therapist harus diisi!");
+            return;
+        }
+
+        try {
+            if (selectedTherapist) {
+                // Update
+                const payload: IUpdateTherapistRequest = {
+                    name: formData.name,
+                    phone: formData.phone || undefined,
+                    address: formData.address || undefined,
+                    gender: typeof formData.gender === 'number' ? formData.gender : undefined,
+                    skills: formData.skills || [],
+                    isActive: formData.isActive
+                };
+                const res = await UpdateTherapistService(selectedTherapist.id, payload);
+                if (res.success) {
+                    message.success("Therapist berhasil diupdate");
+                    setShowModal(false);
+                    fetchData(pagination.current, pagination.pageSize, searchText, genderFilter);
+                } else {
+                    message.error(res.message || "Gagal mengupdate therapist");
+                }
+            } else {
+                // Create
+                const payload: ICreateTherapistRequest = {
+                    name: formData.name!,
+                    phone: formData.phone || undefined,
+                    address: formData.address || undefined,
+                    gender: typeof formData.gender === 'number' ? formData.gender : undefined,
+                    skills: formData.skills || []
+                };
+                const res = await CreateTherapistService(payload);
+                if (res.success) {
+                    message.success("Therapist berhasil ditambahkan");
+                    setShowModal(false);
+                    fetchData(1, pagination.pageSize, searchText, genderFilter);
+                } else {
+                    message.error(res.message || "Gagal membuat therapist");
+                }
+            }
+        } catch (err: any) {
+            console.error(err);
+            message.error(err.message || "Terjadi kesalahan saat menyimpan");
+        }
+    };
+
+    const handleDelete = async (id: number) => {
+        if (!confirm("Apakah Anda yakin ingin menghapus therapist ini?")) return;
+
+        try {
+            const res = await DeleteTherapistService(id);
+            if (res.success) {
+                message.success("Therapist berhasil dihapus");
+                fetchData(pagination.current, pagination.pageSize, searchText, genderFilter);
+            } else {
+                message.error(res.message || "Gagal menghapus therapist");
+            }
+        } catch (err: any) {
+            console.error(err);
+            message.error(err.message || "Terjadi kesalahan saat menghapus");
+        }
+    };
+
+    const handlePageChange = (page: number) => {
+        fetchData(page, pagination.pageSize, searchText, genderFilter);
+    };
+
+    const getQueueStatusBadgeClass = (status: any): string => {
+        const statusName = getQueueStatusName(status).toLowerCase();
+        switch (statusName) {
+            case 'available': return 'badge-green';
+            case 'busy': return 'badge-yellow';
+            case 'break': return 'badge-orange';
+            case 'offline': return 'badge-gray';
+            default: return 'badge-gray';
         }
     };
 
@@ -186,44 +180,12 @@ export default function MasterTherapists() {
             <div className="page-header">
                 <div>
                     <h1 className="page-title">Master Therapist</h1>
-                    <p className="page-subtitle">Kelola data therapist dan keahlian mereka</p>
+                    <p className="page-subtitle">Kelola data therapist / terapis spa</p>
                 </div>
-                <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+                <button className="btn btn-primary" onClick={handleOpenCreateModal}>
                     <i className="fa-solid fa-plus"></i>
                     Tambah Therapist
                 </button>
-            </div>
-
-            {/* Stats */}
-            <div className="stats-row">
-                <div className="stat-card">
-                    <div className="stat-icon green">
-                        <i className="fa-solid fa-user-nurse"></i>
-                    </div>
-                    <div className="stat-value">8</div>
-                    <div className="stat-label">Total Therapist</div>
-                </div>
-                <div className="stat-card">
-                    <div className="stat-icon blue">
-                        <i className="fa-solid fa-circle-check"></i>
-                    </div>
-                    <div className="stat-value">5</div>
-                    <div className="stat-label">Tersedia Sekarang</div>
-                </div>
-                <div className="stat-card">
-                    <div className="stat-icon purple">
-                        <i className="fa-solid fa-star"></i>
-                    </div>
-                    <div className="stat-value">4.8</div>
-                    <div className="stat-label">Rata-rata Rating</div>
-                </div>
-                <div className="stat-card">
-                    <div className="stat-icon orange">
-                        <i className="fa-solid fa-calendar-check"></i>
-                    </div>
-                    <div className="stat-value">342</div>
-                    <div className="stat-label">Sesi Bulan Ini</div>
-                </div>
             </div>
 
             {/* Table */}
@@ -233,238 +195,264 @@ export default function MasterTherapists() {
                     <div className="filters">
                         <div className="search-box">
                             <i className="fa-solid fa-magnifying-glass"></i>
-                            <input type="text" placeholder="Cari therapist..." />
+                            <input 
+                                type="text" 
+                                placeholder="Cari nama, telepon, kode..." 
+                                value={searchText}
+                                onChange={(e) => setSearchText(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                            />
                         </div>
                         <Select
-                            placeholder="Semua Keahlian"
-                            style={{ width: 150, height: 40 }}
+                            style={{ width: 140 }}
+                            placeholder="Gender"
                             allowClear
+                            value={genderFilter || undefined}
+                            onChange={(value) => {
+                                setGenderFilter(value || "");
+                                fetchData(1, pagination.pageSize, searchText, value || "");
+                            }}
                             options={[
-                                { value: "massage", label: "Massage" },
-                                { value: "therapy", label: "Therapy" },
-                                { value: "bodycare", label: "Body Care" },
-                                { value: "facial", label: "Facial" }
+                                { label: "Semua Gender", value: "" },
+                                { label: "Laki-laki", value: "Male" },
+                                { label: "Perempuan", value: "Female" }
                             ]}
                         />
-                        <Select
-                            placeholder="Semua Status"
-                            style={{ width: 150, height: 40 }}
-                            allowClear
-                            options={[
-                                { value: "available", label: "Tersedia" },
-                                { value: "busy", label: "Sibuk" },
-                                { value: "off", label: "Istirahat" },
-                                { value: "leave", label: "Cuti" }
-                            ]}
-                        />
+                        <button className="btn btn-secondary" onClick={handleSearch}>
+                            Cari
+                        </button>
                     </div>
                 </div>
                 <div className="card-body">
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                <th>Therapist</th>
-                                <th>Keahlian</th>
-                                <th>Rating</th>
-                                <th>Sesi</th>
-                                <th>Komisi Bulan Ini</th>
-                                <th>Status</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {dummyTherapists.map((therapist) => (
-                                <tr key={therapist.id}>
-                                    <td>
-                                        <div className="therapist-info">
-                                            <div
-                                                className={`therapist-avatar ${therapist.gender}`}
-                                                style={{ opacity: therapist.status === "leave" ? 0.6 : 1 }}
-                                            >
-                                                {therapist.initials}
-                                            </div>
-                                            <div>
-                                                <div
-                                                    className="therapist-name"
-                                                    style={{ color: therapist.status === "leave" ? "var(--text-muted)" : "var(--text-primary)" }}
-                                                >
-                                                    {therapist.name}
-                                                </div>
-                                                <div className="therapist-phone">
-                                                    <i className="fa-solid fa-phone"></i>
-                                                    {therapist.phone}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div className="skill-tags">
-                                            {therapist.skills.map((skill) => (
-                                                <span
-                                                    key={skill}
-                                                    className={`skill-tag ${skill}`}
-                                                    style={{ opacity: therapist.status === "leave" ? 0.6 : 1 }}
-                                                >
-                                                    {skill === "massage"
-                                                        ? "Massage"
-                                                        : skill === "therapy"
-                                                            ? "Therapy"
-                                                            : skill === "bodycare"
-                                                                ? "Body Care"
-                                                                : "Facial"}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div className="rating-display">
-                                            <div className="rating-stars" style={{ opacity: therapist.status === "leave" ? 0.5 : 1 }}>
-                                                {[...Array(5)].map((_, i) => (
-                                                    <i
-                                                        key={i}
-                                                        className={`fa-solid fa-star${i >= Math.floor(therapist.rating) ? "-half-stroke" : ""}`}
-                                                        style={{
-                                                            color: i >= Math.ceil(therapist.rating) ? "var(--text-muted)" : "",
-                                                            display: i >= Math.ceil(therapist.rating) ? "none" : "inline-block", // Simplified star logic for dummy
-                                                        }}
-                                                    ></i>
-                                                ))}
-                                                {/* Fallback specific icons logic is complex without full component, using simple text for now if stars are complex */}
-                                            </div>
-                                            <span className="rating-value" style={{ opacity: therapist.status === "leave" ? 0.6 : 1 }}>
-                                                {therapist.rating}
-                                            </span>
-                                            <span className="rating-count">({therapist.ratingCount})</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div className="session-info">
-                                            <div
-                                                className="session-total"
-                                                style={{ color: therapist.status === "leave" ? "var(--text-muted)" : "var(--text-primary)" }}
-                                            >
-                                                {therapist.sessionsMonth}
-                                            </div>
-                                            <div className="session-month">bulan ini</div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div className="commission-info">
-                                            <div
-                                                className="commission-total"
-                                                style={{ color: therapist.status === "leave" ? "var(--text-muted)" : "var(--spa-green)" }}
-                                                suppressHydrationWarning
-                                            >
-                                                {formatCurrency(therapist.commissionMonth)}
-                                            </div>
-                                            <div className="commission-month">bulan ini</div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span className={getStatusBadgeClass(therapist.status)}>
-                                            <span
-                                                className="status-dot"
-                                                style={{ animation: therapist.status === "available" || therapist.status === "busy" ? "pulse 2s infinite" : "none" }}
-                                            ></span>
-                                            {getStatusLabel(therapist.status)}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div className="action-buttons">
-                                            <button
-                                                className="btn-action"
-                                                title="Detail"
-                                                onClick={() => handleOpenDetailModal(therapist)}
-                                            >
-                                                <i className="fa-solid fa-eye"></i>
-                                            </button>
-                                            <button
-                                                className="btn-action"
-                                                title="Edit"
-                                                onClick={() => handleOpenEditModal(therapist)}
-                                            >
-                                                <i className="fa-solid fa-pen"></i>
-                                            </button>
-                                            <button className="btn-action delete" title="Hapus">
-                                                <i className="fa-solid fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </td>
+                    {loading ? (
+                        <div style={{ textAlign: "center", padding: "40px" }}>
+                            <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: 24 }}></i>
+                            <p style={{ marginTop: 8 }}>Loading...</p>
+                        </div>
+                    ) : (
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th style={{ width: '90px' }}>Kode</th>
+                                    <th>Nama</th>
+                                    <th>No. HP</th>
+                                    <th>Gender</th>
+                                    <th>Skills</th>
+                                    <th style={{ width: '120px' }}>Rating</th>
+                                    <th style={{ width: '80px' }}>Sessions</th>
+                                    <th style={{ width: '100px' }}>Status</th>
+                                    <th style={{ width: '100px' }}>Aksi</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {therapists.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={9} style={{ textAlign: "center", padding: "40px" }}>
+                                            <i className="fa-solid fa-user-nurse" style={{ fontSize: 40, color: "#ccc", marginBottom: 12 }}></i>
+                                            <p>Tidak ada data therapist</p>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    therapists.map((therapist) => (
+                                        <tr key={therapist.id}>
+                                            <td>
+                                                <code className="text-sm" style={{ color: '#d97706' }}>{therapist.code}</code>
+                                            </td>
+                                            <td>
+                                                <div className="service-info">
+                                                    <div
+                                                        className="service-icon"
+                                                        style={{
+                                                            backgroundColor: "#fef3c7",
+                                                            color: "#d97706",
+                                                        }}
+                                                    >
+                                                        <i className="fa-solid fa-user-nurse"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div className="service-name">{therapist.name}</div>
+                                                        <div style={{ fontSize: 11, color: '#888' }}>
+                                                            Bergabung: {therapist.joinDate}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>{therapist.phone || "-"}</td>
+                                            <td>{getGenderName(therapist.gender)}</td>
+                                            <td>
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                                    {therapist.skills && therapist.skills.length > 0 ? (
+                                                        therapist.skills.slice(0, 3).map((skill, idx) => (
+                                                            <Tag key={idx} color="blue" style={{ margin: 0, fontSize: 11 }}>
+                                                                {skill}
+                                                            </Tag>
+                                                        ))
+                                                    ) : (
+                                                        <span style={{ color: '#999' }}>-</span>
+                                                    )}
+                                                    {therapist.skills && therapist.skills.length > 3 && (
+                                                        <Tag color="default" style={{ margin: 0, fontSize: 11 }}>
+                                                            +{therapist.skills.length - 3}
+                                                        </Tag>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                    <Rate 
+                                                        disabled 
+                                                        defaultValue={therapist.rating} 
+                                                        allowHalf 
+                                                        style={{ fontSize: 12 }}
+                                                    />
+                                                    <span style={{ fontSize: 12, color: '#666' }}>
+                                                        ({therapist.reviewCount})
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td style={{ textAlign: 'center' }}>
+                                                <span style={{ fontWeight: 600 }}>{therapist.totalSessions}</span>
+                                            </td>
+                                            <td>
+                                                <span className={`badge ${therapist.isActive ? getQueueStatusBadgeClass(therapist.queueStatus) : 'badge-red'}`}>
+                                                    {therapist.isActive ? getQueueStatusName(therapist.queueStatus) : 'Inactive'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div className="action-buttons">
+                                                    <button
+                                                        className="btn-action"
+                                                        title="Edit"
+                                                        onClick={() => handleOpenEditModal(therapist)}
+                                                    >
+                                                        <i className="fa-solid fa-pen"></i>
+                                                    </button>
+                                                    <button
+                                                        className="btn-action delete"
+                                                        title="Hapus"
+                                                        onClick={() => handleDelete(therapist.id)}
+                                                    >
+                                                        <i className="fa-solid fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
                 <div className="table-footer">
-                    <div className="table-info">Menampilkan 1-8 dari 8 therapist</div>
-                    <div className="pagination">
-                        <button className="page-btn">
-                            <i className="fa-solid fa-chevron-left"></i>
-                        </button>
-                        <button className="page-btn active">1</button>
-                        <button className="page-btn">
-                            <i className="fa-solid fa-chevron-right"></i>
-                        </button>
+                    <div className="table-info">
+                        Menampilkan {therapists.length > 0 ? ((pagination.current - 1) * pagination.pageSize) + 1 : 0}-
+                        {Math.min(pagination.current * pagination.pageSize, pagination.total)} dari {pagination.total} therapist
                     </div>
+                    {pagination.total > pagination.pageSize && (
+                        <div className="pagination">
+                            <button 
+                                className="btn btn-sm"
+                                disabled={pagination.current === 1}
+                                onClick={() => handlePageChange(pagination.current - 1)}
+                            >
+                                Prev
+                            </button>
+                            <span style={{ padding: '0 12px' }}>
+                                Page {pagination.current} of {Math.ceil(pagination.total / pagination.pageSize)}
+                            </span>
+                            <button 
+                                className="btn btn-sm"
+                                disabled={pagination.current >= Math.ceil(pagination.total / pagination.pageSize)}
+                                onClick={() => handlePageChange(pagination.current + 1)}
+                            >
+                                Next
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* Add/Edit Therapist Modal */}
-            <div className={`modal-overlay ${showAddModal ? "show" : ""}`}>
-                <div className="modal">
+            <div className={`modal-overlay ${showModal ? "show" : ""}`}>
+                <div className="modal" style={{ maxWidth: 600 }}>
                     <div className="modal-header">
                         <h3 className="modal-title">
                             {selectedTherapist ? "Edit Therapist" : "Tambah Therapist Baru"}
                         </h3>
-                        <button className="modal-close" onClick={() => setShowAddModal(false)}>
+                        <button className="modal-close" onClick={() => setShowModal(false)}>
                             &times;
                         </button>
                     </div>
                     <div className="modal-body">
                         <div className="form-row">
-                            <div className="form-group">
+                            <div className="form-group" style={{ flex: 1 }}>
                                 <label className="form-label">
-                                    Nama Lengkap <span className="required">*</span>
+                                    Nama Therapist <span className="required">*</span>
                                 </label>
                                 <input
                                     type="text"
                                     className="form-input"
-                                    placeholder="Nama lengkap therapist"
-                                    defaultValue={selectedTherapist?.name}
+                                    placeholder="Nama lengkap"
+                                    value={formData.name || ""}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 />
                             </div>
-                            <div className="form-group">
-                                <label className="form-label">
-                                    Jenis Kelamin <span className="required">*</span>
-                                </label>
-                                <Select
-                                    style={{ width: '100%', height: '40px' }}
-                                    placeholder="-- Pilih --"
-                                    defaultValue={selectedTherapist?.gender}
-                                    options={[
-                                        { value: "female", label: "Perempuan" },
-                                        { value: "male", label: "Laki-laki" }
-                                    ]}
+                            <div className="form-group" style={{ flex: 1 }}>
+                                <label className="form-label">No. HP</label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="08xxxxxxxxxx"
+                                    value={formData.phone || ""}
+                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                 />
                             </div>
                         </div>
 
                         <div className="form-row">
-                            <div className="form-group">
-                                <label className="form-label">
-                                    No. Telepon <span className="required">*</span>
-                                </label>
-                                <input
-                                    type="tel"
-                                    className="form-input"
-                                    placeholder="0812-xxxx-xxxx"
-                                    defaultValue={selectedTherapist?.phone}
+                            <div className="form-group" style={{ flex: 1 }}>
+                                <label className="form-label">Gender</label>
+                                <Select
+                                    style={{ width: '100%', height: 40 }}
+                                    placeholder="Pilih gender"
+                                    allowClear
+                                    value={formData.gender}
+                                    onChange={(value) => setFormData({ ...formData, gender: value })}
+                                    options={[
+                                        { label: "Laki-laki", value: 0 },
+                                        { label: "Perempuan", value: 1 }
+                                    ]}
                                 />
                             </div>
-                            <div className="form-group">
-                                <label className="form-label">Tanggal Bergabung</label>
-                                <input type="date" className="form-input" />
-                            </div>
+                            {selectedTherapist && (
+                                <div className="form-group" style={{ flex: 1 }}>
+                                    <label className="form-label">Status</label>
+                                    <Select
+                                        style={{ width: '100%', height: 40 }}
+                                        value={formData.isActive}
+                                        onChange={(value) => setFormData({ ...formData, isActive: value })}
+                                        options={[
+                                            { label: "Aktif", value: true },
+                                            { label: "Nonaktif", value: false }
+                                        ]}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Skills / Keahlian</label>
+                            <Select
+                                mode="multiple"
+                                style={{ width: '100%' }}
+                                placeholder="Pilih keahlian"
+                                value={formData.skills || []}
+                                onChange={(value) => setFormData({ ...formData, skills: value })}
+                                options={SKILL_OPTIONS}
+                            />
+                            <small style={{ color: '#888', marginTop: 4, display: 'block' }}>
+                                Pilih satu atau lebih keahlian yang dimiliki therapist
+                            </small>
                         </div>
 
                         <div className="form-group">
@@ -472,181 +460,69 @@ export default function MasterTherapists() {
                             <textarea
                                 className="form-textarea"
                                 rows={2}
-                                placeholder="Alamat lengkap..."
-                                defaultValue={selectedTherapist?.address}
+                                placeholder="Alamat lengkap"
+                                value={formData.address || ""}
+                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                             ></textarea>
                         </div>
 
-                        <div className="form-group">
-                            <label className="form-label">
-                                Keahlian <span className="required">*</span>
-                            </label>
-                            <div style={{ marginTop: 8 }}>
-                                <Row gutter={[16, 16]}>
-                                    <Col span={12}>
-                                        <Checkbox
-                                            defaultChecked={selectedTherapist?.skills.includes('massage')}
-                                            style={{ width: '100%' }}
-                                        >
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                                <i className="fa-solid fa-hands" style={{ color: '#8b5cf6' }}></i>
-                                                Massage
-                                            </span>
-                                        </Checkbox>
-                                    </Col>
-                                    <Col span={12}>
-                                        <Checkbox
-                                            defaultChecked={selectedTherapist?.skills.includes('therapy')}
-                                            style={{ width: '100%' }}
-                                        >
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                                <i className="fa-solid fa-heart-pulse" style={{ color: '#ec4899' }}></i>
-                                                Therapy
-                                            </span>
-                                        </Checkbox>
-                                    </Col>
-                                    <Col span={12}>
-                                        <Checkbox
-                                            defaultChecked={selectedTherapist?.skills.includes('bodycare')}
-                                            style={{ width: '100%' }}
-                                        >
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                                <i className="fa-solid fa-pump-soap" style={{ color: '#10b981' }}></i>
-                                                Body Care
-                                            </span>
-                                        </Checkbox>
-                                    </Col>
-                                    <Col span={12}>
-                                        <Checkbox
-                                            defaultChecked={selectedTherapist?.skills.includes('facial')}
-                                            style={{ width: '100%' }}
-                                        >
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                                <i className="fa-solid fa-face-smile" style={{ color: '#f59e0b' }}></i>
-                                                Facial
-                                            </span>
-                                        </Checkbox>
-                                    </Col>
-                                </Row>
+                        {selectedTherapist && (
+                            <div className="form-row" style={{ marginTop: 16 }}>
+                                <div style={{ 
+                                    flex: 1, 
+                                    padding: 16, 
+                                    backgroundColor: '#f9fafb', 
+                                    borderRadius: 8,
+                                    textAlign: 'center'
+                                }}>
+                                    <div style={{ fontSize: 12, color: '#666' }}>Total Sessions</div>
+                                    <div style={{ fontSize: 24, fontWeight: 700, color: '#059669' }}>
+                                        {selectedTherapist.totalSessions}
+                                    </div>
+                                </div>
+                                <div style={{ 
+                                    flex: 1, 
+                                    padding: 16, 
+                                    backgroundColor: '#f9fafb', 
+                                    borderRadius: 8,
+                                    textAlign: 'center'
+                                }}>
+                                    <div style={{ fontSize: 12, color: '#666' }}>Rating</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                                        <span style={{ fontSize: 24, fontWeight: 700, color: '#d97706' }}>
+                                            {selectedTherapist.rating.toFixed(1)}
+                                        </span>
+                                        <Rate 
+                                            disabled 
+                                            value={selectedTherapist.rating} 
+                                            allowHalf 
+                                            style={{ fontSize: 16 }}
+                                        />
+                                    </div>
+                                    <div style={{ fontSize: 11, color: '#888' }}>
+                                        {selectedTherapist.reviewCount} reviews
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Status</label>
-                            <Select
-                                style={{ width: '100%', height: '40px' }}
-                                defaultValue={selectedTherapist?.status || "available"}
-                                options={[
-                                    { value: "available", label: "Tersedia" },
-                                    { value: "off", label: "Istirahat" },
-                                    { value: "leave", label: "Cuti" }
-                                ]}
-                            />
-                        </div>
+                        )}
                     </div>
                     <div className="modal-footer">
                         <button
                             className="btn btn-secondary"
                             onClick={() => {
-                                setShowAddModal(false);
+                                setShowModal(false);
                                 setSelectedTherapist(null);
                             }}
                         >
                             Batal
                         </button>
-                        <button className="btn btn-primary">
+                        <button className="btn btn-primary" onClick={handleSave}>
                             <i className="fa-solid fa-check"></i>
-                            Simpan Therapist
+                            {selectedTherapist ? "Update Therapist" : "Simpan Therapist"}
                         </button>
                     </div>
                 </div>
             </div>
-
-            {/* Detail Modal */}
-            {selectedTherapist && (
-                <div className={`modal-overlay ${showDetailModal ? "show" : ""}`}>
-                    <div className="modal">
-                        <div className="modal-header">
-                            <h3 className="modal-title">Detail Therapist</h3>
-                            <button className="modal-close" onClick={() => setShowDetailModal(false)}>
-                                &times;
-                            </button>
-                        </div>
-                        <div className="modal-body">
-                            <div className="detail-header">
-                                <div className={`detail-avatar ${selectedTherapist.gender}`}>
-                                    {selectedTherapist.initials}
-                                </div>
-                                <div className="detail-info">
-                                    <h3>{selectedTherapist.name}</h3>
-                                    <p>
-                                        <i className="fa-solid fa-phone"></i> {selectedTherapist.phone}
-                                    </p>
-                                    <p>
-                                        <i className="fa-solid fa-star" style={{ color: "var(--accent-yellow)" }}></i> {selectedTherapist.rating} ({selectedTherapist.ratingCount} reviews)
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="detail-stats">
-                                <div className="detail-stat">
-                                    <div className="detail-stat-value">{selectedTherapist.sessionsMonth}</div>
-                                    <div className="detail-stat-label">Sesi Bulan Ini</div>
-                                </div>
-                                <div className="detail-stat">
-                                    <div className="detail-stat-value" style={{ color: "var(--spa-green)" }} suppressHydrationWarning>
-                                        {formatCurrency(selectedTherapist.commissionMonth)}
-                                    </div>
-                                    <div className="detail-stat-label">Komisi Bulan Ini</div>
-                                </div>
-                            </div>
-
-                            <div className="form-group">
-                                <label className="form-label" style={{ marginBottom: '12px' }}>Keahlian</label>
-                                <div className="skill-tags" style={{ justifyContent: 'center' }}>
-                                    {selectedTherapist.skills.map((skill) => (
-                                        <span
-                                            key={skill}
-                                            className={`skill-tag ${skill}`}
-                                            style={{ fontSize: '13px', padding: '6px 12px' }}
-                                        >
-                                            {skill === "massage"
-                                                ? "Massage"
-                                                : skill === "therapy"
-                                                    ? "Therapy"
-                                                    : skill === "bodycare"
-                                                        ? "Body Care"
-                                                        : "Facial"}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-
-                        </div>
-                        <div className="modal-footer">
-                            <button
-                                className="btn btn-secondary"
-                                onClick={() => {
-                                    setShowDetailModal(false);
-                                    setSelectedTherapist(null);
-                                }}
-                            >
-                                Tutup
-                            </button>
-                            <button
-                                className="btn btn-primary"
-                                onClick={() => {
-                                    setShowDetailModal(false);
-                                    setShowAddModal(true);
-                                }}
-                            >
-                                <i className="fa-solid fa-pen"></i>
-                                Edit Therapist
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     );
 }
