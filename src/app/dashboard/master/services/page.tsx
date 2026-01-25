@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Select } from "antd"; // Import Ant Design Select
-import { IService, ICreateServiceRequest, IUpdateServiceRequest } from "../../../../interfaces/service.iface";
-import { ServiceGetAllService, ServiceCreateService, ServiceUpdateService, ServiceDeleteService } from "../../../../services/service.service";
-import { ServiceCategoryGetActiveService } from "../../../../services/service-category.service";
-import { IServiceCategory } from "../../../../interfaces/service-category.iface";
+import { Select } from "antd";
+import { IService, ICreateServiceRequest, IUpdateServiceRequest } from "@afx/interfaces/service.iface";
+import { ServiceGetAllService, ServiceCreateService, ServiceUpdateService, ServiceDeleteService } from "@afx/services/service.service";
+import { ServiceCategoryGetActiveService } from "@afx/services/service-category.service";
+import { IServiceCategory } from "@afx/interfaces/service-category.iface";
 
 export default function MasterServices() {
     const [services, setServices] = useState<IService[]>([]);
@@ -17,12 +16,15 @@ export default function MasterServices() {
         pageSize: 10,
         total: 0
     });
+    const [searchText, setSearchText] = useState("");
+    const [filterCategory, setFilterCategory] = useState<number | undefined>(undefined);
+    const [filterStatus, setFilterStatus] = useState<string | undefined>(undefined);
 
     const [showAddModal, setShowAddModal] = useState(false);
     const [selectedService, setSelectedService] = useState<IService | null>(null);
     const [formData, setFormData] = useState<Partial<ICreateServiceRequest & { isActive: boolean }>>({
         name: "",
-        categoryId: "",
+        categoryId: undefined,
         duration: 60,
         price: 0,
         description: "",
@@ -30,10 +32,14 @@ export default function MasterServices() {
     });
 
     // Fetch Data
-    const fetchData = async (page = 1) => {
+    const fetchData = async (page = 1, search?: string, categoryId?: number) => {
         setLoading(true);
         try {
-            const res = await ServiceGetAllService({ page, pageSize: pagination.pageSize });
+            const params: any = { page, pageSize: pagination.pageSize };
+            if (search) params.search = search;
+            if (categoryId) params.categoryId = categoryId;
+            
+            const res = await ServiceGetAllService(params);
             if (res.success) {
                 setServices(res.data);
                 setPagination({
@@ -65,12 +71,21 @@ export default function MasterServices() {
         fetchCategories();
     }, []);
 
+    const handleSearch = () => {
+        fetchData(1, searchText, filterCategory);
+    };
+
+    const handleCategoryFilter = (value: number | undefined) => {
+        setFilterCategory(value);
+        fetchData(1, searchText, value);
+    };
+
     // Handlers
     const handleOpenCreateModal = () => {
         setSelectedService(null);
         setFormData({
             name: "",
-            categoryId: "",
+            categoryId: undefined,
             duration: 60,
             price: 0,
             description: "",
@@ -112,7 +127,7 @@ export default function MasterServices() {
                 const res = await ServiceUpdateService(selectedService.id, payload);
                 if (res.success) {
                     setShowAddModal(false);
-                    fetchData(pagination.current);
+                    fetchData(pagination.current, searchText, filterCategory);
                 } else {
                     alert(res.message || "Gagal mengupdate layanan");
                 }
@@ -128,7 +143,7 @@ export default function MasterServices() {
                 const res = await ServiceCreateService(payload);
                 if (res.success) {
                     setShowAddModal(false);
-                    fetchData(1); // Reset to page 1
+                    fetchData(1, searchText, filterCategory);
                 } else {
                     alert(res.message || "Gagal membuat layanan");
                 }
@@ -139,13 +154,13 @@ export default function MasterServices() {
         }
     };
 
-    const handleDelete = async (id: string, name: string) => {
+    const handleDelete = async (id: number, name: string) => {
         if (!confirm(`Apakah Anda yakin ingin menghapus layanan "${name}"?`)) return;
 
         try {
             const res = await ServiceDeleteService(id);
             if (res.success) {
-                fetchData(pagination.current);
+                fetchData(pagination.current, searchText, filterCategory);
             } else {
                 alert(res.message || "Gagal menghapus layanan");
             }
@@ -165,7 +180,7 @@ export default function MasterServices() {
     };
 
     // Using category color/icon if available, else fallback
-    const getCategoryDetails = (id: string) => {
+    const getCategoryDetails = (id: number) => {
         return categories.find(c => c.id === id) || { name: 'Unknown', color: '#ccc', icon: 'fa-solid fa-spa' };
     };
 
@@ -188,7 +203,7 @@ export default function MasterServices() {
                 </button>
             </div>
 
-            {/* Stats - Static for now, can be made dynamic later */}
+            {/* Stats */}
             <div className="stats-row">
                 <div className="stat-card">
                     <div className="stat-icon green">
@@ -197,7 +212,13 @@ export default function MasterServices() {
                     <div className="stat-value">{pagination.total}</div>
                     <div className="stat-label">Total Layanan</div>
                 </div>
-                {/* Other stats can be calculated or fetched separately */}
+                <div className="stat-card">
+                    <div className="stat-icon blue">
+                        <i className="fa-solid fa-folder"></i>
+                    </div>
+                    <div className="stat-value">{categories.length}</div>
+                    <div className="stat-label">Kategori</div>
+                </div>
             </div>
 
             {/* Table */}
@@ -207,47 +228,50 @@ export default function MasterServices() {
                     <div className="filters">
                         <div className="search-box">
                             <i className="fa-solid fa-magnifying-glass"></i>
-                            <input type="text" placeholder="Cari layanan..." />
+                            <input 
+                                type="text" 
+                                placeholder="Cari layanan..." 
+                                value={searchText}
+                                onChange={(e) => setSearchText(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                            />
                         </div>
                         <Select
                             placeholder="Semua Kategori"
                             style={{ width: 180, height: 40 }}
                             allowClear
+                            value={filterCategory}
+                            onChange={handleCategoryFilter}
                             options={categoryOptions}
                         />
-                        <Select
-                            placeholder="Semua Status"
-                            style={{ width: 150, height: 40 }}
-                            allowClear
-                            options={[
-                                { label: "Aktif", value: "active" },
-                                { label: "Nonaktif", value: "inactive" }
-                            ]}
-                        />
+                        <button className="btn btn-secondary" onClick={handleSearch}>
+                            Cari
+                        </button>
                     </div>
                 </div>
                 <div className="card-body">
                     <table className="data-table">
                         <thead>
                             <tr>
+                                <th style={{ width: '60px' }}>ID</th>
                                 <th>Layanan</th>
                                 <th>Kategori</th>
                                 <th>Durasi</th>
                                 <th>Harga</th>
                                 <th>Status</th>
-                                <th>Aksi</th>
+                                <th style={{ width: '100px' }}>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} style={{ textAlign: "center", padding: "20px" }}>
+                                    <td colSpan={7} style={{ textAlign: "center", padding: "20px" }}>
                                         Loading...
                                     </td>
                                 </tr>
                             ) : services.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} style={{ textAlign: "center", padding: "20px" }}>
+                                    <td colSpan={7} style={{ textAlign: "center", padding: "20px" }}>
                                         Tidak ada data layanan
                                     </td>
                                 </tr>
@@ -256,6 +280,7 @@ export default function MasterServices() {
                                     const cat = getCategoryDetails(service.categoryId);
                                     return (
                                         <tr key={service.id}>
+                                            <td>{service.id}</td>
                                             <td>
                                                 <div className="service-info">
                                                     <div
@@ -324,26 +349,30 @@ export default function MasterServices() {
                 </div>
                 <div className="table-footer">
                     <div className="table-info">
-                        Menampilkan {(pagination.current - 1) * pagination.pageSize + 1}-
+                        Menampilkan {services.length > 0 ? (pagination.current - 1) * pagination.pageSize + 1 : 0}-
                         {Math.min(pagination.current * pagination.pageSize, pagination.total)} dari {pagination.total} layanan
                     </div>
-                    <div className="pagination">
-                        <button
-                            className="page-btn"
-                            disabled={pagination.current === 1}
-                            onClick={() => fetchData(pagination.current - 1)}
-                        >
-                            <i className="fa-solid fa-chevron-left"></i>
-                        </button>
-                        <button className="page-btn active">{pagination.current}</button>
-                        <button
-                            className="page-btn"
-                            disabled={pagination.current * pagination.pageSize >= pagination.total}
-                            onClick={() => fetchData(pagination.current + 1)}
-                        >
-                            <i className="fa-solid fa-chevron-right"></i>
-                        </button>
-                    </div>
+                    {pagination.total > pagination.pageSize && (
+                        <div className="pagination">
+                            <button
+                                className="page-btn"
+                                disabled={pagination.current === 1}
+                                onClick={() => fetchData(pagination.current - 1, searchText, filterCategory)}
+                            >
+                                <i className="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <span style={{ padding: '0 12px' }}>
+                                Page {pagination.current} of {Math.ceil(pagination.total / pagination.pageSize)}
+                            </span>
+                            <button
+                                className="page-btn"
+                                disabled={pagination.current * pagination.pageSize >= pagination.total}
+                                onClick={() => fetchData(pagination.current + 1, searchText, filterCategory)}
+                            >
+                                <i className="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -382,7 +411,6 @@ export default function MasterServices() {
                                     placeholder="-- Pilih Kategori --"
                                     optionFilterProp="label"
                                     style={{ width: '100%', height: '40px' }}
-                                    className="ant-select-custom" // You might need global css if you want to override ant styles drastically
                                     value={formData.categoryId || null}
                                     onChange={(value) => setFormData({ ...formData, categoryId: value })}
                                     options={categoryOptions}
@@ -432,18 +460,20 @@ export default function MasterServices() {
                             ></textarea>
                         </div>
 
-                        <div className="form-group">
-                            <label className="form-label">Status</label>
-                            <Select
-                                style={{ width: '100%', height: '40px' }}
-                                value={formData.isActive ? "active" : "inactive"}
-                                onChange={(value) => setFormData({ ...formData, isActive: value === "active" })}
-                                options={[
-                                    { label: "Aktif", value: "active" },
-                                    { label: "Nonaktif", value: "inactive" }
-                                ]}
-                            />
-                        </div>
+                        {selectedService && (
+                            <div className="form-group">
+                                <label className="form-label">Status</label>
+                                <Select
+                                    style={{ width: '100%', height: '40px' }}
+                                    value={formData.isActive ? "active" : "inactive"}
+                                    onChange={(value) => setFormData({ ...formData, isActive: value === "active" })}
+                                    options={[
+                                        { label: "Aktif", value: "active" },
+                                        { label: "Nonaktif", value: "inactive" }
+                                    ]}
+                                />
+                            </div>
+                        )}
                     </div>
                     <div className="modal-footer">
                         <button

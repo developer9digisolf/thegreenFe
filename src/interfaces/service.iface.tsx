@@ -1,6 +1,6 @@
 export interface IService {
-    id: string;
-    categoryId: string;
+    id: number;
+    categoryId: number;
     categoryName: string;
     name: string;
     duration: number;
@@ -8,10 +8,12 @@ export interface IService {
     description?: string;
     icon?: string;
     isActive: boolean;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface ICreateServiceRequest {
-    categoryId: string;
+    categoryId: number;
     name: string;
     duration: number;
     price: number;
@@ -20,7 +22,7 @@ export interface ICreateServiceRequest {
 }
 
 export interface IUpdateServiceRequest {
-    categoryId?: string;
+    categoryId?: number;
     name?: string;
     duration?: number;
     price?: number;

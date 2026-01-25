@@ -14,4 +14,5 @@ export const rest = {
     service: "services",
     serviceActive: "services/active",
     serviceDetail: "services/:id",
+    serviceByCategory: "services/category/:categoryId",
 }

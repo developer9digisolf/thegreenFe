@@ -9,6 +9,7 @@ export default function MasterServiceCategories() {
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState<IServiceCategory[]>([]);
     const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+    const [searchText, setSearchText] = useState("");
 
     const [showAddModal, setShowAddModal] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<IServiceCategory | null>(null);
@@ -20,10 +21,13 @@ export default function MasterServiceCategories() {
         isActive: true
     });
 
-    const fetchData = async (page = 1, pageSize = 10) => {
+    const fetchData = async (page = 1, pageSize = 10, search?: string) => {
         setLoading(true);
         try {
-            const res = await ServiceCategoryGetAllService({ page, pageSize });
+            const params: any = { page, pageSize };
+            if (search) params.search = search;
+            
+            const res = await ServiceCategoryGetAllService(params);
             if (res.success) {
                 setCategories(res.data);
                 setPagination({
@@ -42,6 +46,10 @@ export default function MasterServiceCategories() {
     useEffect(() => {
         fetchData();
     }, []);
+
+    const handleSearch = () => {
+        fetchData(1, pagination.pageSize, searchText);
+    };
 
     const handleOpenCreateModal = () => {
         setSelectedCategory(null);
@@ -82,7 +90,7 @@ export default function MasterServiceCategories() {
                 const res = await ServiceCategoryUpdateService(selectedCategory.id, payload);
                 if (res.success) {
                     setShowAddModal(false);
-                    fetchData(pagination.current);
+                    fetchData(pagination.current, pagination.pageSize, searchText);
                 } else {
                     alert(res.message || "Gagal mengupdate kategori");
                 }
@@ -98,7 +106,7 @@ export default function MasterServiceCategories() {
                 const res = await ServiceCategoryCreateService(payload);
                 if (res.success) {
                     setShowAddModal(false);
-                    fetchData(1); // Reset to first page
+                    fetchData(1, pagination.pageSize, searchText);
                 } else {
                     alert(res.message || "Gagal membuat kategori");
                 }
@@ -109,13 +117,13 @@ export default function MasterServiceCategories() {
         }
     };
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = async (id: number) => {
         if (!confirm("Apakah Anda yakin ingin menghapus kategori ini?")) return;
 
         try {
             const res = await ServiceCategoryDeleteService(id);
             if (res.success) {
-                fetchData(pagination.current);
+                fetchData(pagination.current, pagination.pageSize, searchText);
             } else {
                 alert(res.message || "Gagal menghapus kategori");
             }
@@ -123,6 +131,10 @@ export default function MasterServiceCategories() {
             console.error(err);
             alert(err.message || "Terjadi kesalahan saat menghapus");
         }
+    };
+
+    const handlePageChange = (page: number) => {
+        fetchData(page, pagination.pageSize, searchText);
     };
 
     return (
@@ -145,8 +157,17 @@ export default function MasterServiceCategories() {
                     <div className="filters">
                         <div className="search-box">
                             <i className="fa-solid fa-magnifying-glass"></i>
-                            <input type="text" placeholder="Cari kategori..." />
+                            <input 
+                                type="text" 
+                                placeholder="Cari kategori..." 
+                                value={searchText}
+                                onChange={(e) => setSearchText(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                            />
                         </div>
+                        <button className="btn btn-secondary" onClick={handleSearch}>
+                            Cari
+                        </button>
                     </div>
                 </div>
                 <div className="card-body">
@@ -156,23 +177,26 @@ export default function MasterServiceCategories() {
                         <table className="data-table">
                             <thead>
                                 <tr>
+                                    <th style={{ width: '60px' }}>ID</th>
                                     <th>Nama Kategori</th>
                                     <th>Deskripsi</th>
                                     <th>Icon</th>
                                     <th>Warna</th>
-                                    <th>Urutan</th>
-                                    <th>Status</th>
-                                    <th>Aksi</th>
+                                    <th style={{ width: '80px' }}>Urutan</th>
+                                    <th style={{ width: '80px' }}>Services</th>
+                                    <th style={{ width: '80px' }}>Status</th>
+                                    <th style={{ width: '100px' }}>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {categories.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} style={{ textAlign: "center" }}>Tidak ada data</td>
+                                        <td colSpan={9} style={{ textAlign: "center" }}>Tidak ada data</td>
                                     </tr>
                                 ) : (
                                     categories.map((category) => (
                                         <tr key={category.id}>
+                                            <td>{category.id}</td>
                                             <td>
                                                 <div className="service-info">
                                                     <div
@@ -207,10 +231,10 @@ export default function MasterServiceCategories() {
                                                 ) : "-"}
                                             </td>
                                             <td>{category.sortOrder}</td>
+                                            <td>{category.serviceCount || 0}</td>
                                             <td>
                                                 <span
-                                                    className={`badge ${category.isActive ? "badge-green" : "badge-red"
-                                                        }`}
+                                                    className={`badge ${category.isActive ? "badge-green" : "badge-red"}`}
                                                 >
                                                     {category.isActive ? "Aktif" : "Nonaktif"}
                                                 </span>
@@ -245,6 +269,27 @@ export default function MasterServiceCategories() {
                         Menampilkan {categories.length > 0 ? ((pagination.current - 1) * pagination.pageSize) + 1 : 0}-
                         {Math.min(pagination.current * pagination.pageSize, pagination.total)} dari {pagination.total} kategori
                     </div>
+                    {pagination.total > pagination.pageSize && (
+                        <div className="pagination">
+                            <button 
+                                className="btn btn-sm"
+                                disabled={pagination.current === 1}
+                                onClick={() => handlePageChange(pagination.current - 1)}
+                            >
+                                Prev
+                            </button>
+                            <span style={{ padding: '0 12px' }}>
+                                Page {pagination.current} of {Math.ceil(pagination.total / pagination.pageSize)}
+                            </span>
+                            <button 
+                                className="btn btn-sm"
+                                disabled={pagination.current >= Math.ceil(pagination.total / pagination.pageSize)}
+                                onClick={() => handlePageChange(pagination.current + 1)}
+                            >
+                                Next
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -334,18 +379,20 @@ export default function MasterServiceCategories() {
                                     onChange={(e) => setFormData({ ...formData, sortOrder: Number(e.target.value) })}
                                 />
                             </div>
-                            <div className="form-group">
-                                <label className="form-label">Status</label>
-                                <Select
-                                    style={{ width: '100%', height: '40px' }}
-                                    value={formData.isActive ? "active" : "inactive"}
-                                    onChange={(value) => setFormData({ ...formData, isActive: value === "active" })}
-                                    options={[
-                                        { label: "Aktif", value: "active" },
-                                        { label: "Nonaktif", value: "inactive" }
-                                    ]}
-                                />
-                            </div>
+                            {selectedCategory && (
+                                <div className="form-group">
+                                    <label className="form-label">Status</label>
+                                    <Select
+                                        style={{ width: '100%', height: '40px' }}
+                                        value={formData.isActive ? "active" : "inactive"}
+                                        onChange={(value) => setFormData({ ...formData, isActive: value === "active" })}
+                                        options={[
+                                            { label: "Aktif", value: "active" },
+                                            { label: "Nonaktif", value: "inactive" }
+                                        ]}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div className="modal-footer">
