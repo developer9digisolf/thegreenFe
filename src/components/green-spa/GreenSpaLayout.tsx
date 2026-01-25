@@ -183,6 +183,14 @@ export default function GreenSpaLayout({
                                 {!isCollapsed && <span className="nav-item-text">Paket Voucher</span>}
                             </Link>
                             <Link
+                                href="/dashboard/master/credit-packages"
+                                className={`nav-item ${isActive("/dashboard/master/credit-packages")}`}
+                                title="Paket Kredit"
+                            >
+                                <i className="fa-solid fa-coins"></i>
+                                {!isCollapsed && <span className="nav-item-text">Paket Kredit</span>}
+                            </Link>
+                            <Link
                                 href="/dashboard/vouchers"
                                 className={`nav-item ${isActive("/dashboard/vouchers")}`}
                                 title="Voucher Terjual"

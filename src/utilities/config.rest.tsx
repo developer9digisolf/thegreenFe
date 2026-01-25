@@ -25,6 +25,18 @@ export const rest = {
     serviceVariantsByService: "services/:serviceId/variants",
     serviceVariantDetail: "services/variants/:variantId",
 
+    // Packages (Voucher)
+    package: "packages",
+    packageActive: "packages/active",
+    packageDetail: "packages/:id",
+    packageCheckName: "packages/check-name",
+
+    // Credit Packages
+    creditPackage: "credit-packages",
+    creditPackageActive: "credit-packages/active",
+    creditPackageDetail: "credit-packages/:id",
+    creditPackageCheckName: "credit-packages/check-name",
+
     // Members
     member: "members",
     memberActive: "members/active",

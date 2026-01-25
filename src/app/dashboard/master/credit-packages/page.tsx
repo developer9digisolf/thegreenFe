@@ -2,15 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { Select, InputNumber, message } from "antd";
-import { IPackage, ICreatePackageRequest, IUpdatePackageRequest } from "@afx/interfaces/package.iface";
-import { PackageGetAllService, PackageCreateService, PackageUpdateService, PackageDeleteService } from "@afx/services/package.service";
-import { VariantGetAllActiveService } from "@afx/services/service.service";
-import { IServiceVariantList } from "@afx/interfaces/service.iface";
+import { ICreditPackage, ICreateCreditPackageRequest, IUpdateCreditPackageRequest } from "@afx/interfaces/credit-package.iface";
+import { CreditPackageGetAllService, CreditPackageCreateService, CreditPackageUpdateService, CreditPackageDeleteService } from "@afx/services/credit-package.service";
 
-export default function MasterPackages() {
-    const [packages, setPackages] = useState<IPackage[]>([]);
+export default function MasterCreditPackages() {
+    const [packages, setPackages] = useState<ICreditPackage[]>([]);
     const [loading, setLoading] = useState(false);
-    const [variants, setVariants] = useState<IServiceVariantList[]>([]);
     const [pagination, setPagination] = useState({
         current: 1,
         pageSize: 10,
@@ -19,22 +16,22 @@ export default function MasterPackages() {
     const [searchText, setSearchText] = useState("");
 
     const [showAddModal, setShowAddModal] = useState(false);
-    const [selectedPackage, setSelectedPackage] = useState<IPackage | null>(null);
+    const [selectedPackage, setSelectedPackage] = useState<ICreditPackage | null>(null);
     const [formData, setFormData] = useState<{
         name: string;
         description: string;
-        totalSessions: number;
-        price: number;
+        payAmount: number;
+        creditAmount: number;
         validityDays: number;
-        serviceVariantId: number | null;
+        sortOrder: number;
         isActive: boolean;
     }>({
         name: "",
         description: "",
-        totalSessions: 10,
-        price: 0,
+        payAmount: 0,
+        creditAmount: 0,
         validityDays: 365,
-        serviceVariantId: null,
+        sortOrder: 0,
         isActive: true
     });
     const [saving, setSaving] = useState(false);
@@ -46,7 +43,7 @@ export default function MasterPackages() {
             const params: any = { page, pageSize: pagination.pageSize };
             if (search) params.search = search;
             
-            const res = await PackageGetAllService(params);
+            const res = await CreditPackageGetAllService(params);
             if (res.success) {
                 setPackages(res.data);
                 setPagination({
@@ -56,26 +53,14 @@ export default function MasterPackages() {
                 });
             }
         } catch (error) {
-            console.error("Failed to fetch packages:", error);
+            console.error("Failed to fetch credit packages:", error);
         } finally {
             setLoading(false);
         }
     };
 
-    const fetchVariants = async () => {
-        try {
-            const res = await VariantGetAllActiveService();
-            if (res.success) {
-                setVariants(res.data);
-            }
-        } catch (error) {
-            console.error("Failed to fetch variants:", error);
-        }
-    };
-
     useEffect(() => {
         fetchData();
-        fetchVariants();
     }, []);
 
     const handleSearch = () => {
@@ -88,27 +73,38 @@ export default function MasterPackages() {
         setFormData({
             name: "",
             description: "",
-            totalSessions: 10,
-            price: 0,
+            payAmount: 0,
+            creditAmount: 0,
             validityDays: 365,
-            serviceVariantId: null,
+            sortOrder: 0,
             isActive: true
         });
         setShowAddModal(true);
     };
 
-    const handleOpenEditModal = (pkg: IPackage) => {
+    const handleOpenEditModal = (pkg: ICreditPackage) => {
         setSelectedPackage(pkg);
         setFormData({
             name: pkg.name,
             description: pkg.description || "",
-            totalSessions: pkg.totalSessions,
-            price: pkg.price,
+            payAmount: pkg.payAmount,
+            creditAmount: pkg.creditAmount,
             validityDays: pkg.validityDays,
-            serviceVariantId: pkg.serviceVariantId || null,
+            sortOrder: pkg.sortOrder,
             isActive: pkg.isActive
         });
         setShowAddModal(true);
+    };
+
+    // Auto-calculate credit amount when pay amount changes
+    const handlePayAmountChange = (value: number | null) => {
+        const pay = value || 0;
+        setFormData(prev => ({
+            ...prev,
+            payAmount: pay,
+            // If credit amount is less than pay amount, set it equal
+            creditAmount: prev.creditAmount < pay ? pay : prev.creditAmount
+        }));
     };
 
     // Save Handler
@@ -118,12 +114,12 @@ export default function MasterPackages() {
             message.warning("Nama paket wajib diisi");
             return;
         }
-        if (!formData.totalSessions || formData.totalSessions < 1) {
-            message.warning("Jumlah sesi minimal 1");
+        if (!formData.payAmount || formData.payAmount <= 0) {
+            message.warning("Jumlah bayar harus lebih dari 0");
             return;
         }
-        if (!formData.price || formData.price < 0) {
-            message.warning("Harga tidak valid");
+        if (!formData.creditAmount || formData.creditAmount < formData.payAmount) {
+            message.warning("Jumlah kredit harus lebih besar atau sama dengan jumlah bayar");
             return;
         }
         if (!formData.validityDays || formData.validityDays < 1) {
@@ -135,48 +131,42 @@ export default function MasterPackages() {
         try {
             if (selectedPackage) {
                 // Update
-                const payload: IUpdatePackageRequest = {
+                const payload: IUpdateCreditPackageRequest = {
                     name: formData.name.trim(),
                     description: formData.description?.trim() || undefined,
-                    totalSessions: formData.totalSessions,
-                    price: formData.price,
+                    payAmount: formData.payAmount,
+                    creditAmount: formData.creditAmount,
                     validityDays: formData.validityDays,
+                    sortOrder: formData.sortOrder,
                     isActive: formData.isActive
                 };
 
-                // Handle service variant
-                if (formData.serviceVariantId) {
-                    payload.serviceVariantId = formData.serviceVariantId;
-                } else if (selectedPackage.serviceVariantId && !formData.serviceVariantId) {
-                    payload.clearServiceVariant = true;
-                }
-
-                const res = await PackageUpdateService(selectedPackage.id, payload);
+                const res = await CreditPackageUpdateService(selectedPackage.id, payload);
                 if (res.success) {
-                    message.success("Paket berhasil diperbarui");
+                    message.success("Paket kredit berhasil diperbarui");
                     setShowAddModal(false);
                     fetchData(pagination.current, searchText);
                 } else {
-                    message.error(res.message || "Gagal memperbarui paket");
+                    message.error(res.message || "Gagal memperbarui paket kredit");
                 }
             } else {
                 // Create
-                const payload: ICreatePackageRequest = {
+                const payload: ICreateCreditPackageRequest = {
                     name: formData.name.trim(),
                     description: formData.description?.trim() || undefined,
-                    totalSessions: formData.totalSessions,
-                    price: formData.price,
+                    payAmount: formData.payAmount,
+                    creditAmount: formData.creditAmount,
                     validityDays: formData.validityDays,
-                    serviceVariantId: formData.serviceVariantId || undefined
+                    sortOrder: formData.sortOrder
                 };
 
-                const res = await PackageCreateService(payload);
+                const res = await CreditPackageCreateService(payload);
                 if (res.success) {
-                    message.success("Paket berhasil dibuat");
+                    message.success("Paket kredit berhasil dibuat");
                     setShowAddModal(false);
                     fetchData(1, searchText);
                 } else {
-                    message.error(res.message || "Gagal membuat paket");
+                    message.error(res.message || "Gagal membuat paket kredit");
                 }
             }
         } catch (error: any) {
@@ -188,15 +178,15 @@ export default function MasterPackages() {
     };
 
     const handleDelete = async (id: number, name: string) => {
-        if (!confirm(`Apakah Anda yakin ingin menghapus paket "${name}"?`)) return;
+        if (!confirm(`Apakah Anda yakin ingin menghapus paket kredit "${name}"?`)) return;
 
         try {
-            const res = await PackageDeleteService(id);
+            const res = await CreditPackageDeleteService(id);
             if (res.success) {
-                message.success("Paket berhasil dihapus");
+                message.success("Paket kredit berhasil dihapus");
                 fetchData(pagination.current, searchText);
             } else {
-                message.error(res.message || "Gagal menghapus paket");
+                message.error(res.message || "Gagal menghapus paket kredit");
             }
         } catch (error: any) {
             console.error(error);
@@ -213,42 +203,33 @@ export default function MasterPackages() {
         }).format(amount);
     };
 
-    // Calculate price per session preview
-    const pricePerSession = formData.totalSessions > 0 ? formData.price / formData.totalSessions : 0;
-    
-    // Calculate savings preview
-    const selectedVariant = variants.find(v => v.id === formData.serviceVariantId);
-    const savingsPreview = selectedVariant && formData.totalSessions > 0
-        ? (selectedVariant.price * formData.totalSessions) - formData.price
-        : null;
-
-    // Variant options for Select
-    const variantOptions = variants.map(v => ({
-        label: `${v.categoryName} > ${v.serviceName} (${v.duration} menit) - ${formatCurrency(v.price)}`,
-        value: v.id
-    }));
+    // Calculate bonus preview
+    const bonusAmount = formData.creditAmount - formData.payAmount;
+    const bonusPercentage = formData.payAmount > 0 
+        ? ((bonusAmount / formData.payAmount) * 100).toFixed(1) 
+        : '0';
 
     return (
         <>
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Master Paket Voucher</h1>
-                    <p className="page-subtitle">Kelola paket voucher/sesi untuk member</p>
+                    <h1 className="page-title">Master Paket Kredit</h1>
+                    <p className="page-subtitle">Kelola paket top-up kredit untuk member</p>
                 </div>
                 <button className="btn btn-primary" onClick={handleOpenCreateModal}>
                     <i className="fa-solid fa-plus"></i>
-                    Tambah Paket
+                    Tambah Paket Kredit
                 </button>
             </div>
 
             {/* Stats */}
             <div className="stats-row">
                 <div className="stat-card">
-                    <div className="stat-icon purple">
-                        <i className="fa-solid fa-ticket"></i>
+                    <div className="stat-icon orange">
+                        <i className="fa-solid fa-coins"></i>
                     </div>
                     <div className="stat-value">{pagination.total}</div>
-                    <div className="stat-label">Total Paket</div>
+                    <div className="stat-label">Total Paket Kredit</div>
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon green">
@@ -262,7 +243,7 @@ export default function MasterPackages() {
             {/* Table */}
             <div className="card">
                 <div className="card-header">
-                    <h3 className="card-title">Daftar Paket Voucher</h3>
+                    <h3 className="card-title">Daftar Paket Kredit</h3>
                     <div className="filters">
                         <div className="search-box">
                             <i className="fa-solid fa-magnifying-glass"></i>
@@ -285,11 +266,11 @@ export default function MasterPackages() {
                             <tr>
                                 <th style={{ width: '60px' }}>ID</th>
                                 <th>Nama Paket</th>
-                                <th>Layanan</th>
-                                <th>Jumlah Sesi</th>
-                                <th>Harga</th>
-                                <th>Harga/Sesi</th>
+                                <th>Bayar</th>
+                                <th>Dapat Kredit</th>
+                                <th>Bonus</th>
                                 <th>Masa Berlaku</th>
+                                <th>Urutan</th>
                                 <th>Status</th>
                                 <th style={{ width: '100px' }}>Aksi</th>
                             </tr>
@@ -304,7 +285,7 @@ export default function MasterPackages() {
                             ) : packages.length === 0 ? (
                                 <tr>
                                     <td colSpan={9} style={{ textAlign: "center", padding: "20px" }}>
-                                        Tidak ada data paket
+                                        Tidak ada data paket kredit
                                     </td>
                                 </tr>
                             ) : (
@@ -320,39 +301,34 @@ export default function MasterPackages() {
                                             </div>
                                         </td>
                                         <td>
-                                            {pkg.serviceVariantName ? (
-                                                <span className="category-tag" style={{ backgroundColor: '#e8f5e9', color: '#2e7d32', border: '1px solid #c8e6c9' }}>
-                                                    <i className="fa-solid fa-spa" style={{ marginRight: "5px" }}></i>
-                                                    {pkg.serviceVariantName}
-                                                </span>
-                                            ) : (
-                                                <span className="badge badge-blue">Semua Layanan</span>
-                                            )}
-                                        </td>
-                                        <td>
-                                            <span className="badge badge-purple">
-                                                {pkg.totalSessions} sesi
-                                            </span>
-                                        </td>
-                                        <td>
                                             <span className="price-tag" suppressHydrationWarning>
-                                                {formatCurrency(pkg.price)}
+                                                {formatCurrency(pkg.payAmount)}
                                             </span>
                                         </td>
                                         <td>
-                                            <span style={{ color: '#666' }} suppressHydrationWarning>
-                                                {formatCurrency(pkg.pricePerSession)}
+                                            <span style={{ fontWeight: 600, color: '#2e7d32' }} suppressHydrationWarning>
+                                                {formatCurrency(pkg.creditAmount)}
                                             </span>
-                                            {pkg.savings && pkg.savings > 0 && (
-                                                <div style={{ fontSize: '11px', color: '#2e7d32' }} suppressHydrationWarning>
-                                                    Hemat {formatCurrency(pkg.savings)}
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <span className="badge badge-orange" suppressHydrationWarning>
+                                                    +{formatCurrency(pkg.bonusAmount)}
+                                                </span>
+                                                <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
+                                                    ({pkg.bonusPercentage}%)
                                                 </div>
-                                            )}
+                                            </div>
                                         </td>
                                         <td>
                                             <span className="duration-tag">
                                                 <i className="fa-regular fa-calendar"></i>
                                                 {pkg.validityDays} hari
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span className="badge badge-gray">
+                                                #{pkg.sortOrder}
                                             </span>
                                         </td>
                                         <td>
@@ -415,10 +391,10 @@ export default function MasterPackages() {
 
             {/* Add/Edit Modal */}
             <div className={`modal-overlay ${showAddModal ? "show" : ""}`}>
-                <div className="modal" style={{ maxWidth: '600px' }}>
+                <div className="modal" style={{ maxWidth: '550px' }}>
                     <div className="modal-header">
                         <h3 className="modal-title">
-                            {selectedPackage ? "Edit Paket Voucher" : "Tambah Paket Voucher"}
+                            {selectedPackage ? "Edit Paket Kredit" : "Tambah Paket Kredit"}
                         </h3>
                         <button className="modal-close" onClick={() => setShowAddModal(false)}>
                             &times;
@@ -432,43 +408,63 @@ export default function MasterPackages() {
                             <input
                                 type="text"
                                 className="form-input"
-                                placeholder="Contoh: Paket Hemat 10 Sesi"
+                                placeholder="Contoh: Gold Credit"
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             />
                         </div>
 
-                        <div className="form-group">
-                            <label className="form-label">Layanan Spesifik (Opsional)</label>
-                            <Select
-                                showSearch
-                                allowClear
-                                placeholder="-- Semua Layanan --"
-                                optionFilterProp="label"
-                                style={{ width: '100%', height: '40px' }}
-                                value={formData.serviceVariantId}
-                                onChange={(value) => setFormData({ ...formData, serviceVariantId: value })}
-                                options={variantOptions}
-                            />
-                            <p style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                                Kosongkan jika paket bisa digunakan untuk semua layanan
-                            </p>
-                        </div>
-
                         <div className="form-row">
                             <div className="form-group">
                                 <label className="form-label">
-                                    Jumlah Sesi <span className="required">*</span>
+                                    Jumlah Bayar <span className="required">*</span>
                                 </label>
                                 <InputNumber
-                                    min={1}
-                                    max={100}
-                                    value={formData.totalSessions}
-                                    onChange={(value) => setFormData({ ...formData, totalSessions: value || 1 })}
+                                    min={0}
+                                    value={formData.payAmount}
+                                    onChange={handlePayAmountChange}
                                     style={{ width: '100%', height: '40px' }}
-                                    addonAfter="sesi"
+                                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                                    parser={(value) => Number(value?.replace(/\./g, '') || 0)}
+                                    addonBefore="Rp"
                                 />
                             </div>
+                            <div className="form-group">
+                                <label className="form-label">
+                                    Dapat Kredit <span className="required">*</span>
+                                </label>
+                                <InputNumber
+                                    min={formData.payAmount}
+                                    value={formData.creditAmount}
+                                    onChange={(value) => setFormData({ ...formData, creditAmount: value || formData.payAmount })}
+                                    style={{ width: '100%', height: '40px' }}
+                                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                                    parser={(value) => Number(value?.replace(/\./g, '') || 0)}
+                                    addonBefore="Rp"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Bonus Preview */}
+                        <div style={{ 
+                            backgroundColor: bonusAmount > 0 ? '#fff8e1' : '#f5f5f5', 
+                            padding: '12px 16px', 
+                            borderRadius: '8px',
+                            marginBottom: '16px',
+                            border: bonusAmount > 0 ? '1px solid #ffe082' : '1px solid #e0e0e0'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ color: '#666' }}>
+                                    <i className="fa-solid fa-gift" style={{ marginRight: '8px', color: '#ff9800' }}></i>
+                                    Bonus Kredit:
+                                </span>
+                                <span style={{ fontWeight: 600, color: bonusAmount > 0 ? '#e65100' : '#666' }} suppressHydrationWarning>
+                                    +{formatCurrency(bonusAmount)} ({bonusPercentage}%)
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="form-row">
                             <div className="form-group">
                                 <label className="form-label">
                                     Masa Berlaku <span className="required">*</span>
@@ -482,47 +478,18 @@ export default function MasterPackages() {
                                     addonAfter="hari"
                                 />
                             </div>
+                            <div className="form-group">
+                                <label className="form-label">Urutan Tampil</label>
+                                <InputNumber
+                                    min={0}
+                                    value={formData.sortOrder}
+                                    onChange={(value) => setFormData({ ...formData, sortOrder: value || 0 })}
+                                    style={{ width: '100%', height: '40px' }}
+                                />
+                            </div>
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">
-                                Harga Paket <span className="required">*</span>
-                            </label>
-                            <InputNumber
-                                min={0}
-                                value={formData.price}
-                                onChange={(value) => setFormData({ ...formData, price: value || 0 })}
-                                style={{ width: '100%', height: '40px' }}
-                                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                                parser={(value) => Number(value?.replace(/\./g, '') || 0)}
-                                addonBefore="Rp"
-                            />
-                        </div>
-
-                        {/* Preview Box */}
-                        <div style={{ 
-                            backgroundColor: '#f8f9fa', 
-                            padding: '12px 16px', 
-                            borderRadius: '8px',
-                            marginTop: '8px'
-                        }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                <span style={{ color: '#666' }}>Harga per sesi:</span>
-                                <span style={{ fontWeight: 600 }} suppressHydrationWarning>
-                                    {formatCurrency(pricePerSession)}
-                                </span>
-                            </div>
-                            {savingsPreview !== null && savingsPreview > 0 && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span style={{ color: '#666' }}>Penghematan:</span>
-                                    <span style={{ fontWeight: 600, color: '#2e7d32' }} suppressHydrationWarning>
-                                        {formatCurrency(savingsPreview)}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="form-group" style={{ marginTop: '16px' }}>
                             <label className="form-label">Deskripsi</label>
                             <textarea
                                 className="form-textarea"
