@@ -34,4 +34,12 @@ export const rest = {
     therapistDetail: "therapists/:id",
     therapistDetailFull: "therapists/:id/detail",
     therapistCheckPhone: "therapists/check-phone",
+
+    // Rooms
+    room: "rooms",
+    roomActive: "rooms/active",
+    roomAvailable: "rooms/available",
+    roomDetail: "rooms/:id",
+    roomDetailFull: "rooms/:id/detail",
+    roomCheckName: "rooms/check-name",
 }
