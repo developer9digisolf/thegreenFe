@@ -34,7 +34,7 @@ export default async function request<T = any, R = any>({
   data
 }: IRequestPayloads<R>): Promise<IResponsePayloads<T>> {
   const token = getToken()
-  const baseUrl = process.env.BASEURL || "http://localhost:5000/api/"
+  const baseUrl = process.env.NEXT_PUBLIC_BASEURL || "http://localhost:5100/api/"
 
   let extendedItems: any = {}
 

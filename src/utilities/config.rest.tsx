@@ -60,4 +60,36 @@ export const rest = {
     roomDetail: "rooms/:id",
     roomDetailFull: "rooms/:id/detail",
     roomCheckName: "rooms/check-name",
+
+    // Payment Methods
+    paymentMethod: "payment-methods",
+    paymentMethodActive: "payment-methods/active",
+    paymentMethodDetail: "payment-methods/:id",
+    paymentMethodByCode: "payment-methods/code/:code",
+    paymentMethodCheckCode: "payment-methods/check-code",
+
+    // Cashier Sessions
+    cashierSession: "cashier-sessions",
+    cashierSessionDetail: "cashier-sessions/:id",
+    cashierSessionDetailFull: "cashier-sessions/:id/detail",
+    cashierSessionCurrent: "cashier-sessions/current",
+    cashierSessionMySession: "cashier-sessions/my-session",
+    cashierSessionHasOpen: "cashier-sessions/has-open-session",
+    cashierSessionOpen: "cashier-sessions/open",
+    cashierSessionClose: "cashier-sessions/:id/close",
+    cashierSessionMovement: "cashier-sessions/:id/movements",
+    cashierSessionBalance: "cashier-sessions/:id/balance",
+
+    // POS
+    posInit: "pos/init",
+    posOrders: "pos/orders",
+    posOrdersPending: "pos/orders/pending",
+    posOrderDetail: "pos/orders/:id",
+    posOrderItems: "pos/orders/:id/items",
+    posOrderItem: "pos/orders/:id/items/:itemId",
+    posOrderMember: "pos/orders/:id/member",
+    posOrderDiscount: "pos/orders/:id/discount",
+    posOrderPay: "pos/orders/:id/pay",
+    posOrderHold: "pos/orders/:id/hold",
+    posOrderCancel: "pos/orders/:id",
 }
