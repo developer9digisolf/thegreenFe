@@ -1,10 +1,20 @@
 export const rest = {
-    // Auth
+    // Auth (Admin)
     authLogin: "auth/login",
     authRegister: "auth/register",
     authMe: "auth/me",
     authValidate: "auth/validate",
     authLogout: "auth/logout",
+
+    // Therapist Auth (Portal Terapis)
+    therapistAuthLogin: "therapist-auth/login",
+    therapistAuthLogout: "therapist-auth/logout",
+    therapistAuthProfile: "therapist-auth/profile",
+    therapistAuthQRToken: "therapist-auth/qr-token",
+    therapistAuthVerifyQR: "therapist-auth/verify-qr",
+    therapistAuthStatus: "therapist-auth/status",
+    therapistAuthCheckOut: "therapist-auth/check-out",
+    therapistAuthAttendance: "therapist-auth/attendance",
 
     // Service Categories
     serviceCategory: "service-categories",

@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { IUser, IAuthState } from '@afx/interfaces/auth.iface'
+import { IUser, IAuthState, getRoleName } from '@afx/interfaces/auth.iface'
 import { AuthHelper } from '@afx/services/auth.service'
 
 interface AuthContextType extends IAuthState {
@@ -14,6 +14,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // Public routes that don't require authentication
 const publicRoutes = ['/auth/login', '/auth/register', '/auth/forgot-password']
+
+// Kiosk routes (no auth required)
+const kioskRoutes = ['/kiosk']
+
+// Therapist routes (requires therapist role)
+const therapistRoutes = ['/therapist']
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter()
@@ -86,17 +92,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!mounted || authState.loading) return
 
         const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
+        const isTherapistRoute = therapistRoutes.some(route => pathname.startsWith(route))
+        const isKioskRoute = kioskRoutes.some(route => pathname.startsWith(route))
         const isRootRoute = pathname === '/'
+        const isAdminRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/pos')
 
-        console.log('Redirect check - isAuthenticated:', authState.isAuthenticated, 'pathname:', pathname, 'isPublicRoute:', isPublicRoute) // Debug
+        // Kiosk routes don't need auth
+        if (isKioskRoute) return
 
-        if (!authState.isAuthenticated && !isPublicRoute && !isRootRoute) {
-            // Not authenticated and trying to access protected route
-            console.log('Redirecting to login...')
+        // Not authenticated
+        if (!authState.isAuthenticated) {
+            // Allow public routes
+            if (isPublicRoute || isRootRoute) return
+            
+            // Redirect to login for protected routes
+            console.log('Not authenticated, redirecting to login...')
             router.push('/auth/login')
+            return
         }
-        // Don't auto-redirect from login to dashboard here - let login page handle it
-    }, [authState.isAuthenticated, authState.loading, mounted, pathname, router])
+
+        // Authenticated - check role-based access
+        if (authState.user) {
+            const role = getRoleName(authState.user.role).toLowerCase()
+
+            // Therapist accessing admin routes
+            if (role === 'therapist' && isAdminRoute) {
+                console.log('Therapist accessing admin route, redirecting to therapist dashboard...')
+                router.push('/therapist/dashboard')
+                return
+            }
+
+            // Non-therapist accessing therapist routes
+            if (role !== 'therapist' && isTherapistRoute) {
+                console.log('Non-therapist accessing therapist route, redirecting to dashboard...')
+                router.push('/dashboard')
+                return
+            }
+
+            // Member should not access admin or therapist routes
+            if (role === 'member' && (isAdminRoute || isTherapistRoute)) {
+                console.log('Member accessing protected route, redirecting to login...')
+                AuthHelper.clearAuth()
+                router.push('/auth/login')
+                return
+            }
+        }
+    }, [authState.isAuthenticated, authState.loading, authState.user, mounted, pathname, router])
 
     // Show loading state only on initial load
     if (!mounted || authState.loading) {

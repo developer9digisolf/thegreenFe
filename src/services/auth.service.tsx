@@ -1,4 +1,4 @@
-import { IAuthResponse, ILoginRequest, IRegisterRequest, IUser } from '@afx/interfaces/auth.iface'
+import { IAuthResponse, ILoginRequest, IRegisterRequest, IUser, ITherapistProfile } from '@afx/interfaces/auth.iface'
 import { rest } from '@afx/utils/config.rest'
 import request from '@afx/utils/request.utils'
 
@@ -47,9 +47,16 @@ export const AuthHelper = {
             if (typeof window !== 'undefined') {
                 localStorage.setItem('THEGREEN@TOKEN', authResponse.accessToken)
                 localStorage.setItem('THEGREEN@USER', JSON.stringify(authResponse.user))
+                
+                // Save therapist data if present
+                if (authResponse.therapist) {
+                    localStorage.setItem('THEGREEN@THERAPIST', JSON.stringify(authResponse.therapist))
+                }
+                
                 console.log('Auth saved successfully:', { 
                     token: authResponse.accessToken?.substring(0, 20) + '...', 
-                    user: authResponse.user?.username 
+                    user: authResponse.user?.username,
+                    hasTherapist: !!authResponse.therapist
                 })
             }
         } catch (error) {
@@ -87,6 +94,22 @@ export const AuthHelper = {
         }
     },
 
+    // Get therapist profile (if user is a therapist)
+    getTherapist: (): ITherapistProfile | null => {
+        try {
+            if (typeof window !== 'undefined') {
+                const therapistStr = localStorage.getItem('THEGREEN@THERAPIST')
+                if (therapistStr) {
+                    return JSON.parse(therapistStr)
+                }
+            }
+            return null
+        } catch (error) {
+            console.error('Error getting therapist:', error)
+            return null
+        }
+    },
+
     // Check if authenticated
     isAuthenticated: (): boolean => {
         const token = AuthHelper.getToken()
@@ -99,6 +122,7 @@ export const AuthHelper = {
             if (typeof window !== 'undefined') {
                 localStorage.removeItem('THEGREEN@TOKEN')
                 localStorage.removeItem('THEGREEN@USER')
+                localStorage.removeItem('THEGREEN@THERAPIST')
                 console.log('Auth cleared')
             }
         } catch (error) {

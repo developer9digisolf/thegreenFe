@@ -28,6 +28,18 @@ export interface IUser {
     createdAt: string;
 }
 
+// Therapist profile (included when role = Therapist)
+export interface ITherapistProfile {
+    id: number;
+    code: string;
+    name: string;
+    phone?: string;
+    photo?: string;
+    rating: number;
+    reviewCount: number;
+    totalSessions: number;
+}
+
 export interface ILoginRequest {
     username: string;
     password: string;
@@ -45,6 +57,7 @@ export interface IAuthResponse {
     tokenType: string;
     expiresIn: number;
     user: IUser;
+    therapist?: ITherapistProfile; // Only present when role = Therapist
 }
 
 export interface IAuthState {

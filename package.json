@@ -42,13 +42,16 @@
     "styled-components": "^6.3.8",
     "styled-system": "^5.1.5",
     "tinycolor2": "^1.6.0",
-    "zustand": "^4.4.1"
+    "zustand": "^4.4.1",
+    "html5-qrcode": "^2.3.8",
+    "qrcode": "^1.5.3"
   },
   "devDependencies": {
     "@types/crypto-js": "^4.1.2",
     "@types/google.maps": "^3.58.1",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/react-helmet": "^6.1.11",

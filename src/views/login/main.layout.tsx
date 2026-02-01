@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Form, Input, Button, message, Card } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { AuthLoginService, AuthHelper } from '@afx/services/auth.service'
-import { ILoginRequest, RoleMap } from '@afx/interfaces/auth.iface'
+import { ILoginRequest, RoleMap, getRoleName } from '@afx/interfaces/auth.iface'
 
 export default function Login(): React.JSX.Element {
   const [loading, setLoading] = useState(false)
@@ -12,31 +12,52 @@ export default function Login(): React.JSX.Element {
 
   const handleLogin = async (values: ILoginRequest) => {
     setLoading(true)
+    
     try {
       const res = await AuthLoginService(values)
+      
       if (res.success) {
-        // Save auth first
-        AuthHelper.saveAuth(res.data)
-        
-        message.success('Login berhasil!')
-        
-        // Get role - handle both number (enum) and string
+        // Get role
         const roleValue = res.data.user.role
-        let role: string
+        const role = getRoleName(roleValue).toLowerCase()
         
-        if (typeof roleValue === 'number') {
-          role = RoleMap[roleValue]?.toLowerCase() || 'member'
+        console.log('Login success - Role:', role, 'Has Therapist:', !!res.data.therapist)
+        
+        // Check role and redirect accordingly
+        if (role === 'therapist') {
+          // Therapist - must have therapist profile
+          if (!res.data.therapist) {
+            message.error('Profil terapis tidak ditemukan. Hubungi admin.')
+            setLoading(false)
+            return
+          }
+          
+          // Save auth
+          AuthHelper.saveAuth(res.data)
+          message.success(`Selamat datang, ${res.data.therapist.name}!`)
+          
+          setTimeout(() => {
+            window.location.href = '/therapist/dashboard'
+          }, 100)
+          
+        } else if (role === 'member') {
+          // Member - redirect to mobile app or show message
+          message.info('Silakan gunakan aplikasi mobile untuk Member')
+          setLoading(false)
+          
+        } else if (['owner', 'admin', 'office'].includes(role)) {
+          // Admin roles - redirect to dashboard
+          AuthHelper.saveAuth(res.data)
+          message.success(`Selamat datang, ${res.data.user.username}!`)
+          
+          setTimeout(() => {
+            window.location.href = '/dashboard'
+          }, 100)
+          
         } else {
-          role = String(roleValue).toLowerCase()
+          message.error('Role tidak dikenali')
+          setLoading(false)
         }
-        
-        console.log('User role:', role, 'Raw value:', roleValue)
-        
-        // Use window.location.href for full page reload to ensure auth state is fresh
-        // Small delay to ensure localStorage is written
-        setTimeout(() => {
-          window.location.href = '/dashboard'
-        }, 100)
       } else {
         message.error(res.message || 'Login gagal')
         setLoading(false)
