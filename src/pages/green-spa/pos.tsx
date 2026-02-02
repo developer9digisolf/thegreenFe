@@ -29,7 +29,7 @@ import {
     CreditCard,
     Clock,
     Star,
-    QrCode,
+    Aperture as QrCode,
     X,
     Plus,
     Minus,
@@ -46,8 +46,8 @@ import {
 } from "react-feather";
 import styled from "@doar/shared/styled";
 import Content from "../../layouts/content";
-import Breadcrumb from "../../components/breadcrumb";
-import SEO from "../../components/seo";
+import Breadcrumb from "../../components/components/breadcrumb";
+import SEO from "../../components/components/seo";
 
 // ============ STYLED COMPONENTS ============
 
