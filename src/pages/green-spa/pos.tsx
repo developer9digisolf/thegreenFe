@@ -1321,3 +1321,6 @@ const POSPage = () => {
 };
 
 export default POSPage;
+
+// Prevent static prerendering - requires ThemeProvider at runtime
+export const getServerSideProps = async () => ({ props: {} });
