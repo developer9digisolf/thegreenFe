@@ -1,0 +1,37 @@
+name: Deploy Frontend to Staging (Blue-Green)
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Blue-Green Deployment
+        run: |
+          cd /home/github-runner/apps/thegreenspa-staging
+          
+          # Make script executable
+          chmod +x deploy-frontend.sh
+          
+          # Run deployment
+          ./deploy-frontend.sh
+
+      - name: Notify Success
+        if: success()
+        run: |
+          echo "✅ TheGreenSpa Frontend deployment to staging successful!"
+          echo "🕐 Deployed at: $(date)"
+
+      - name: Notify Failure
+        if: failure()
+        run: |
+          echo "❌ TheGreenSpa Frontend deployment to staging failed!"
+          echo "🔙 Automatic rollback was performed"
+          echo "📋 Check logs above for details"

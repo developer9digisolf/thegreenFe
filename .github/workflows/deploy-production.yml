@@ -1,0 +1,37 @@
+name: Deploy Frontend to Production (Blue-Green)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Blue-Green Deployment
+        run: |
+          cd /home/github-runner/apps/thegreenspa-production
+          
+          # Make script executable
+          chmod +x deploy-frontend.sh
+          
+          # Run deployment
+          ./deploy-frontend.sh
+
+      - name: Notify Success
+        if: success()
+        run: |
+          echo "✅ TheGreenSpa Frontend deployment to production successful!"
+          echo "🕐 Deployed at: $(date)"
+
+      - name: Notify Failure
+        if: failure()
+        run: |
+          echo "❌ TheGreenSpa Frontend deployment to production failed!"
+          echo "🔙 Automatic rollback was performed"
+          echo "📋 Check logs above for details"
