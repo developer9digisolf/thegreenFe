@@ -1,4 +1,2 @@
-// Green Spa Pages Export
-export { default as POSPage } from "./pos";
-export { default as MasterServiceCategoryPage } from "./master-service-category";
-export { default as MasterServicePage } from "./master-service";
+// Redirect to POS as default page
+export { default } from "./pos";
