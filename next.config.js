@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: ['antd', '@ant-design/icons', '@ant-design/icons-svg', 'rc-util', 'rc-pagination', 'rc-picker', 'rc-table', 'rc-tree', 'rc-select', 'rc-input', 'rc-field-form', 'rc-cascader', 'rc-checkbox', 'rc-collapse', 'rc-dialog', 'rc-drawer', 'rc-dropdown', 'rc-image', 'rc-menu', 'rc-motion', 'rc-notification', 'rc-progress', 'rc-rate', 'rc-resize-observer', 'rc-segmented', 'rc-slider', 'rc-steps', 'rc-switch', 'rc-tabs', 'rc-textarea', 'rc-tooltip', 'rc-tree-select', 'rc-upload', 'rc-virtual-list'],
   compiler: {
     removeConsole: false
   },
