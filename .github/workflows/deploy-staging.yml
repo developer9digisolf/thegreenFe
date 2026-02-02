@@ -15,7 +15,7 @@ jobs:
 
       - name: Run Blue-Green Deployment
         run: |
-          cd /home/github-runner/apps/thegreenspa-staging
+          cd ~/apps/thegreenspa-staging
           
           # Make script executable
           chmod +x deploy-frontend.sh
