@@ -3,7 +3,7 @@ name: Deploy Frontend to Production (Blue-Green)
 on:
   push:
     branches:
-      - main
+      - production
 
 jobs:
   deploy:
@@ -15,7 +15,7 @@ jobs:
 
       - name: Run Blue-Green Deployment
         run: |
-          cd ~/apps/thegreenspa-production
+          cd /home/github-runner/apps/thegreen-production
           
           # Make script executable
           chmod +x deploy-frontend.sh
