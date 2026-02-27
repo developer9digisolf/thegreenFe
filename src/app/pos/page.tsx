@@ -501,10 +501,12 @@ export default function POSPage() {
     };
 
     const openPaymentModal = () => {
+        console.log("[POS] openPaymentModal called", { currentOrder, itemsCount: currentOrder?.items?.length });
         if (!currentOrder || currentOrder.items.length === 0) {
             alert("Tidak ada item dalam order");
             return;
         }
+        console.log("[POS] Opening payment modal for order", currentOrder.saleCode, "total:", currentOrder.grandTotal);
         setPayments([]);
         setSelectedPaymentMethod(null);
         setPaymentAmount(currentOrder.grandTotal.toString());
