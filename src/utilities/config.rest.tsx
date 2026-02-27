@@ -102,4 +102,9 @@ export const rest = {
     posOrderPay: "pos/orders/:id/pay",
     posOrderHold: "pos/orders/:id/hold",
     posOrderCancel: "pos/orders/:id",
+
+    // Bookings (Admin)
+    booking: "bookings",
+    bookingSummary: "bookings/summary",
+    bookingDetail: "bookings/:id",
 }

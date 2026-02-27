@@ -13,7 +13,7 @@ interface AuthContextType extends IAuthState {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // Public routes that don't require authentication
-const publicRoutes = ['/auth/login', '/auth/register', '/auth/forgot-password']
+const publicRoutes = ['/auth/login', '/auth/register', '/auth/forgot-password', '/privacy-policy', '/terms-of-service']
 
 // Kiosk routes (no auth required)
 const kioskRoutes = ['/kiosk']
@@ -139,34 +139,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [authState.isAuthenticated, authState.loading, authState.user, mounted, pathname, router])
 
-    // Show loading state only on initial load
-    if (!mounted || authState.loading) {
+    // Determine if current route requires auth
+    const isProtectedRoute = !publicRoutes.some(route => pathname.startsWith(route)) 
+        && !kioskRoutes.some(route => pathname.startsWith(route))
+        && pathname !== '/'
+
+    // Show loading spinner while checking auth OR when not authenticated on protected route (prevents flash)
+    const shouldShowLoading = !mounted || authState.loading || (isProtectedRoute && !authState.isAuthenticated)
+
+    if (shouldShowLoading) {
         return (
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100vh',
-                background: 'linear-gradient(135deg, #059669 0%, #0d9488 50%, #14b8a6 100%)'
-            }}>
-                <div style={{ textAlign: 'center', color: 'white' }}>
-                    <div style={{
-                        width: 60,
-                        height: 60,
-                        borderRadius: '50%',
-                        border: '3px solid rgba(255,255,255,0.3)',
-                        borderTopColor: 'white',
-                        animation: 'spin 1s linear infinite',
-                        margin: '0 auto 16px'
-                    }} />
-                    <div style={{ fontSize: 16 }}>Loading...</div>
+            <AuthContext.Provider value={{ ...authState, logout, refreshUser }}>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100vh',
+                    background: 'linear-gradient(135deg, #059669 0%, #0d9488 50%, #14b8a6 100%)'
+                }}>
+                    <div style={{ textAlign: 'center', color: 'white' }}>
+                        <div style={{
+                            width: 60,
+                            height: 60,
+                            borderRadius: '50%',
+                            border: '3px solid rgba(255,255,255,0.3)',
+                            borderTopColor: 'white',
+                            animation: 'spin 1s linear infinite',
+                            margin: '0 auto 16px'
+                        }} />
+                        <div style={{ fontSize: 16 }}>Loading...</div>
+                    </div>
+                    <style jsx global>{`
+                        @keyframes spin {
+                            to { transform: rotate(360deg); }
+                        }
+                    `}</style>
                 </div>
-                <style jsx global>{`
-                    @keyframes spin {
-                        to { transform: rotate(360deg); }
-                    }
-                `}</style>
-            </div>
+            </AuthContext.Provider>
         )
     }
 

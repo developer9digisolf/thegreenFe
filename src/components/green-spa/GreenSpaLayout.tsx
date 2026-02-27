@@ -58,6 +58,26 @@ const menuConfig: MenuSection[] = [
         ]
     },
     {
+        title: "Transaksi",
+        roles: ["owner", "admin", "office"],
+        items: [
+            {
+                key: "bookings",
+                path: "/dashboard/bookings",
+                icon: "fa-calendar-days",
+                label: "Booking & Sesi",
+                roles: ["owner", "admin", "office"]
+            },
+            {
+                key: "vouchers",
+                path: "/dashboard/vouchers",
+                icon: "fa-tags",
+                label: "Voucher Terjual",
+                roles: ["owner", "admin", "office"]
+            }
+        ]
+    },
+    {
         title: "Master Data",
         roles: ["owner", "admin", "office"],
         items: [
@@ -102,13 +122,6 @@ const menuConfig: MenuSection[] = [
                 icon: "fa-coins",
                 label: "Paket Kredit",
                 roles: ["owner", "admin"]
-            },
-            {
-                key: "vouchers",
-                path: "/dashboard/vouchers",
-                icon: "fa-tags",
-                label: "Voucher Terjual",
-                roles: ["owner", "admin", "office"]
             },
             {
                 key: "rooms",

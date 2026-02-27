@@ -200,6 +200,8 @@ export default function POSPage() {
     // Modal states
     const [showOpenSessionModal, setShowOpenSessionModal] = useState(false);
     const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
+    const [sessionDetail, setSessionDetail] = useState<any>(null);
+    const [loadingSessionDetail, setLoadingSessionDetail] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [openingCash, setOpeningCash] = useState("");
     const [closingCash, setClosingCash] = useState("");
@@ -283,6 +285,26 @@ export default function POSPage() {
         }
     };
 
+    const openCloseSessionModal = async () => {
+        if (!initData?.currentSession) return;
+        setLoadingSessionDetail(true);
+        setShowCloseSessionModal(true);
+        try {
+            const response = await get(
+                rest.cashierSessionDetailFull.replace(":id", initData.currentSession.id.toString())
+            );
+            if (response.success && response.data) {
+                setSessionDetail(response.data);
+                // Pre-fill expected closing cash
+                setClosingCash(response.data.expectedClosingCash?.toString() || "0");
+            }
+        } catch (error) {
+            console.error("Failed to load session detail:", error);
+        } finally {
+            setLoadingSessionDetail(false);
+        }
+    };
+
     const handleCloseSession = async () => {
         if (!closingCash || parseFloat(closingCash) < 0) {
             alert("Masukkan jumlah kas akhir yang valid");
@@ -297,6 +319,7 @@ export default function POSPage() {
             if (response.success) {
                 setShowCloseSessionModal(false);
                 setClosingCash("");
+                setSessionDetail(null);
                 await loadInitData();
             } else {
                 alert(response.message || "Gagal menutup sesi");
@@ -309,7 +332,7 @@ export default function POSPage() {
 
     const createNewOrder = async (saleType: number = 0): Promise<Order | null> => {
         if (!initData?.hasOpenSession) {
-            setShowOpenSessionModal(true);
+            alert("Sesi kasir belum dibuka. Silakan buka sesi terlebih dahulu.");
             return null;
         }
         try {
@@ -582,7 +605,98 @@ export default function POSPage() {
     }
 
     // ============================================
-    // RENDER
+    // RENDER - NO SESSION GATE
+    // ============================================
+    if (!initData?.hasOpenSession) {
+        return (
+            <div className="pos-container" style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-main)" }}>
+                <div className="modal-content" style={{
+                    background: "var(--bg-card)",
+                    borderRadius: "24px",
+                    padding: "40px",
+                    width: "100%",
+                    maxWidth: "440px",
+                    boxShadow: "var(--shadow-lg)"
+                }}>
+                    <div style={{ textAlign: "center", marginBottom: "28px" }}>
+                        <div style={{
+                            width: "90px",
+                            height: "90px",
+                            background: "var(--spa-green-bg)",
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            margin: "0 auto 20px"
+                        }}>
+                            <i className="fa-solid fa-cash-register" style={{ fontSize: "40px", color: "var(--spa-green)" }}></i>
+                        </div>
+                        <h2 style={{ marginBottom: "10px", fontSize: "24px" }}>Buka Sesi Kasir</h2>
+                        <p style={{ color: "var(--text-muted)", fontSize: "14px", lineHeight: 1.6 }}>
+                            Belum ada sesi kasir yang terbuka. Untuk memulai transaksi POS, silakan buka sesi kasir terlebih dahulu.
+                        </p>
+                    </div>
+                    <div style={{ marginBottom: "24px" }}>
+                        <label style={{ display: "block", marginBottom: "8px", fontWeight: 600, fontSize: "13px" }}>
+                            Kas Awal (Rp)
+                        </label>
+                        <input
+                            type="number"
+                            value={openingCash}
+                            onChange={(e) => setOpeningCash(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleOpenSession()}
+                            placeholder="500000"
+                            className="search-input"
+                            autoFocus
+                            style={{ width: "100%", padding: "16px", fontSize: "22px", textAlign: "right", fontWeight: 700 }}
+                        />
+                        <div style={{ display: "flex", gap: "8px", marginTop: "10px", flexWrap: "wrap" }}>
+                            {[200000, 500000, 1000000].map(amount => (
+                                <button
+                                    key={amount}
+                                    onClick={() => setOpeningCash(amount.toString())}
+                                    style={{
+                                        padding: "6px 14px",
+                                        fontSize: "12px",
+                                        fontWeight: 600,
+                                        background: openingCash === amount.toString() ? "var(--spa-green-bg)" : "var(--bg-main)",
+                                        color: openingCash === amount.toString() ? "var(--spa-green)" : "var(--text-muted)",
+                                        border: openingCash === amount.toString() ? "1.5px solid var(--spa-green)" : "1.5px solid var(--border-color)",
+                                        borderRadius: "8px",
+                                        cursor: "pointer",
+                                        transition: "all 0.2s"
+                                    }}
+                                >
+                                    {formatCurrency(amount)}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div style={{ display: "flex", gap: "12px" }}>
+                        <Link
+                            href="/dashboard"
+                            className="action-btn secondary"
+                            style={{ flex: 1, textAlign: "center", textDecoration: "none" }}
+                        >
+                            <i className="fa-solid fa-arrow-left"></i>
+                            Kembali
+                        </Link>
+                        <button
+                            className="action-btn primary"
+                            onClick={handleOpenSession}
+                            style={{ flex: 1 }}
+                        >
+                            <i className="fa-solid fa-play"></i>
+                            Mulai Sesi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // ============================================
+    // RENDER - MAIN POS (session is open)
     // ============================================
     return (
         <div className="pos-container">
@@ -646,10 +760,12 @@ export default function POSPage() {
                         {initData?.hasOpenSession && (
                             <button 
                                 className="header-btn" 
-                                title="Tutup Sesi"
-                                onClick={() => setShowCloseSessionModal(true)}
+                                title="Tutup Sesi Kasir"
+                                onClick={openCloseSessionModal}
+                                style={{ color: "#ef4444", gap: "6px" }}
                             >
                                 <i className="fa-solid fa-power-off"></i>
+                                <span style={{ fontSize: "12px", fontWeight: 600 }}>Tutup Sesi</span>
                             </button>
                         )}
                         <button className="header-btn scan">
@@ -1195,12 +1311,12 @@ export default function POSPage() {
             {/* MODALS */}
             {/* ============================================ */}
 
-            {/* Open Session Modal */}
-            {showOpenSessionModal && (
+            {/* Close Session Modal */}
+            {showCloseSessionModal && (
                 <div className="modal-overlay" style={{
                     position: "fixed",
                     inset: 0,
-                    background: "rgba(0,0,0,0.7)",
+                    background: "rgba(0,0,0,0.6)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -1212,151 +1328,187 @@ export default function POSPage() {
                         borderRadius: "24px",
                         padding: "32px",
                         width: "100%",
-                        maxWidth: "420px",
+                        maxWidth: "480px",
+                        maxHeight: "90vh",
+                        overflowY: "auto",
                         boxShadow: "var(--shadow-lg)"
                     }}>
+                        {/* Header */}
                         <div style={{ textAlign: "center", marginBottom: "24px" }}>
-                            <div style={{ 
-                                width: "80px", 
-                                height: "80px", 
-                                background: "var(--spa-green-bg)", 
-                                borderRadius: "50%", 
-                                display: "flex", 
-                                alignItems: "center", 
-                                justifyContent: "center",
-                                margin: "0 auto 20px"
-                            }}>
-                                <i className="fa-solid fa-cash-register" style={{ fontSize: "36px", color: "var(--spa-green)" }}></i>
-                            </div>
-                            <h2 style={{ marginBottom: "8px", fontSize: "24px" }}>Buka Sesi Kasir</h2>
-                            <p style={{ color: "var(--text-muted)", fontSize: "14px", lineHeight: 1.5 }}>
-                                Untuk memulai transaksi, silakan buka sesi kasir terlebih dahulu dengan memasukkan jumlah kas awal di laci.
-                            </p>
-                        </div>
-                        <div style={{ marginBottom: "24px" }}>
-                            <label style={{ display: "block", marginBottom: "8px", fontWeight: 600, fontSize: "13px" }}>
-                                Kas Awal (Rp)
-                            </label>
-                            <input
-                                type="number"
-                                value={openingCash}
-                                onChange={(e) => setOpeningCash(e.target.value)}
-                                placeholder="500000"
-                                className="search-input"
-                                style={{ width: "100%", padding: "16px", fontSize: "20px", textAlign: "right", fontWeight: 700 }}
-                            />
-                        </div>
-                        <div style={{ display: "flex", gap: "12px" }}>
-                            <Link 
-                                href="/dashboard"
-                                className="action-btn secondary" 
-                                style={{ flex: 1, textAlign: "center", textDecoration: "none" }}
-                            >
-                                <i className="fa-solid fa-arrow-left"></i>
-                                Kembali
-                            </Link>
-                            <button 
-                                className="action-btn primary" 
-                                onClick={handleOpenSession}
-                                style={{ flex: 1 }}
-                            >
-                                <i className="fa-solid fa-play"></i>
-                                Mulai Sesi
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Close Session Modal */}
-            {showCloseSessionModal && (
-                <div className="modal-overlay" style={{
-                    position: "fixed",
-                    inset: 0,
-                    background: "rgba(0,0,0,0.5)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    zIndex: 1000
-                }}>
-                    <div className="modal-content" style={{
-                        background: "var(--bg-card)",
-                        borderRadius: "24px",
-                        padding: "32px",
-                        width: "100%",
-                        maxWidth: "400px",
-                        boxShadow: "var(--shadow-lg)"
-                    }}>
-                        <div style={{ textAlign: "center", marginBottom: "24px" }}>
-                            <div style={{ 
-                                width: "64px", 
-                                height: "64px", 
-                                background: "var(--accent-red-light)", 
-                                borderRadius: "50%", 
-                                display: "flex", 
-                                alignItems: "center", 
-                                justifyContent: "center",
+                            <div style={{
+                                width: "64px", height: "64px",
+                                background: "var(--accent-red-light)",
+                                borderRadius: "50%",
+                                display: "flex", alignItems: "center", justifyContent: "center",
                                 margin: "0 auto 16px"
                             }}>
                                 <i className="fa-solid fa-power-off" style={{ fontSize: "28px", color: "var(--accent-red)" }}></i>
                             </div>
-                            <h2 style={{ marginBottom: "8px" }}>Tutup Sesi Kasir</h2>
-                            <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>
-                                Hitung dan masukkan jumlah kas aktual
+                            <h2 style={{ marginBottom: "6px" }}>Tutup Sesi Kasir</h2>
+                            <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>
+                                {initData?.currentSession?.sessionCode} • {initData?.currentSession?.userName}
                             </p>
                         </div>
-                        
-                        {initData?.currentSession && (
-                            <div style={{ 
-                                background: "var(--bg-main)", 
-                                padding: "16px", 
-                                borderRadius: "12px", 
-                                marginBottom: "24px" 
-                            }}>
-                                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px" }}>
-                                    <span style={{ color: "var(--text-muted)" }}>Kas Awal</span>
-                                    <span>{formatCurrency(initData.currentSession.openingCash)}</span>
-                                </div>
-                                <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: "16px" }}>
-                                    <span>Kas Diharapkan</span>
-                                    <span style={{ color: "var(--spa-green)" }}>
-                                        {formatCurrency(initData.currentSession.expectedClosingCash)}
-                                    </span>
-                                </div>
+
+                        {loadingSessionDetail ? (
+                            <div style={{ textAlign: "center", padding: "30px 0" }}>
+                                <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: 24, color: "var(--spa-green)" }}></i>
+                                <div style={{ marginTop: 8, color: "var(--text-muted)", fontSize: 13 }}>Memuat ringkasan sesi...</div>
                             </div>
+                        ) : (
+                            <>
+                                {/* Sales Summary */}
+                                <div style={{
+                                    background: "linear-gradient(135deg, #059669, #14b8a6)",
+                                    borderRadius: "16px", padding: "20px", marginBottom: "20px", color: "white"
+                                }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
+                                        <span style={{ opacity: 0.85, fontSize: 13 }}>Total Transaksi</span>
+                                        <span style={{ fontWeight: 700 }}>{sessionDetail?.totalSales || 0} transaksi</span>
+                                    </div>
+                                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                        <span style={{ opacity: 0.85, fontSize: 13 }}>Total Penjualan</span>
+                                        <span style={{ fontWeight: 800, fontSize: 20 }}>
+                                            {formatCurrency(sessionDetail?.totalSalesAmount || 0)}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Payment Breakdown */}
+                                {sessionDetail?.paymentBreakdown && sessionDetail.paymentBreakdown.length > 0 && (
+                                    <div style={{
+                                        background: "var(--bg-main)", borderRadius: "14px",
+                                        padding: "16px", marginBottom: "20px"
+                                    }}>
+                                        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 12, color: "var(--text-secondary)" }}>
+                                            <i className="fa-solid fa-chart-pie" style={{ marginRight: 6 }}></i>
+                                            Rincian per Metode Pembayaran
+                                        </div>
+                                        {sessionDetail.paymentBreakdown.map((pm: any, idx: number) => (
+                                            <div key={idx} style={{
+                                                display: "flex", justifyContent: "space-between", alignItems: "center",
+                                                padding: "10px 0",
+                                                borderBottom: idx < sessionDetail.paymentBreakdown.length - 1 ? "1px solid var(--border-color)" : "none"
+                                            }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                                    <div style={{
+                                                        width: 32, height: 32, borderRadius: 8,
+                                                        background: pm.isCash ? "#ecfdf5" : "#eff6ff",
+                                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                                        fontSize: 14, color: pm.isCash ? "#059669" : "#3b82f6"
+                                                    }}>
+                                                        <i className={`fa-solid ${pm.isCash ? "fa-money-bill-wave" : pm.paymentMethodCode === "QRIS" ? "fa-qrcode" : "fa-credit-card"}`}></i>
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontWeight: 600, fontSize: 13 }}>{pm.paymentMethodName}</div>
+                                                        <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{pm.transactionCount} transaksi</div>
+                                                    </div>
+                                                </div>
+                                                <div style={{ fontWeight: 700, fontSize: 14, color: pm.isCash ? "#059669" : "#3b82f6" }}>
+                                                    {formatCurrency(pm.totalAmount)}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Cash Summary */}
+                                <div style={{
+                                    background: "var(--bg-main)", borderRadius: "14px",
+                                    padding: "16px", marginBottom: "24px"
+                                }}>
+                                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 12, color: "var(--text-secondary)" }}>
+                                        <i className="fa-solid fa-coins" style={{ marginRight: 6 }}></i>
+                                        Perhitungan Kas
+                                    </div>
+                                    <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 14, borderBottom: "1px solid var(--border-color)" }}>
+                                        <span style={{ color: "var(--text-muted)" }}>Kas Awal</span>
+                                        <span style={{ fontWeight: 600 }}>{formatCurrency(initData?.currentSession?.openingCash || 0)}</span>
+                                    </div>
+                                    <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 14, borderBottom: "1px solid var(--border-color)" }}>
+                                        <span style={{ color: "var(--text-muted)" }}>+ Penjualan Tunai</span>
+                                        <span style={{ fontWeight: 600, color: "#059669" }}>+ {formatCurrency(sessionDetail?.totalCashReceived || 0)}</span>
+                                    </div>
+                                    {(sessionDetail?.totalNonCashReceived || 0) > 0 && (
+                                        <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 13, borderBottom: "1px solid var(--border-color)" }}>
+                                            <span style={{ color: "var(--text-muted)" }}>Non-Tunai (tidak di kas)</span>
+                                            <span style={{ color: "var(--text-muted)" }}>{formatCurrency(sessionDetail?.totalNonCashReceived || 0)}</span>
+                                        </div>
+                                    )}
+                                    <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0 4px", fontWeight: 800, fontSize: 17 }}>
+                                        <span>Kas Diharapkan</span>
+                                        <span style={{ color: "var(--spa-green)" }}>
+                                            {formatCurrency(
+                                                (initData?.currentSession?.openingCash || 0) + (sessionDetail?.totalCashReceived || 0)
+                                            )}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Kas Aktual Input */}
+                                <div style={{ marginBottom: "16px" }}>
+                                    <label style={{ display: "block", marginBottom: "8px", fontWeight: 600, fontSize: "13px" }}>
+                                        Kas Aktual (Rp) — Hitung uang tunai di laci
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={closingCash}
+                                        onChange={(e) => setClosingCash(e.target.value)}
+                                        onKeyDown={(e) => e.key === "Enter" && handleCloseSession()}
+                                        placeholder="0"
+                                        className="search-input"
+                                        style={{ width: "100%", padding: "16px", fontSize: "22px", textAlign: "right", fontWeight: 700 }}
+                                    />
+                                </div>
+
+                                {/* Difference indicator */}
+                                {closingCash && (() => {
+                                    const expected = (initData?.currentSession?.openingCash || 0) + (sessionDetail?.totalCashReceived || 0);
+                                    const actual = parseFloat(closingCash) || 0;
+                                    const diff = actual - expected;
+                                    if (diff === 0) return (
+                                        <div style={{ padding: "10px 16px", borderRadius: 10, background: "#ecfdf5", color: "#059669", fontWeight: 600, fontSize: 13, marginBottom: 20, textAlign: "center" }}>
+                                            <i className="fa-solid fa-check-circle" style={{ marginRight: 6 }}></i>
+                                            Kas seimbang
+                                        </div>
+                                    );
+                                    return (
+                                        <div style={{
+                                            padding: "10px 16px", borderRadius: 10,
+                                            background: diff > 0 ? "#eff6ff" : "#fef2f2",
+                                            color: diff > 0 ? "#3b82f6" : "#ef4444",
+                                            fontWeight: 600, fontSize: 13, marginBottom: 20,
+                                            display: "flex", justifyContent: "space-between"
+                                        }}>
+                                            <span>
+                                                <i className={`fa-solid ${diff > 0 ? "fa-arrow-up" : "fa-arrow-down"}`} style={{ marginRight: 6 }}></i>
+                                                {diff > 0 ? "Kas lebih" : "Kas kurang"}
+                                            </span>
+                                            <span>{formatCurrency(Math.abs(diff))}</span>
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* Action Buttons */}
+                                <div style={{ display: "flex", gap: "12px" }}>
+                                    <button
+                                        className="action-btn secondary"
+                                        onClick={() => { setShowCloseSessionModal(false); setSessionDetail(null); }}
+                                        style={{ flex: 1 }}
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        className="action-btn primary"
+                                        onClick={handleCloseSession}
+                                        style={{ flex: 1, background: "var(--accent-red)" }}
+                                    >
+                                        <i className="fa-solid fa-power-off"></i>
+                                        Tutup Sesi
+                                    </button>
+                                </div>
+                            </>
                         )}
-
-                        <div style={{ marginBottom: "24px" }}>
-                            <label style={{ display: "block", marginBottom: "8px", fontWeight: 600, fontSize: "13px" }}>
-                                Kas Aktual (Rp)
-                            </label>
-                            <input
-                                type="number"
-                                value={closingCash}
-                                onChange={(e) => setClosingCash(e.target.value)}
-                                placeholder="0"
-                                className="search-input"
-                                style={{ width: "100%", padding: "16px", fontSize: "20px", textAlign: "right", fontWeight: 700 }}
-                            />
-                        </div>
-
-                        <div style={{ display: "flex", gap: "12px" }}>
-                            <button 
-                                className="action-btn secondary" 
-                                onClick={() => setShowCloseSessionModal(false)}
-                                style={{ flex: 1 }}
-                            >
-                                Batal
-                            </button>
-                            <button 
-                                className="action-btn primary" 
-                                onClick={handleCloseSession}
-                                style={{ flex: 1, background: "var(--accent-red)" }}
-                            >
-                                <i className="fa-solid fa-power-off"></i>
-                                Tutup Sesi
-                            </button>
-                        </div>
                     </div>
                 </div>
             )}
