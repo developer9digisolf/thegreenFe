@@ -107,4 +107,9 @@ export const rest = {
     booking: "bookings",
     bookingSummary: "bookings/summary",
     bookingDetail: "bookings/:id",
+
+    // Sales
+    sales: "sales",
+    salesSummary: "sales/summary",
+    salesDetail: "sales/:id",
 }

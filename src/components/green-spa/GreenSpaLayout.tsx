@@ -62,6 +62,13 @@ const menuConfig: MenuSection[] = [
         roles: ["owner", "admin", "office"],
         items: [
             {
+                key: "sales",
+                path: "/dashboard/sales",
+                icon: "fa-receipt",
+                label: "Penjualan",
+                roles: ["owner", "admin", "office"]
+            },
+            {
                 key: "bookings",
                 path: "/dashboard/bookings",
                 icon: "fa-calendar-days",
@@ -73,6 +80,13 @@ const menuConfig: MenuSection[] = [
                 path: "/dashboard/vouchers",
                 icon: "fa-tags",
                 label: "Voucher Terjual",
+                roles: ["owner", "admin", "office"]
+            },
+            {
+                key: "cashier-sessions",
+                path: "/dashboard/cashier-sessions",
+                icon: "fa-clock-rotate-left",
+                label: "Sesi Kasir",
                 roles: ["owner", "admin", "office"]
             }
         ]
@@ -165,7 +179,7 @@ const menuConfig: MenuSection[] = [
         items: [
             {
                 key: "sales-report",
-                path: "#",
+                path: "/dashboard/sales",
                 icon: "fa-chart-line",
                 label: "Laporan Penjualan",
                 roles: ["owner", "admin"]
