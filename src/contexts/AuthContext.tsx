@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react'
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { IUser, IAuthState, getRoleName } from '@afx/interfaces/auth.iface'
 import { AuthHelper } from '@afx/services/auth.service'
@@ -21,15 +21,17 @@ const kioskRoutes = ['/kiosk']
 // Therapist routes (requires therapist role)
 const therapistRoutes = ['/therapist']
 
+const initialAuthState: IAuthState = {
+    isAuthenticated: false,
+    user: null,
+    token: null,
+    loading: true
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter()
     const pathname = usePathname()
-    const [authState, setAuthState] = useState<IAuthState>({
-        isAuthenticated: false,
-        user: null,
-        token: null,
-        loading: true
-    })
+    const [authState, setAuthState] = useState<IAuthState>(initialAuthState)
     const [mounted, setMounted] = useState(false)
 
     const checkAuth = useCallback(() => {
@@ -41,23 +43,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const token = AuthHelper.getToken()
         const user = AuthHelper.getUser()
 
-        console.log('CheckAuth - Token:', !!token, 'User:', !!user) // Debug
-
-        if (token && user) {
-            setAuthState({
-                isAuthenticated: true,
-                user: user,
-                token: token,
-                loading: false
-            })
-        } else {
-            setAuthState({
-                isAuthenticated: false,
-                user: null,
-                token: null,
-                loading: false
-            })
+        if (process.env.NODE_ENV === 'development') {
+            console.log('CheckAuth - Token:', !!token, 'User:', !!user)
         }
+
+        setAuthState({
+            isAuthenticated: !!(token && user),
+            user: user || null,
+            token: token || null,
+            loading: false
+        })
     }, [])
 
     const logout = useCallback(() => {
@@ -74,6 +69,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const refreshUser = useCallback(() => {
         checkAuth()
     }, [checkAuth])
+
+    // Memoize context value to prevent unnecessary re-renders
+    const contextValue = useMemo<AuthContextType>(
+        () => ({
+            isAuthenticated: authState.isAuthenticated,
+            user: authState.user,
+            token: authState.token,
+            loading: authState.loading,
+            logout,
+            refreshUser
+        }),
+        [authState.isAuthenticated, authState.user, authState.token, authState.loading, logout, refreshUser]
+    )
 
     // Mark as mounted (client-side only)
     useEffect(() => {
@@ -104,9 +112,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!authState.isAuthenticated) {
             // Allow public routes
             if (isPublicRoute || isRootRoute) return
-            
+
             // Redirect to login for protected routes
-            console.log('Not authenticated, redirecting to login...')
+            if (process.env.NODE_ENV === 'development') {
+                console.log('Not authenticated, redirecting to login...')
+            }
             router.push('/auth/login')
             return
         }
@@ -117,21 +127,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             // Therapist accessing admin routes
             if (role === 'therapist' && isAdminRoute) {
-                console.log('Therapist accessing admin route, redirecting to therapist dashboard...')
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('Therapist accessing admin route, redirecting to therapist dashboard...')
+                }
                 router.push('/therapist/dashboard')
                 return
             }
 
             // Non-therapist accessing therapist routes
             if (role !== 'therapist' && isTherapistRoute) {
-                console.log('Non-therapist accessing therapist route, redirecting to dashboard...')
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('Non-therapist accessing therapist route, redirecting to dashboard...')
+                }
                 router.push('/dashboard')
                 return
             }
 
             // Member should not access admin or therapist routes
             if (role === 'member' && (isAdminRoute || isTherapistRoute)) {
-                console.log('Member accessing protected route, redirecting to login...')
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('Member accessing protected route, redirecting to login...')
+                }
                 AuthHelper.clearAuth()
                 router.push('/auth/login')
                 return
@@ -140,16 +156,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [authState.isAuthenticated, authState.loading, authState.user, mounted, pathname, router])
 
     // Determine if current route requires auth
-    const isProtectedRoute = !publicRoutes.some(route => pathname.startsWith(route)) 
-        && !kioskRoutes.some(route => pathname.startsWith(route))
-        && pathname !== '/'
+    const isProtectedRoute = useMemo(
+        () => !publicRoutes.some(route => pathname.startsWith(route))
+            && !kioskRoutes.some(route => pathname.startsWith(route))
+            && pathname !== '/',
+        [pathname]
+    )
 
     // Show loading spinner while checking auth OR when not authenticated on protected route (prevents flash)
     const shouldShowLoading = !mounted || authState.loading || (isProtectedRoute && !authState.isAuthenticated)
 
     if (shouldShowLoading) {
         return (
-            <AuthContext.Provider value={{ ...authState, logout, refreshUser }}>
+            <AuthContext.Provider value={contextValue}>
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -180,7 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return (
-        <AuthContext.Provider value={{ ...authState, logout, refreshUser }}>
+        <AuthContext.Provider value={contextValue}>
             {children}
         </AuthContext.Provider>
     )
@@ -192,4 +211,22 @@ export function useAuth() {
         throw new Error('useAuth must be used within an AuthProvider')
     }
     return context
+}
+
+/**
+ * Hook to get user data without causing re-renders on auth state changes
+ * Use this when you only need user information, not authentication status
+ */
+export function useUser() {
+    const { user, refreshUser } = useAuth()
+    return { user, refreshUser }
+}
+
+/**
+ * Hook to check if user is authenticated
+ * Use this for simple auth checks
+ */
+export function useIsAuthenticated() {
+    const { isAuthenticated, loading } = useAuth()
+    return { isAuthenticated, loading }
 }
