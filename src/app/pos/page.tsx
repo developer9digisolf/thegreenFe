@@ -209,6 +209,14 @@ export default function POSPage() {
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
     const [paymentAmount, setPaymentAmount] = useState("");
     const [paymentReference, setPaymentReference] = useState("");
+    const [showDiscountModal, setShowDiscountModal] = useState(false);
+    const [discountType, setDiscountType] = useState<"fixed" | "percent">("fixed");
+    const [discountValue, setDiscountValue] = useState("");
+    const [showCashMovementModal, setShowCashMovementModal] = useState(false);
+    const [cashMovementType, setCashMovementType] = useState<"in" | "out">("in");
+    const [cashMovementAmount, setCashMovementAmount] = useState("");
+    const [cashMovementReason, setCashMovementReason] = useState("");
+    const [showMobileCart, setShowMobileCart] = useState(false);
 
     // ============================================
     // HELPERS
@@ -557,13 +565,15 @@ export default function POSPage() {
                     amount: p.amount,
                     referenceNumber: p.referenceNumber
                 })),
-                amountReceived: totalPaid
+                amountReceived: totalPaid,
+                therapistId: selectedTherapist || undefined
             });
 
             if (response.success) {
                 setShowPaymentModal(false);
                 setCurrentOrder(null);
                 setSelectedMember(null);
+                setSelectedTherapist(null);
                 setPayments([]);
                 await loadPendingOrders();
                 alert("Pembayaran berhasil!");
@@ -573,6 +583,76 @@ export default function POSPage() {
         } catch (error) {
             console.error("Failed to process payment:", error);
             alert("Gagal memproses pembayaran");
+        }
+    };
+
+    const applyDiscount = async () => {
+        if (!currentOrder || !discountValue) return;
+        const value = parseFloat(discountValue);
+        if (value <= 0) return;
+
+        try {
+            const payload: Record<string, unknown> = {};
+            if (discountType === "fixed") {
+                payload.discountAmount = value;
+            } else {
+                payload.discountPercent = value;
+            }
+
+            const response = await put(rest.posOrderDiscount.replace(":id", currentOrder.id.toString()), payload);
+            if (response.success && response.data) {
+                setCurrentOrder(response.data);
+                setShowDiscountModal(false);
+                setDiscountValue("");
+            } else {
+                alert(response.message || "Gagal menerapkan diskon");
+            }
+        } catch (error) {
+            console.error("Failed to apply discount:", error);
+            alert("Gagal menerapkan diskon");
+        }
+    };
+
+    const removeDiscount = async () => {
+        if (!currentOrder) return;
+        try {
+            const response = await put(rest.posOrderDiscount.replace(":id", currentOrder.id.toString()), {
+                discountAmount: 0
+            });
+            if (response.success && response.data) {
+                setCurrentOrder(response.data);
+            }
+        } catch (error) {
+            console.error("Failed to remove discount:", error);
+        }
+    };
+
+    const submitCashMovement = async () => {
+        if (!initData?.currentSession || !cashMovementAmount || !cashMovementReason) return;
+        const amount = parseFloat(cashMovementAmount);
+        if (amount <= 0) return;
+
+        try {
+            const response = await post(
+                rest.cashierSessionMovement.replace(":id", initData.currentSession.id.toString()),
+                {
+                    movementType: cashMovementType === "in" ? 3 : 4, // CashIn=3, CashOut=4
+                    amount,
+                    reason: cashMovementReason
+                }
+            );
+            if (response.success) {
+                setShowCashMovementModal(false);
+                setCashMovementAmount("");
+                setCashMovementReason("");
+                await loadInitData();
+                alert(`Kas ${cashMovementType === "in" ? "masuk" : "keluar"} berhasil dicatat`);
+            } else {
+                alert(response.message || "Gagal mencatat pergerakan kas");
+            }
+        } catch (error) {
+            console.error("Failed to submit cash movement:", error);
+            alert("Gagal mencatat pergerakan kas");
         }
     };
 
@@ -759,6 +839,28 @@ export default function POSPage() {
                         <button className="header-btn" title="Riwayat">
                             <i className="fa-solid fa-clock-rotate-left"></i>
                         </button>
+                        {initData?.hasOpenSession && (
+                            <>
+                                <button
+                                    className="header-btn"
+                                    title="Kas Masuk"
+                                    onClick={() => { setCashMovementType("in"); setShowCashMovementModal(true); }}
+                                    style={{ color: "#059669", gap: "4px" }}
+                                >
+                                    <i className="fa-solid fa-arrow-down"></i>
+                                    <span style={{ fontSize: "11px", fontWeight: 600 }}>Kas+</span>
+                                </button>
+                                <button
+                                    className="header-btn"
+                                    title="Kas Keluar"
+                                    onClick={() => { setCashMovementType("out"); setShowCashMovementModal(true); }}
+                                    style={{ color: "#ef4444", gap: "4px" }}
+                                >
+                                    <i className="fa-solid fa-arrow-up"></i>
+                                    <span style={{ fontSize: "11px", fontWeight: 600 }}>Kas-</span>
+                                </button>
+                            </>
+                        )}
                         {initData?.hasOpenSession && (
                             <button 
                                 className="header-btn" 
@@ -1193,14 +1295,40 @@ export default function POSPage() {
                 )}
             </div>
 
+            {/* Mobile Cart Overlay */}
+            {showMobileCart && (
+                <div className="mobile-cart-overlay" onClick={() => setShowMobileCart(false)} />
+            )}
+
+            {/* Floating Cart Button (Mobile) */}
+            <button
+                className="mobile-cart-fab"
+                onClick={() => setShowMobileCart(!showMobileCart)}
+            >
+                <i className="fa-solid fa-cart-shopping"></i>
+                {currentOrder && currentOrder.items.length > 0 && (
+                    <span className="mobile-cart-badge">{currentOrder.items.length}</span>
+                )}
+            </button>
+
             {/* Cart Sidebar */}
-            <aside className="pos-sidebar">
+            <aside className={`pos-sidebar ${showMobileCart ? "open" : ""}`}>
                 <div className="cart-header">
-                    <div className="cart-title">
-                        {currentOrder ? `Order #${currentOrder.saleCode.split("-").pop()}` : "Keranjang"}
-                    </div>
-                    <div className="cart-subtitle">
-                        {currentOrder?.items.length || 0} item • {calculateTotalDuration()} menit
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                        <div>
+                            <div className="cart-title">
+                                {currentOrder ? `Order #${currentOrder.saleCode.split("-").pop()}` : "Keranjang"}
+                            </div>
+                            <div className="cart-subtitle">
+                                {currentOrder?.items.length || 0} item • {calculateTotalDuration()} menit
+                            </div>
+                        </div>
+                        <button
+                            className="mobile-cart-close"
+                            onClick={() => setShowMobileCart(false)}
+                        >
+                            <i className="fa-solid fa-xmark"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -1277,8 +1405,13 @@ export default function POSPage() {
                         <span className="summary-label">Subtotal</span>
                         <span className="summary-value">{formatCurrency(currentOrder?.subtotal || 0)}</span>
                     </div>
-                    <div className="summary-row">
-                        <span className="summary-label">Diskon</span>
+                    <div className="summary-row" style={{ cursor: currentOrder ? "pointer" : "default" }} onClick={() => currentOrder && currentOrder.items.length > 0 && setShowDiscountModal(true)}>
+                        <span className="summary-label" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            Diskon
+                            {currentOrder && currentOrder.items.length > 0 && (
+                                <i className="fa-solid fa-pen-to-square" style={{ fontSize: "10px", color: "var(--text-muted)" }}></i>
+                            )}
+                        </span>
                         <span className="summary-value" style={{ color: "var(--spa-green)" }}>
                             - {formatCurrency(currentOrder?.discountAmount || 0)}
                         </span>
@@ -1308,6 +1441,31 @@ export default function POSPage() {
                     </button>
                 </div>
             </aside>
+
+            {/* Mobile Bottom Tabs */}
+            <nav className="mobile-bottom-tabs">
+                <button
+                    className={`mobile-tab ${mode === "session" ? "active" : ""}`}
+                    onClick={() => setMode("session")}
+                >
+                    <i className="fa-solid fa-spa"></i>
+                    <span>Sesi Baru</span>
+                </button>
+                <button
+                    className={`mobile-tab ${mode === "voucher" ? "active" : ""}`}
+                    onClick={() => setMode("voucher")}
+                >
+                    <i className="fa-solid fa-ticket"></i>
+                    <span>Voucher</span>
+                </button>
+                <button
+                    className={`mobile-tab ${mode === "redeem" ? "active" : ""}`}
+                    onClick={() => setMode("redeem")}
+                >
+                    <i className="fa-solid fa-gift"></i>
+                    <span>Redeem</span>
+                </button>
+            </nav>
 
             {/* ============================================ */}
             {/* MODALS */}
@@ -1712,6 +1870,168 @@ export default function POSPage() {
                             <i className="fa-solid fa-check-circle"></i>
                             Proses Pembayaran
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Discount Modal */}
+            {showDiscountModal && currentOrder && (
+                <div className="modal-overlay" style={{
+                    position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+                    display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000
+                }}>
+                    <div className="modal-content" style={{
+                        background: "var(--bg-card)", borderRadius: "24px", padding: "32px",
+                        width: "100%", maxWidth: "400px", boxShadow: "var(--shadow-lg)"
+                    }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+                            <h2 style={{ margin: 0, fontSize: "20px" }}>Diskon Order</h2>
+                            <button onClick={() => setShowDiscountModal(false)}
+                                style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "var(--text-muted)" }}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div style={{ marginBottom: "20px" }}>
+                            <label style={{ display: "block", marginBottom: "8px", fontWeight: 600, fontSize: "13px" }}>Tipe Diskon</label>
+                            <div style={{ display: "flex", gap: "8px" }}>
+                                <button onClick={() => setDiscountType("fixed")}
+                                    style={{
+                                        flex: 1, padding: "12px", borderRadius: "10px", cursor: "pointer", fontWeight: 600, fontSize: "13px",
+                                        background: discountType === "fixed" ? "var(--spa-green-bg)" : "var(--bg-main)",
+                                        border: discountType === "fixed" ? "2px solid var(--spa-green)" : "2px solid var(--border-color)",
+                                        color: discountType === "fixed" ? "var(--spa-green)" : "var(--text-secondary)"
+                                    }}>
+                                    <i className="fa-solid fa-money-bill" style={{ marginRight: "6px" }}></i>Nominal (Rp)
+                                </button>
+                                <button onClick={() => setDiscountType("percent")}
+                                    style={{
+                                        flex: 1, padding: "12px", borderRadius: "10px", cursor: "pointer", fontWeight: 600, fontSize: "13px",
+                                        background: discountType === "percent" ? "var(--spa-green-bg)" : "var(--bg-main)",
+                                        border: discountType === "percent" ? "2px solid var(--spa-green)" : "2px solid var(--border-color)",
+                                        color: discountType === "percent" ? "var(--spa-green)" : "var(--text-secondary)"
+                                    }}>
+                                    <i className="fa-solid fa-percent" style={{ marginRight: "6px" }}></i>Persen (%)
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style={{ marginBottom: "20px" }}>
+                            <label style={{ display: "block", marginBottom: "8px", fontWeight: 600, fontSize: "13px" }}>
+                                {discountType === "fixed" ? "Jumlah Diskon (Rp)" : "Persentase Diskon (%)"}
+                            </label>
+                            <input
+                                type="number" value={discountValue}
+                                onChange={(e) => setDiscountValue(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && applyDiscount()}
+                                placeholder={discountType === "fixed" ? "10000" : "10"}
+                                className="search-input" autoFocus
+                                style={{ width: "100%", padding: "16px", fontSize: "22px", textAlign: "right", fontWeight: 700 }}
+                            />
+                            {discountType === "percent" && discountValue && (
+                                <div style={{ marginTop: "8px", fontSize: "13px", color: "var(--text-muted)", textAlign: "right" }}>
+                                    = {formatCurrency(currentOrder.subtotal * (parseFloat(discountValue) || 0) / 100)}
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={{ background: "var(--bg-main)", padding: "14px", borderRadius: "12px", marginBottom: "20px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "6px" }}>
+                                <span style={{ color: "var(--text-muted)" }}>Subtotal</span>
+                                <span>{formatCurrency(currentOrder.subtotal)}</span>
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                                <span style={{ color: "var(--text-muted)" }}>Diskon saat ini</span>
+                                <span style={{ color: "var(--spa-green)" }}>- {formatCurrency(currentOrder.discountAmount)}</span>
+                            </div>
+                        </div>
+
+                        <div style={{ display: "flex", gap: "12px" }}>
+                            {currentOrder.discountAmount > 0 && (
+                                <button className="action-btn secondary" onClick={() => { removeDiscount(); setShowDiscountModal(false); }} style={{ flex: 1 }}>
+                                    <i className="fa-solid fa-trash"></i>Hapus Diskon
+                                </button>
+                            )}
+                            <button className="action-btn primary" onClick={applyDiscount}
+                                disabled={!discountValue || parseFloat(discountValue) <= 0}
+                                style={{ flex: 1, opacity: (!discountValue || parseFloat(discountValue) <= 0) ? 0.5 : 1 }}>
+                                <i className="fa-solid fa-check"></i>Terapkan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Cash Movement Modal */}
+            {showCashMovementModal && (
+                <div className="modal-overlay" style={{
+                    position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+                    display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000
+                }}>
+                    <div className="modal-content" style={{
+                        background: "var(--bg-card)", borderRadius: "24px", padding: "32px",
+                        width: "100%", maxWidth: "400px", boxShadow: "var(--shadow-lg)"
+                    }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+                            <h2 style={{ margin: 0, fontSize: "20px" }}>
+                                {cashMovementType === "in" ? "Kas Masuk" : "Kas Keluar"}
+                            </h2>
+                            <button onClick={() => setShowCashMovementModal(false)}
+                                style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "var(--text-muted)" }}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div style={{
+                            padding: "16px", borderRadius: "14px", marginBottom: "20px", textAlign: "center",
+                            background: cashMovementType === "in" ? "#ecfdf5" : "#fef2f2"
+                        }}>
+                            <i className={`fa-solid ${cashMovementType === "in" ? "fa-arrow-down" : "fa-arrow-up"}`}
+                                style={{ fontSize: "32px", color: cashMovementType === "in" ? "#059669" : "#ef4444", marginBottom: "8px" }}></i>
+                            <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>
+                                {cashMovementType === "in"
+                                    ? "Tambah uang tunai ke laci kas"
+                                    : "Ambil uang tunai dari laci kas"}
+                            </div>
+                        </div>
+
+                        <div style={{ marginBottom: "16px" }}>
+                            <label style={{ display: "block", marginBottom: "8px", fontWeight: 600, fontSize: "13px" }}>Jumlah (Rp)</label>
+                            <input
+                                type="number" value={cashMovementAmount}
+                                onChange={(e) => setCashMovementAmount(e.target.value)}
+                                placeholder="100000" className="search-input" autoFocus
+                                style={{ width: "100%", padding: "16px", fontSize: "22px", textAlign: "right", fontWeight: 700 }}
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: "24px" }}>
+                            <label style={{ display: "block", marginBottom: "8px", fontWeight: 600, fontSize: "13px" }}>Alasan *</label>
+                            <input
+                                type="text" value={cashMovementReason}
+                                onChange={(e) => setCashMovementReason(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && submitCashMovement()}
+                                placeholder={cashMovementType === "in" ? "Contoh: Tambahan modal" : "Contoh: Setor ke bank"}
+                                className="search-input"
+                                style={{ width: "100%", padding: "14px" }}
+                            />
+                        </div>
+
+                        <div style={{ display: "flex", gap: "12px" }}>
+                            <button className="action-btn secondary" onClick={() => setShowCashMovementModal(false)} style={{ flex: 1 }}>
+                                Batal
+                            </button>
+                            <button className="action-btn primary" onClick={submitCashMovement}
+                                disabled={!cashMovementAmount || parseFloat(cashMovementAmount) <= 0 || !cashMovementReason}
+                                style={{
+                                    flex: 1,
+                                    background: cashMovementType === "in" ? "var(--spa-green)" : "#ef4444",
+                                    opacity: (!cashMovementAmount || parseFloat(cashMovementAmount) <= 0 || !cashMovementReason) ? 0.5 : 1
+                                }}>
+                                <i className={`fa-solid ${cashMovementType === "in" ? "fa-arrow-down" : "fa-arrow-up"}`}></i>
+                                {cashMovementType === "in" ? "Kas Masuk" : "Kas Keluar"}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
