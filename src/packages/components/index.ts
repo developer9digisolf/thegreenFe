@@ -93,13 +93,6 @@ export { default as ApexMixChart } from "./src/charts/apexchart/mix-chart";
 export { default as ApexPieChart } from "./src/charts/apexchart/pie-chart";
 export { default as ApexRadialChart } from "./src/charts/apexchart/radial-chart";
 
-// Chart.js
-export { default as BarChart } from "./src/charts/chart-js/bar-chart";
-export { default as DonutChart } from "./src/charts/chart-js/donut-chart";
-export { default as HorizontalBarChart } from "./src/charts/chart-js/horizontal-bar-chart";
-export { default as LineChart } from "./src/charts/chart-js/line-chart";
-export { default as PieChart } from "./src/charts/chart-js/pie-chart";
-
 // Sparkline Charts
 export { default as SparklinesBar } from "./src/charts/sparkline/bar";
 export { default as SparklinesLines } from "./src/charts/sparkline/line";

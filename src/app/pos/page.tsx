@@ -209,6 +209,16 @@ export default function POSPage() {
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
     const [paymentAmount, setPaymentAmount] = useState("");
     const [paymentReference, setPaymentReference] = useState("");
+    const [showDiscountModal, setShowDiscountModal] = useState(false);
+    const [discountType, setDiscountType] = useState<"fixed" | "percent">("fixed");
+    const [discountValue, setDiscountValue] = useState("");
+    const [showCashMovementModal, setShowCashMovementModal] = useState(false);
+    const [cashMovementType, setCashMovementType] = useState<"in" | "out">("in");
+    const [cashMovementAmount, setCashMovementAmount] = useState("");
+    const [cashMovementReason, setCashMovementReason] = useState("");
+    const [showMobileCart, setShowMobileCart] = useState(false);
+    const [serviceSearch, setServiceSearch] = useState("");
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
     // ============================================
     // HELPERS
@@ -219,6 +229,11 @@ export default function POSPage() {
             currency: "IDR",
             minimumFractionDigits: 0,
         }).format(amount).replace("IDR", "Rp");
+    };
+
+    const showToast = (message: string, type: "success" | "error" | "info" = "success") => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
     };
 
     // ============================================
@@ -265,7 +280,7 @@ export default function POSPage() {
 
     const handleOpenSession = async () => {
         if (!openingCash || parseFloat(openingCash) < 0) {
-            alert("Masukkan jumlah kas awal yang valid");
+            showToast("Masukkan jumlah kas awal yang valid", "error");
             return;
         }
         try {
@@ -277,11 +292,11 @@ export default function POSPage() {
                 setOpeningCash("");
                 await loadInitData();
             } else {
-                alert(response.message || "Gagal membuka sesi");
+                showToast(response.message || "Gagal membuka sesi", "error");
             }
         } catch (error) {
             console.error("Failed to open session:", error);
-            alert("Gagal membuka sesi");
+            showToast("Gagal membuka sesi", "error");
         }
     };
 
@@ -307,7 +322,7 @@ export default function POSPage() {
 
     const handleCloseSession = async () => {
         if (!closingCash || parseFloat(closingCash) < 0) {
-            alert("Masukkan jumlah kas akhir yang valid");
+            showToast("Masukkan jumlah kas akhir yang valid", "error");
             return;
         }
         if (!initData?.currentSession) return;
@@ -322,17 +337,17 @@ export default function POSPage() {
                 setSessionDetail(null);
                 await loadInitData();
             } else {
-                alert(response.message || "Gagal menutup sesi");
+                showToast(response.message || "Gagal menutup sesi", "error");
             }
         } catch (error) {
             console.error("Failed to close session:", error);
-            alert("Gagal menutup sesi");
+            showToast("Gagal menutup sesi", "error");
         }
     };
 
     const createNewOrder = async (saleType: number = 0): Promise<Order | null> => {
         if (!initData?.hasOpenSession) {
-            alert("Sesi kasir belum dibuka. Silakan buka sesi terlebih dahulu.");
+            showToast("Sesi kasir belum dibuka. Silakan buka sesi terlebih dahulu.", "error");
             return null;
         }
         try {
@@ -345,12 +360,12 @@ export default function POSPage() {
                 await loadPendingOrders();
                 return response.data;
             } else {
-                alert(response.message || "Gagal membuat order");
+                showToast(response.message || "Gagal membuat order", "error");
                 return null;
             }
         } catch (error) {
             console.error("Failed to create order:", error);
-            alert("Gagal membuat order");
+            showToast("Gagal membuat order", "error");
             return null;
         }
     };
@@ -394,12 +409,13 @@ export default function POSPage() {
             if (response.success && response.data) {
                 setCurrentOrder(response.data);
                 await loadPendingOrders();
+                showToast("Item ditambahkan ke keranjang");
             } else {
-                alert(response.message || "Gagal menambahkan item");
+                showToast(response.message || "Gagal menambahkan item", "error");
             }
         } catch (error) {
             console.error("Failed to add item:", error);
-            alert("Gagal menambahkan item");
+            showToast("Gagal menambahkan item", "error");
         }
     };
 
@@ -459,9 +475,11 @@ export default function POSPage() {
             if (response.success && response.data) {
                 setCurrentOrder(response.data);
                 await loadPendingOrders();
+                showToast("Item dihapus dari keranjang", "info");
             }
         } catch (error) {
             console.error("Failed to remove item:", error);
+            showToast("Gagal menghapus item", "error");
         }
     };
 
@@ -494,16 +512,18 @@ export default function POSPage() {
                 setCurrentOrder(null);
                 setSelectedMember(null);
                 await loadPendingOrders();
+                showToast("Order ditahan");
             }
         } catch (error) {
             console.error("Failed to hold order:", error);
+            showToast("Gagal menahan order", "error");
         }
     };
 
     const openPaymentModal = () => {
         console.log("[POS] openPaymentModal called", { currentOrder, itemsCount: currentOrder?.items?.length });
         if (!currentOrder || currentOrder.items.length === 0) {
-            alert("Tidak ada item dalam order");
+            showToast("Tidak ada item dalam order", "error");
             return;
         }
         console.log("[POS] Opening payment modal for order", currentOrder.saleCode, "total:", currentOrder.grandTotal);
@@ -521,7 +541,7 @@ export default function POSPage() {
         if (amount <= 0) return;
 
         if (selectedPaymentMethod.requiresReference && !paymentReference) {
-            alert(`Nomor referensi diperlukan untuk pembayaran ${selectedPaymentMethod.name}`);
+            showToast(`Nomor referensi diperlukan untuk pembayaran ${selectedPaymentMethod.name}`, "error");
             return;
         }
 
@@ -546,7 +566,7 @@ export default function POSPage() {
 
         const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
         if (totalPaid < currentOrder.grandTotal) {
-            alert(`Total pembayaran kurang dari tagihan`);
+            showToast(`Total pembayaran kurang dari tagihan`, "error");
             return;
         }
 
@@ -557,22 +577,95 @@ export default function POSPage() {
                     amount: p.amount,
                     referenceNumber: p.referenceNumber
                 })),
-                amountReceived: totalPaid
+                amountReceived: totalPaid,
+                therapistId: selectedTherapist || undefined
             });
 
             if (response.success) {
                 setShowPaymentModal(false);
                 setCurrentOrder(null);
                 setSelectedMember(null);
+                setSelectedTherapist(null);
                 setPayments([]);
                 await loadPendingOrders();
-                alert("Pembayaran berhasil!");
+                showToast("Pembayaran berhasil!");
             } else {
-                alert(response.message || "Gagal memproses pembayaran");
+                showToast(response.message || "Gagal memproses pembayaran", "error");
             }
         } catch (error) {
             console.error("Failed to process payment:", error);
-            alert("Gagal memproses pembayaran");
+            showToast("Gagal memproses pembayaran", "error");
+        }
+    };
+
+    const applyDiscount = async () => {
+        if (!currentOrder || !discountValue) return;
+        const value = parseFloat(discountValue);
+        if (value <= 0) return;
+
+        try {
+            const payload: Record<string, unknown> = {};
+            if (discountType === "fixed") {
+                payload.discountAmount = value;
+            } else {
+                payload.discountPercent = value;
+            }
+
+            const response = await put(rest.posOrderDiscount.replace(":id", currentOrder.id.toString()), payload);
+            if (response.success && response.data) {
+                setCurrentOrder(response.data);
+                setShowDiscountModal(false);
+                setDiscountValue("");
+                showToast("Diskon berhasil diterapkan");
+            } else {
+                showToast(response.message || "Gagal menerapkan diskon", "error");
+            }
+        } catch (error) {
+            console.error("Failed to apply discount:", error);
+            showToast("Gagal menerapkan diskon", "error");
+        }
+    };
+
+    const removeDiscount = async () => {
+        if (!currentOrder) return;
+        try {
+            const response = await put(rest.posOrderDiscount.replace(":id", currentOrder.id.toString()), {
+                discountAmount: 0
+            });
+            if (response.success && response.data) {
+                setCurrentOrder(response.data);
+            }
+        } catch (error) {
+            console.error("Failed to remove discount:", error);
+        }
+    };
+
+    const submitCashMovement = async () => {
+        if (!initData?.currentSession || !cashMovementAmount || !cashMovementReason) return;
+        const amount = parseFloat(cashMovementAmount);
+        if (amount <= 0) return;
+
+        try {
+            const response = await post(
+                rest.cashierSessionMovement.replace(":id", initData.currentSession.id.toString()),
+                {
+                    movementType: cashMovementType === "in" ? 3 : 4, // CashIn=3, CashOut=4
+                    amount,
+                    reason: cashMovementReason
+                }
+            );
+            if (response.success) {
+                setShowCashMovementModal(false);
+                setCashMovementAmount("");
+                setCashMovementReason("");
+                await loadInitData();
+                showToast(`Kas ${cashMovementType === "in" ? "masuk" : "keluar"} berhasil dicatat`);
+            } else {
+                showToast(response.message || "Gagal mencatat pergerakan kas", "error");
+            }
+        } catch (error) {
+            console.error("Failed to submit cash movement:", error);
+            showToast("Gagal mencatat pergerakan kas", "error");
         }
     };
 
@@ -581,11 +674,18 @@ export default function POSPage() {
     // ============================================
     const getFilteredServices = (): ServiceVariant[] => {
         if (!initData) return [];
+        let services: ServiceVariant[];
         if (selectedCategory === null) {
-            return initData.categories.flatMap(c => c.services);
+            services = initData.categories.flatMap(c => c.services);
+        } else {
+            const cat = initData.categories.find(c => c.id === selectedCategory);
+            services = cat?.services || [];
         }
-        const cat = initData.categories.find(c => c.id === selectedCategory);
-        return cat?.services || [];
+        if (serviceSearch.trim()) {
+            const q = serviceSearch.toLowerCase();
+            services = services.filter(s => s.displayName.toLowerCase().includes(q) || s.serviceName.toLowerCase().includes(q));
+        }
+        return services;
     };
 
     const calculateTotalDuration = () => currentOrder?.items.reduce((sum, item) => sum + item.duration * item.quantity, 0) || 0;
@@ -597,11 +697,27 @@ export default function POSPage() {
     // ============================================
     if (loading) {
         return (
-            <div className="pos-container" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <div style={{ textAlign: "center" }}>
-                    <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: "48px", color: "var(--spa-green)", marginBottom: "16px" }}></i>
-                    <p>Memuat data POS...</p>
+            <div className="pos-container">
+                <div className="pos-main">
+                    <div className="pos-skeleton-header" />
+                    <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+                        <div className="pos-skeleton-sidebar" />
+                        <div style={{ flex: 1, padding: "24px" }}>
+                            <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+                                {[1, 2, 3, 4, 5].map(i => <div key={i} className="pos-skeleton-chip" />)}
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "16px" }}>
+                                {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <div key={i} className="pos-skeleton-card" />)}
+                            </div>
+                        </div>
+                    </div>
                 </div>
+                <aside className="pos-sidebar">
+                    <div style={{ padding: "24px" }}>
+                        <div className="pos-skeleton-chip" style={{ width: "60%", height: "20px", marginBottom: "8px" }} />
+                        <div className="pos-skeleton-chip" style={{ width: "40%", height: "14px" }} />
+                    </div>
+                </aside>
             </div>
         );
     }
@@ -702,6 +818,14 @@ export default function POSPage() {
     // ============================================
     return (
         <div className="pos-container">
+            {/* Toast Notification */}
+            {toast && (
+                <div className={`pos-toast pos-toast-${toast.type}`}>
+                    <i className={`fa-solid ${toast.type === "success" ? "fa-check-circle" : toast.type === "error" ? "fa-exclamation-circle" : "fa-info-circle"}`}></i>
+                    <span>{toast.message}</span>
+                </div>
+            )}
+
             {/* Main Area */}
             <div className="pos-main">
                 {/* Header */}
@@ -742,7 +866,7 @@ export default function POSPage() {
                     <div className="pos-header-actions">
                         {/* Session Info */}
                         {initData?.hasOpenSession && initData.currentSession && (
-                            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginRight: "12px", fontSize: "12px" }}>
+                            <div className="session-info-badge">
                                 <span style={{ color: "var(--spa-green)", fontWeight: 600 }}>
                                     <i className="fa-solid fa-circle" style={{ fontSize: "6px", marginRight: "4px" }}></i>
                                     {initData.currentSession.sessionCode}
@@ -756,9 +880,31 @@ export default function POSPage() {
                             <i className="fa-solid fa-arrow-left"></i>
                             Backend
                         </Link>
-                        <button className="header-btn" title="Riwayat">
+                        <Link href="/dashboard/sales" className="header-btn" title="Riwayat Penjualan">
                             <i className="fa-solid fa-clock-rotate-left"></i>
-                        </button>
+                        </Link>
+                        {initData?.hasOpenSession && (
+                            <>
+                                <button
+                                    className="header-btn"
+                                    title="Kas Masuk"
+                                    onClick={() => { setCashMovementType("in"); setShowCashMovementModal(true); }}
+                                    style={{ color: "#059669", gap: "4px" }}
+                                >
+                                    <i className="fa-solid fa-arrow-down"></i>
+                                    <span style={{ fontSize: "11px", fontWeight: 600 }}>Kas+</span>
+                                </button>
+                                <button
+                                    className="header-btn"
+                                    title="Kas Keluar"
+                                    onClick={() => { setCashMovementType("out"); setShowCashMovementModal(true); }}
+                                    style={{ color: "#ef4444", gap: "4px" }}
+                                >
+                                    <i className="fa-solid fa-arrow-up"></i>
+                                    <span style={{ fontSize: "11px", fontWeight: 600 }}>Kas-</span>
+                                </button>
+                            </>
+                        )}
                         {initData?.hasOpenSession && (
                             <button 
                                 className="header-btn" 
@@ -938,13 +1084,27 @@ export default function POSPage() {
                                     )}
                                 </>
                             ) : (
-                                <div style={{ 
-                                    padding: "40px 20px", 
+                                <div style={{
+                                    padding: "32px 20px",
                                     textAlign: "center",
                                     color: "var(--text-muted)"
                                 }}>
-                                    <i className="fa-solid fa-user" style={{ fontSize: "48px", marginBottom: "16px", opacity: 0.3 }}></i>
-                                    <p style={{ fontSize: "13px" }}>Cari member atau<br/>lanjutkan sebagai guest</p>
+                                    <div style={{
+                                        width: "72px", height: "72px",
+                                        background: "var(--spa-green-bg)",
+                                        borderRadius: "50%",
+                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                        margin: "0 auto 16px",
+                                        border: "2px dashed var(--spa-green-border)"
+                                    }}>
+                                        <i className="fa-solid fa-user-plus" style={{ fontSize: "24px", color: "var(--spa-green)" }}></i>
+                                    </div>
+                                    <p style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                                        Belum ada member
+                                    </p>
+                                    <p style={{ fontSize: "12px", lineHeight: 1.5 }}>
+                                        Cari nama atau nomor HP di kotak pencarian, atau lanjutkan sebagai guest
+                                    </p>
                                 </div>
                             )}
                         </div>
@@ -953,25 +1113,54 @@ export default function POSPage() {
                     {/* Service Area - Session Mode */}
                     {mode === "session" && (
                         <div className="service-area">
-                            <div className="service-categories">
-                                <button 
-                                    className={`category-chip ${selectedCategory === null ? "active" : ""}`}
-                                    onClick={() => setSelectedCategory(null)}
-                                >
-                                    Semua
-                                </button>
-                                {initData?.categories.map(cat => (
-                                    <button 
-                                        key={cat.id}
-                                        className={`category-chip ${selectedCategory === cat.id ? "active" : ""}`}
-                                        onClick={() => setSelectedCategory(cat.id)}
+                            <div className="service-toolbar">
+                                <div className="service-search-wrapper">
+                                    <i className="fa-solid fa-magnifying-glass"></i>
+                                    <input
+                                        type="text"
+                                        className="service-search-input"
+                                        placeholder="Cari layanan..."
+                                        value={serviceSearch}
+                                        onChange={(e) => setServiceSearch(e.target.value)}
+                                        aria-label="Cari layanan"
+                                    />
+                                    {serviceSearch && (
+                                        <button className="service-search-clear" onClick={() => setServiceSearch("")}>
+                                            <i className="fa-solid fa-xmark"></i>
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="service-categories">
+                                    <button
+                                        className={`category-chip ${selectedCategory === null ? "active" : ""}`}
+                                        onClick={() => setSelectedCategory(null)}
                                     >
-                                        {cat.name}
+                                        Semua
                                     </button>
-                                ))}
+                                    {initData?.categories.map(cat => (
+                                        <button
+                                            key={cat.id}
+                                            className={`category-chip ${selectedCategory === cat.id ? "active" : ""}`}
+                                            onClick={() => setSelectedCategory(cat.id)}
+                                        >
+                                            {cat.name}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
                             <div className="service-grid-wrapper">
+                                {getFilteredServices().length === 0 && (
+                                    <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-muted)" }}>
+                                        <i className="fa-solid fa-search" style={{ fontSize: "36px", marginBottom: "16px", opacity: 0.3 }}></i>
+                                        <p style={{ fontSize: "15px", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                                            Layanan tidak ditemukan
+                                        </p>
+                                        <p style={{ fontSize: "13px" }}>
+                                            Coba kata kunci lain atau pilih kategori berbeda
+                                        </p>
+                                    </div>
+                                )}
                                 <div className="service-grid">
                                     {getFilteredServices().map((variant) => {
                                         const isInCart = currentOrder?.items.some(i => i.serviceVariantId === variant.id);
@@ -1012,6 +1201,25 @@ export default function POSPage() {
                     {mode === "voucher" && (
                         <div className="service-area">
                             <div className="service-grid-wrapper">
+                                {(!initData?.packages || initData.packages.length === 0) && (
+                                    <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-muted)" }}>
+                                        <div style={{
+                                            width: "80px", height: "80px",
+                                            background: "var(--accent-purple-light)",
+                                            borderRadius: "50%",
+                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                            margin: "0 auto 20px"
+                                        }}>
+                                            <i className="fa-solid fa-ticket" style={{ fontSize: "32px", color: "var(--accent-purple)" }}></i>
+                                        </div>
+                                        <p style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-primary)", marginBottom: "8px" }}>
+                                            Belum Ada Paket Voucher
+                                        </p>
+                                        <p style={{ fontSize: "13px", maxWidth: "320px", margin: "0 auto" }}>
+                                            Paket voucher belum dikonfigurasi. Buat paket voucher di menu pengaturan backend.
+                                        </p>
+                                    </div>
+                                )}
                                 <div className="package-grid">
                                     {initData?.packages.map((pkg, idx) => {
                                         const pkgType = idx === 0 ? "hemat" : idx === 1 ? "premium" : idx === 2 ? "vip" : "signature";
@@ -1193,14 +1401,40 @@ export default function POSPage() {
                 )}
             </div>
 
+            {/* Mobile Cart Overlay */}
+            {showMobileCart && (
+                <div className="mobile-cart-overlay" onClick={() => setShowMobileCart(false)} />
+            )}
+
+            {/* Floating Cart Button (Mobile) */}
+            <button
+                className="mobile-cart-fab"
+                onClick={() => setShowMobileCart(!showMobileCart)}
+            >
+                <i className="fa-solid fa-cart-shopping"></i>
+                {currentOrder && currentOrder.items.length > 0 && (
+                    <span className="mobile-cart-badge">{currentOrder.items.length}</span>
+                )}
+            </button>
+
             {/* Cart Sidebar */}
-            <aside className="pos-sidebar">
+            <aside className={`pos-sidebar ${showMobileCart ? "open" : ""}`}>
                 <div className="cart-header">
-                    <div className="cart-title">
-                        {currentOrder ? `Order #${currentOrder.saleCode.split("-").pop()}` : "Keranjang"}
-                    </div>
-                    <div className="cart-subtitle">
-                        {currentOrder?.items.length || 0} item • {calculateTotalDuration()} menit
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                        <div>
+                            <div className="cart-title">
+                                {currentOrder ? `Order #${currentOrder.saleCode.split("-").pop()}` : "Keranjang"}
+                            </div>
+                            <div className="cart-subtitle">
+                                {currentOrder?.items.length || 0} item • {calculateTotalDuration()} menit
+                            </div>
+                        </div>
+                        <button
+                            className="mobile-cart-close"
+                            onClick={() => setShowMobileCart(false)}
+                        >
+                            <i className="fa-solid fa-xmark"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -1277,12 +1511,19 @@ export default function POSPage() {
                         <span className="summary-label">Subtotal</span>
                         <span className="summary-value">{formatCurrency(currentOrder?.subtotal || 0)}</span>
                     </div>
-                    <div className="summary-row">
-                        <span className="summary-label">Diskon</span>
-                        <span className="summary-value" style={{ color: "var(--spa-green)" }}>
-                            - {formatCurrency(currentOrder?.discountAmount || 0)}
-                        </span>
-                    </div>
+                    {((currentOrder?.discountAmount || 0) > 0 || (currentOrder && currentOrder.items.length > 0)) && (
+                        <div className="summary-row" style={{ cursor: currentOrder ? "pointer" : "default" }} onClick={() => currentOrder && currentOrder.items.length > 0 && setShowDiscountModal(true)}>
+                            <span className="summary-label" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                Diskon
+                                {currentOrder && currentOrder.items.length > 0 && (
+                                    <i className="fa-solid fa-pen-to-square" style={{ fontSize: "10px", color: "var(--text-muted)" }}></i>
+                                )}
+                            </span>
+                            <span className="summary-value" style={{ color: (currentOrder?.discountAmount || 0) > 0 ? "var(--accent-red)" : "var(--text-muted)" }}>
+                                {(currentOrder?.discountAmount || 0) > 0 ? `- ${formatCurrency(currentOrder!.discountAmount)}` : "Tambah"}
+                            </span>
+                        </div>
+                    )}
                     <div className="summary-row total">
                         <span className="summary-label">Total</span>
                         <span className="summary-value">{formatCurrency(currentOrder?.grandTotal || 0)}</span>
@@ -1308,6 +1549,31 @@ export default function POSPage() {
                     </button>
                 </div>
             </aside>
+
+            {/* Mobile Bottom Tabs */}
+            <nav className="mobile-bottom-tabs">
+                <button
+                    className={`mobile-tab ${mode === "session" ? "active" : ""}`}
+                    onClick={() => setMode("session")}
+                >
+                    <i className="fa-solid fa-spa"></i>
+                    <span>Sesi Baru</span>
+                </button>
+                <button
+                    className={`mobile-tab ${mode === "voucher" ? "active" : ""}`}
+                    onClick={() => setMode("voucher")}
+                >
+                    <i className="fa-solid fa-ticket"></i>
+                    <span>Voucher</span>
+                </button>
+                <button
+                    className={`mobile-tab ${mode === "redeem" ? "active" : ""}`}
+                    onClick={() => setMode("redeem")}
+                >
+                    <i className="fa-solid fa-gift"></i>
+                    <span>Redeem</span>
+                </button>
+            </nav>
 
             {/* ============================================ */}
             {/* MODALS */}
@@ -1712,6 +1978,168 @@ export default function POSPage() {
                             <i className="fa-solid fa-check-circle"></i>
                             Proses Pembayaran
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Discount Modal */}
+            {showDiscountModal && currentOrder && (
+                <div className="modal-overlay" style={{
+                    position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+                    display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000
+                }}>
+                    <div className="modal-content" style={{
+                        background: "var(--bg-card)", borderRadius: "24px", padding: "32px",
+                        width: "100%", maxWidth: "400px", boxShadow: "var(--shadow-lg)"
+                    }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+                            <h2 style={{ margin: 0, fontSize: "20px" }}>Diskon Order</h2>
+                            <button onClick={() => setShowDiscountModal(false)}
+                                style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "var(--text-muted)" }}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div style={{ marginBottom: "20px" }}>
+                            <label style={{ display: "block", marginBottom: "8px", fontWeight: 600, fontSize: "13px" }}>Tipe Diskon</label>
+                            <div style={{ display: "flex", gap: "8px" }}>
+                                <button onClick={() => setDiscountType("fixed")}
+                                    style={{
+                                        flex: 1, padding: "12px", borderRadius: "10px", cursor: "pointer", fontWeight: 600, fontSize: "13px",
+                                        background: discountType === "fixed" ? "var(--spa-green-bg)" : "var(--bg-main)",
+                                        border: discountType === "fixed" ? "2px solid var(--spa-green)" : "2px solid var(--border-color)",
+                                        color: discountType === "fixed" ? "var(--spa-green)" : "var(--text-secondary)"
+                                    }}>
+                                    <i className="fa-solid fa-money-bill" style={{ marginRight: "6px" }}></i>Nominal (Rp)
+                                </button>
+                                <button onClick={() => setDiscountType("percent")}
+                                    style={{
+                                        flex: 1, padding: "12px", borderRadius: "10px", cursor: "pointer", fontWeight: 600, fontSize: "13px",
+                                        background: discountType === "percent" ? "var(--spa-green-bg)" : "var(--bg-main)",
+                                        border: discountType === "percent" ? "2px solid var(--spa-green)" : "2px solid var(--border-color)",
+                                        color: discountType === "percent" ? "var(--spa-green)" : "var(--text-secondary)"
+                                    }}>
+                                    <i className="fa-solid fa-percent" style={{ marginRight: "6px" }}></i>Persen (%)
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style={{ marginBottom: "20px" }}>
+                            <label style={{ display: "block", marginBottom: "8px", fontWeight: 600, fontSize: "13px" }}>
+                                {discountType === "fixed" ? "Jumlah Diskon (Rp)" : "Persentase Diskon (%)"}
+                            </label>
+                            <input
+                                type="number" value={discountValue}
+                                onChange={(e) => setDiscountValue(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && applyDiscount()}
+                                placeholder={discountType === "fixed" ? "10000" : "10"}
+                                className="search-input" autoFocus
+                                style={{ width: "100%", padding: "16px", fontSize: "22px", textAlign: "right", fontWeight: 700 }}
+                            />
+                            {discountType === "percent" && discountValue && (
+                                <div style={{ marginTop: "8px", fontSize: "13px", color: "var(--text-muted)", textAlign: "right" }}>
+                                    = {formatCurrency(currentOrder.subtotal * (parseFloat(discountValue) || 0) / 100)}
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={{ background: "var(--bg-main)", padding: "14px", borderRadius: "12px", marginBottom: "20px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "6px" }}>
+                                <span style={{ color: "var(--text-muted)" }}>Subtotal</span>
+                                <span>{formatCurrency(currentOrder.subtotal)}</span>
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                                <span style={{ color: "var(--text-muted)" }}>Diskon saat ini</span>
+                                <span style={{ color: "var(--spa-green)" }}>- {formatCurrency(currentOrder.discountAmount)}</span>
+                            </div>
+                        </div>
+
+                        <div style={{ display: "flex", gap: "12px" }}>
+                            {currentOrder.discountAmount > 0 && (
+                                <button className="action-btn secondary" onClick={() => { removeDiscount(); setShowDiscountModal(false); }} style={{ flex: 1 }}>
+                                    <i className="fa-solid fa-trash"></i>Hapus Diskon
+                                </button>
+                            )}
+                            <button className="action-btn primary" onClick={applyDiscount}
+                                disabled={!discountValue || parseFloat(discountValue) <= 0}
+                                style={{ flex: 1, opacity: (!discountValue || parseFloat(discountValue) <= 0) ? 0.5 : 1 }}>
+                                <i className="fa-solid fa-check"></i>Terapkan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Cash Movement Modal */}
+            {showCashMovementModal && (
+                <div className="modal-overlay" style={{
+                    position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+                    display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000
+                }}>
+                    <div className="modal-content" style={{
+                        background: "var(--bg-card)", borderRadius: "24px", padding: "32px",
+                        width: "100%", maxWidth: "400px", boxShadow: "var(--shadow-lg)"
+                    }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+                            <h2 style={{ margin: 0, fontSize: "20px" }}>
+                                {cashMovementType === "in" ? "Kas Masuk" : "Kas Keluar"}
+                            </h2>
+                            <button onClick={() => setShowCashMovementModal(false)}
+                                style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "var(--text-muted)" }}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div style={{
+                            padding: "16px", borderRadius: "14px", marginBottom: "20px", textAlign: "center",
+                            background: cashMovementType === "in" ? "#ecfdf5" : "#fef2f2"
+                        }}>
+                            <i className={`fa-solid ${cashMovementType === "in" ? "fa-arrow-down" : "fa-arrow-up"}`}
+                                style={{ fontSize: "32px", color: cashMovementType === "in" ? "#059669" : "#ef4444", marginBottom: "8px" }}></i>
+                            <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>
+                                {cashMovementType === "in"
+                                    ? "Tambah uang tunai ke laci kas"
+                                    : "Ambil uang tunai dari laci kas"}
+                            </div>
+                        </div>
+
+                        <div style={{ marginBottom: "16px" }}>
+                            <label style={{ display: "block", marginBottom: "8px", fontWeight: 600, fontSize: "13px" }}>Jumlah (Rp)</label>
+                            <input
+                                type="number" value={cashMovementAmount}
+                                onChange={(e) => setCashMovementAmount(e.target.value)}
+                                placeholder="100000" className="search-input" autoFocus
+                                style={{ width: "100%", padding: "16px", fontSize: "22px", textAlign: "right", fontWeight: 700 }}
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: "24px" }}>
+                            <label style={{ display: "block", marginBottom: "8px", fontWeight: 600, fontSize: "13px" }}>Alasan *</label>
+                            <input
+                                type="text" value={cashMovementReason}
+                                onChange={(e) => setCashMovementReason(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && submitCashMovement()}
+                                placeholder={cashMovementType === "in" ? "Contoh: Tambahan modal" : "Contoh: Setor ke bank"}
+                                className="search-input"
+                                style={{ width: "100%", padding: "14px" }}
+                            />
+                        </div>
+
+                        <div style={{ display: "flex", gap: "12px" }}>
+                            <button className="action-btn secondary" onClick={() => setShowCashMovementModal(false)} style={{ flex: 1 }}>
+                                Batal
+                            </button>
+                            <button className="action-btn primary" onClick={submitCashMovement}
+                                disabled={!cashMovementAmount || parseFloat(cashMovementAmount) <= 0 || !cashMovementReason}
+                                style={{
+                                    flex: 1,
+                                    background: cashMovementType === "in" ? "var(--spa-green)" : "#ef4444",
+                                    opacity: (!cashMovementAmount || parseFloat(cashMovementAmount) <= 0 || !cashMovementReason) ? 0.5 : 1
+                                }}>
+                                <i className={`fa-solid ${cashMovementType === "in" ? "fa-arrow-down" : "fa-arrow-up"}`}></i>
+                                {cashMovementType === "in" ? "Kas Masuk" : "Kas Keluar"}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

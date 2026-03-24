@@ -1,28 +1,40 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['antd', '@ant-design/icons', '@ant-design/icons-svg', 'rc-util', 'rc-pagination', 'rc-picker', 'rc-table', 'rc-tree', 'rc-select', 'rc-input', 'rc-field-form', 'rc-cascader', 'rc-checkbox', 'rc-collapse', 'rc-dialog', 'rc-drawer', 'rc-dropdown', 'rc-image', 'rc-menu', 'rc-motion', 'rc-notification', 'rc-progress', 'rc-rate', 'rc-resize-observer', 'rc-segmented', 'rc-slider', 'rc-steps', 'rc-switch', 'rc-tabs', 'rc-textarea', 'rc-tooltip', 'rc-tree-select', 'rc-upload', 'rc-virtual-list'],
+  // Transpile packages only when necessary (Ant Design needs this due to ES modules)
+  transpilePackages: ['@ant-design/icons'],
   compiler: {
-    removeConsole: false
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn']
+    } : false,
+    // Remove PropTypes from production build
+    removeReactProperties: true
   },
   swcMinify: true,
+  compress: true,
   eslint: {
     ignoreDuringBuilds: true
   },
-  webpack: config => {
+  webpack: (config, { isServer }) => {
+    // Optimize bundle size
     config.snapshot = {
       ...(config.snapshot ?? {}),
       managedPaths: [/^(.+?[\\/]node_modules[\\/])(?!@next)/]
     }
+
+    // Optimize moment.js locale imports (if moment is used)
+    config.resolve.alias = {
+      ...config.resolve.alias,
+    }
+
     return config
   },
   typescript: {
     ignoreBuildErrors: true
   },
   distDir: 'dist',
+  productionBrowserSourceMaps: false,
   images: {
-    domains: [
-
-    ]
+    domains: []
   },
   env: {
     STORAGE_ENCRYPTION_KEY: 'example2x0x2x3',
@@ -34,4 +46,9 @@ const nextConfig = {
   }
 }
 
-module.exports = nextConfig
+// Bundle analyzer configuration
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true'
+})
+
+module.exports = withBundleAnalyzer(nextConfig)
