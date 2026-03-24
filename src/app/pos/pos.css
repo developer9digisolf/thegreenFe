@@ -1171,6 +1171,15 @@
     background: var(--text-muted);
 }
 
+/* ========== SESSION INFO BADGE ========== */
+.session-info-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-right: 12px;
+    font-size: 12px;
+}
+
 /* ========== MOBILE ELEMENTS (hidden on desktop) ========== */
 .mobile-cart-fab,
 .mobile-cart-overlay,
@@ -1281,7 +1290,7 @@
         width: 260px;
     }
 
-    .pos-header-actions > div:first-child {
+    .session-info-badge {
         display: none;
     }
 }
@@ -1303,6 +1312,15 @@
 
     .pos-header-center {
         display: none;
+    }
+
+    .service-add-btn {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .service-search-wrapper {
+        padding: 10px 16px 0;
     }
 
     .mobile-bottom-tabs {
@@ -1434,6 +1452,25 @@
 
     .pos-header-actions {
         gap: 6px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+    }
+
+    .service-search-wrapper {
+        padding: 8px 12px 0;
+    }
+
+    .service-search-input {
+        padding: 10px 36px 10px 36px;
+        font-size: 12px;
+    }
+
+    .service-search-wrapper > i {
+        left: 24px;
+    }
+
+    .service-search-clear {
+        right: 24px;
     }
 
     .header-btn {
@@ -1664,4 +1701,153 @@
 
 .cart-empty p {
     font-size: 13px;
+}
+
+/* ========== SERVICE TOOLBAR ========== */
+.service-toolbar {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.service-search-wrapper {
+    position: relative;
+    padding: 12px 24px 0;
+}
+
+.service-search-wrapper > i {
+    position: absolute;
+    left: 38px;
+    top: 50%;
+    transform: translateY(-30%);
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.service-search-input {
+    width: 100%;
+    padding: 11px 40px 11px 40px;
+    background: var(--bg-main);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.service-search-input::placeholder {
+    color: var(--text-muted);
+}
+
+.service-search-input:focus {
+    outline: none;
+    border-color: var(--spa-green);
+    background: var(--bg-card);
+    box-shadow: 0 0 0 4px var(--spa-green-bg);
+}
+
+.service-search-clear {
+    position: absolute;
+    right: 38px;
+    top: 50%;
+    transform: translateY(-30%);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background: var(--border-color);
+    color: var(--text-secondary);
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.service-search-clear:hover {
+    background: var(--text-muted);
+    color: white;
+}
+
+/* ========== TOAST NOTIFICATION ========== */
+.pos-toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    animation: toastSlideIn 0.3s ease;
+    backdrop-filter: blur(8px);
+}
+
+.pos-toast-success {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+.pos-toast-error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.pos-toast-info {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* ========== LOADING SKELETON ========== */
+.pos-skeleton-header {
+    height: 72px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.pos-skeleton-sidebar {
+    width: 300px;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border-color);
+}
+
+.pos-skeleton-chip {
+    height: 40px;
+    width: 80px;
+    background: linear-gradient(90deg, var(--bg-main) 25%, var(--bg-card-hover) 50%, var(--bg-main) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 20px;
+}
+
+.pos-skeleton-card {
+    height: 160px;
+    background: linear-gradient(90deg, var(--bg-main) 25%, var(--bg-card-hover) 50%, var(--bg-main) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 20px;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
 }

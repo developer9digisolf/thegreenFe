@@ -217,6 +217,8 @@ export default function POSPage() {
     const [cashMovementAmount, setCashMovementAmount] = useState("");
     const [cashMovementReason, setCashMovementReason] = useState("");
     const [showMobileCart, setShowMobileCart] = useState(false);
+    const [serviceSearch, setServiceSearch] = useState("");
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
     // ============================================
     // HELPERS
@@ -227,6 +229,11 @@ export default function POSPage() {
             currency: "IDR",
             minimumFractionDigits: 0,
         }).format(amount).replace("IDR", "Rp");
+    };
+
+    const showToast = (message: string, type: "success" | "error" | "info" = "success") => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
     };
 
     // ============================================
@@ -273,7 +280,7 @@ export default function POSPage() {
 
     const handleOpenSession = async () => {
         if (!openingCash || parseFloat(openingCash) < 0) {
-            alert("Masukkan jumlah kas awal yang valid");
+            showToast("Masukkan jumlah kas awal yang valid", "error");
             return;
         }
         try {
@@ -285,11 +292,11 @@ export default function POSPage() {
                 setOpeningCash("");
                 await loadInitData();
             } else {
-                alert(response.message || "Gagal membuka sesi");
+                showToast(response.message || "Gagal membuka sesi", "error");
             }
         } catch (error) {
             console.error("Failed to open session:", error);
-            alert("Gagal membuka sesi");
+            showToast("Gagal membuka sesi", "error");
         }
     };
 
@@ -315,7 +322,7 @@ export default function POSPage() {
 
     const handleCloseSession = async () => {
         if (!closingCash || parseFloat(closingCash) < 0) {
-            alert("Masukkan jumlah kas akhir yang valid");
+            showToast("Masukkan jumlah kas akhir yang valid", "error");
             return;
         }
         if (!initData?.currentSession) return;
@@ -330,17 +337,17 @@ export default function POSPage() {
                 setSessionDetail(null);
                 await loadInitData();
             } else {
-                alert(response.message || "Gagal menutup sesi");
+                showToast(response.message || "Gagal menutup sesi", "error");
             }
         } catch (error) {
             console.error("Failed to close session:", error);
-            alert("Gagal menutup sesi");
+            showToast("Gagal menutup sesi", "error");
         }
     };
 
     const createNewOrder = async (saleType: number = 0): Promise<Order | null> => {
         if (!initData?.hasOpenSession) {
-            alert("Sesi kasir belum dibuka. Silakan buka sesi terlebih dahulu.");
+            showToast("Sesi kasir belum dibuka. Silakan buka sesi terlebih dahulu.", "error");
             return null;
         }
         try {
@@ -353,12 +360,12 @@ export default function POSPage() {
                 await loadPendingOrders();
                 return response.data;
             } else {
-                alert(response.message || "Gagal membuat order");
+                showToast(response.message || "Gagal membuat order", "error");
                 return null;
             }
         } catch (error) {
             console.error("Failed to create order:", error);
-            alert("Gagal membuat order");
+            showToast("Gagal membuat order", "error");
             return null;
         }
     };
@@ -402,12 +409,13 @@ export default function POSPage() {
             if (response.success && response.data) {
                 setCurrentOrder(response.data);
                 await loadPendingOrders();
+                showToast("Item ditambahkan ke keranjang");
             } else {
-                alert(response.message || "Gagal menambahkan item");
+                showToast(response.message || "Gagal menambahkan item", "error");
             }
         } catch (error) {
             console.error("Failed to add item:", error);
-            alert("Gagal menambahkan item");
+            showToast("Gagal menambahkan item", "error");
         }
     };
 
@@ -467,9 +475,11 @@ export default function POSPage() {
             if (response.success && response.data) {
                 setCurrentOrder(response.data);
                 await loadPendingOrders();
+                showToast("Item dihapus dari keranjang", "info");
             }
         } catch (error) {
             console.error("Failed to remove item:", error);
+            showToast("Gagal menghapus item", "error");
         }
     };
 
@@ -502,16 +512,18 @@ export default function POSPage() {
                 setCurrentOrder(null);
                 setSelectedMember(null);
                 await loadPendingOrders();
+                showToast("Order ditahan");
             }
         } catch (error) {
             console.error("Failed to hold order:", error);
+            showToast("Gagal menahan order", "error");
         }
     };
 
     const openPaymentModal = () => {
         console.log("[POS] openPaymentModal called", { currentOrder, itemsCount: currentOrder?.items?.length });
         if (!currentOrder || currentOrder.items.length === 0) {
-            alert("Tidak ada item dalam order");
+            showToast("Tidak ada item dalam order", "error");
             return;
         }
         console.log("[POS] Opening payment modal for order", currentOrder.saleCode, "total:", currentOrder.grandTotal);
@@ -529,7 +541,7 @@ export default function POSPage() {
         if (amount <= 0) return;
 
         if (selectedPaymentMethod.requiresReference && !paymentReference) {
-            alert(`Nomor referensi diperlukan untuk pembayaran ${selectedPaymentMethod.name}`);
+            showToast(`Nomor referensi diperlukan untuk pembayaran ${selectedPaymentMethod.name}`, "error");
             return;
         }
 
@@ -554,7 +566,7 @@ export default function POSPage() {
 
         const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
         if (totalPaid < currentOrder.grandTotal) {
-            alert(`Total pembayaran kurang dari tagihan`);
+            showToast(`Total pembayaran kurang dari tagihan`, "error");
             return;
         }
 
@@ -576,13 +588,13 @@ export default function POSPage() {
                 setSelectedTherapist(null);
                 setPayments([]);
                 await loadPendingOrders();
-                alert("Pembayaran berhasil!");
+                showToast("Pembayaran berhasil!");
             } else {
-                alert(response.message || "Gagal memproses pembayaran");
+                showToast(response.message || "Gagal memproses pembayaran", "error");
             }
         } catch (error) {
             console.error("Failed to process payment:", error);
-            alert("Gagal memproses pembayaran");
+            showToast("Gagal memproses pembayaran", "error");
         }
     };
 
@@ -604,12 +616,13 @@ export default function POSPage() {
                 setCurrentOrder(response.data);
                 setShowDiscountModal(false);
                 setDiscountValue("");
+                showToast("Diskon berhasil diterapkan");
             } else {
-                alert(response.message || "Gagal menerapkan diskon");
+                showToast(response.message || "Gagal menerapkan diskon", "error");
             }
         } catch (error) {
             console.error("Failed to apply discount:", error);
-            alert("Gagal menerapkan diskon");
+            showToast("Gagal menerapkan diskon", "error");
         }
     };
 
@@ -646,13 +659,13 @@ export default function POSPage() {
                 setCashMovementAmount("");
                 setCashMovementReason("");
                 await loadInitData();
-                alert(`Kas ${cashMovementType === "in" ? "masuk" : "keluar"} berhasil dicatat`);
+                showToast(`Kas ${cashMovementType === "in" ? "masuk" : "keluar"} berhasil dicatat`);
             } else {
-                alert(response.message || "Gagal mencatat pergerakan kas");
+                showToast(response.message || "Gagal mencatat pergerakan kas", "error");
             }
         } catch (error) {
             console.error("Failed to submit cash movement:", error);
-            alert("Gagal mencatat pergerakan kas");
+            showToast("Gagal mencatat pergerakan kas", "error");
         }
     };
 
@@ -661,11 +674,18 @@ export default function POSPage() {
     // ============================================
     const getFilteredServices = (): ServiceVariant[] => {
         if (!initData) return [];
+        let services: ServiceVariant[];
         if (selectedCategory === null) {
-            return initData.categories.flatMap(c => c.services);
+            services = initData.categories.flatMap(c => c.services);
+        } else {
+            const cat = initData.categories.find(c => c.id === selectedCategory);
+            services = cat?.services || [];
         }
-        const cat = initData.categories.find(c => c.id === selectedCategory);
-        return cat?.services || [];
+        if (serviceSearch.trim()) {
+            const q = serviceSearch.toLowerCase();
+            services = services.filter(s => s.displayName.toLowerCase().includes(q) || s.serviceName.toLowerCase().includes(q));
+        }
+        return services;
     };
 
     const calculateTotalDuration = () => currentOrder?.items.reduce((sum, item) => sum + item.duration * item.quantity, 0) || 0;
@@ -677,11 +697,27 @@ export default function POSPage() {
     // ============================================
     if (loading) {
         return (
-            <div className="pos-container" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <div style={{ textAlign: "center" }}>
-                    <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: "48px", color: "var(--spa-green)", marginBottom: "16px" }}></i>
-                    <p>Memuat data POS...</p>
+            <div className="pos-container">
+                <div className="pos-main">
+                    <div className="pos-skeleton-header" />
+                    <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+                        <div className="pos-skeleton-sidebar" />
+                        <div style={{ flex: 1, padding: "24px" }}>
+                            <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+                                {[1, 2, 3, 4, 5].map(i => <div key={i} className="pos-skeleton-chip" />)}
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "16px" }}>
+                                {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <div key={i} className="pos-skeleton-card" />)}
+                            </div>
+                        </div>
+                    </div>
                 </div>
+                <aside className="pos-sidebar">
+                    <div style={{ padding: "24px" }}>
+                        <div className="pos-skeleton-chip" style={{ width: "60%", height: "20px", marginBottom: "8px" }} />
+                        <div className="pos-skeleton-chip" style={{ width: "40%", height: "14px" }} />
+                    </div>
+                </aside>
             </div>
         );
     }
@@ -782,6 +818,14 @@ export default function POSPage() {
     // ============================================
     return (
         <div className="pos-container">
+            {/* Toast Notification */}
+            {toast && (
+                <div className={`pos-toast pos-toast-${toast.type}`}>
+                    <i className={`fa-solid ${toast.type === "success" ? "fa-check-circle" : toast.type === "error" ? "fa-exclamation-circle" : "fa-info-circle"}`}></i>
+                    <span>{toast.message}</span>
+                </div>
+            )}
+
             {/* Main Area */}
             <div className="pos-main">
                 {/* Header */}
@@ -822,7 +866,7 @@ export default function POSPage() {
                     <div className="pos-header-actions">
                         {/* Session Info */}
                         {initData?.hasOpenSession && initData.currentSession && (
-                            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginRight: "12px", fontSize: "12px" }}>
+                            <div className="session-info-badge">
                                 <span style={{ color: "var(--spa-green)", fontWeight: 600 }}>
                                     <i className="fa-solid fa-circle" style={{ fontSize: "6px", marginRight: "4px" }}></i>
                                     {initData.currentSession.sessionCode}
@@ -836,9 +880,9 @@ export default function POSPage() {
                             <i className="fa-solid fa-arrow-left"></i>
                             Backend
                         </Link>
-                        <button className="header-btn" title="Riwayat">
+                        <Link href="/dashboard/sales" className="header-btn" title="Riwayat Penjualan">
                             <i className="fa-solid fa-clock-rotate-left"></i>
-                        </button>
+                        </Link>
                         {initData?.hasOpenSession && (
                             <>
                                 <button
@@ -1040,13 +1084,27 @@ export default function POSPage() {
                                     )}
                                 </>
                             ) : (
-                                <div style={{ 
-                                    padding: "40px 20px", 
+                                <div style={{
+                                    padding: "32px 20px",
                                     textAlign: "center",
                                     color: "var(--text-muted)"
                                 }}>
-                                    <i className="fa-solid fa-user" style={{ fontSize: "48px", marginBottom: "16px", opacity: 0.3 }}></i>
-                                    <p style={{ fontSize: "13px" }}>Cari member atau<br/>lanjutkan sebagai guest</p>
+                                    <div style={{
+                                        width: "72px", height: "72px",
+                                        background: "var(--spa-green-bg)",
+                                        borderRadius: "50%",
+                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                        margin: "0 auto 16px",
+                                        border: "2px dashed var(--spa-green-border)"
+                                    }}>
+                                        <i className="fa-solid fa-user-plus" style={{ fontSize: "24px", color: "var(--spa-green)" }}></i>
+                                    </div>
+                                    <p style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                                        Belum ada member
+                                    </p>
+                                    <p style={{ fontSize: "12px", lineHeight: 1.5 }}>
+                                        Cari nama atau nomor HP di kotak pencarian, atau lanjutkan sebagai guest
+                                    </p>
                                 </div>
                             )}
                         </div>
@@ -1055,25 +1113,54 @@ export default function POSPage() {
                     {/* Service Area - Session Mode */}
                     {mode === "session" && (
                         <div className="service-area">
-                            <div className="service-categories">
-                                <button 
-                                    className={`category-chip ${selectedCategory === null ? "active" : ""}`}
-                                    onClick={() => setSelectedCategory(null)}
-                                >
-                                    Semua
-                                </button>
-                                {initData?.categories.map(cat => (
-                                    <button 
-                                        key={cat.id}
-                                        className={`category-chip ${selectedCategory === cat.id ? "active" : ""}`}
-                                        onClick={() => setSelectedCategory(cat.id)}
+                            <div className="service-toolbar">
+                                <div className="service-search-wrapper">
+                                    <i className="fa-solid fa-magnifying-glass"></i>
+                                    <input
+                                        type="text"
+                                        className="service-search-input"
+                                        placeholder="Cari layanan..."
+                                        value={serviceSearch}
+                                        onChange={(e) => setServiceSearch(e.target.value)}
+                                        aria-label="Cari layanan"
+                                    />
+                                    {serviceSearch && (
+                                        <button className="service-search-clear" onClick={() => setServiceSearch("")}>
+                                            <i className="fa-solid fa-xmark"></i>
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="service-categories">
+                                    <button
+                                        className={`category-chip ${selectedCategory === null ? "active" : ""}`}
+                                        onClick={() => setSelectedCategory(null)}
                                     >
-                                        {cat.name}
+                                        Semua
                                     </button>
-                                ))}
+                                    {initData?.categories.map(cat => (
+                                        <button
+                                            key={cat.id}
+                                            className={`category-chip ${selectedCategory === cat.id ? "active" : ""}`}
+                                            onClick={() => setSelectedCategory(cat.id)}
+                                        >
+                                            {cat.name}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
                             <div className="service-grid-wrapper">
+                                {getFilteredServices().length === 0 && (
+                                    <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-muted)" }}>
+                                        <i className="fa-solid fa-search" style={{ fontSize: "36px", marginBottom: "16px", opacity: 0.3 }}></i>
+                                        <p style={{ fontSize: "15px", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                                            Layanan tidak ditemukan
+                                        </p>
+                                        <p style={{ fontSize: "13px" }}>
+                                            Coba kata kunci lain atau pilih kategori berbeda
+                                        </p>
+                                    </div>
+                                )}
                                 <div className="service-grid">
                                     {getFilteredServices().map((variant) => {
                                         const isInCart = currentOrder?.items.some(i => i.serviceVariantId === variant.id);
@@ -1114,6 +1201,25 @@ export default function POSPage() {
                     {mode === "voucher" && (
                         <div className="service-area">
                             <div className="service-grid-wrapper">
+                                {(!initData?.packages || initData.packages.length === 0) && (
+                                    <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-muted)" }}>
+                                        <div style={{
+                                            width: "80px", height: "80px",
+                                            background: "var(--accent-purple-light)",
+                                            borderRadius: "50%",
+                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                            margin: "0 auto 20px"
+                                        }}>
+                                            <i className="fa-solid fa-ticket" style={{ fontSize: "32px", color: "var(--accent-purple)" }}></i>
+                                        </div>
+                                        <p style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-primary)", marginBottom: "8px" }}>
+                                            Belum Ada Paket Voucher
+                                        </p>
+                                        <p style={{ fontSize: "13px", maxWidth: "320px", margin: "0 auto" }}>
+                                            Paket voucher belum dikonfigurasi. Buat paket voucher di menu pengaturan backend.
+                                        </p>
+                                    </div>
+                                )}
                                 <div className="package-grid">
                                     {initData?.packages.map((pkg, idx) => {
                                         const pkgType = idx === 0 ? "hemat" : idx === 1 ? "premium" : idx === 2 ? "vip" : "signature";
@@ -1405,17 +1511,19 @@ export default function POSPage() {
                         <span className="summary-label">Subtotal</span>
                         <span className="summary-value">{formatCurrency(currentOrder?.subtotal || 0)}</span>
                     </div>
-                    <div className="summary-row" style={{ cursor: currentOrder ? "pointer" : "default" }} onClick={() => currentOrder && currentOrder.items.length > 0 && setShowDiscountModal(true)}>
-                        <span className="summary-label" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                            Diskon
-                            {currentOrder && currentOrder.items.length > 0 && (
-                                <i className="fa-solid fa-pen-to-square" style={{ fontSize: "10px", color: "var(--text-muted)" }}></i>
-                            )}
-                        </span>
-                        <span className="summary-value" style={{ color: "var(--spa-green)" }}>
-                            - {formatCurrency(currentOrder?.discountAmount || 0)}
-                        </span>
-                    </div>
+                    {((currentOrder?.discountAmount || 0) > 0 || (currentOrder && currentOrder.items.length > 0)) && (
+                        <div className="summary-row" style={{ cursor: currentOrder ? "pointer" : "default" }} onClick={() => currentOrder && currentOrder.items.length > 0 && setShowDiscountModal(true)}>
+                            <span className="summary-label" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                Diskon
+                                {currentOrder && currentOrder.items.length > 0 && (
+                                    <i className="fa-solid fa-pen-to-square" style={{ fontSize: "10px", color: "var(--text-muted)" }}></i>
+                                )}
+                            </span>
+                            <span className="summary-value" style={{ color: (currentOrder?.discountAmount || 0) > 0 ? "var(--accent-red)" : "var(--text-muted)" }}>
+                                {(currentOrder?.discountAmount || 0) > 0 ? `- ${formatCurrency(currentOrder!.discountAmount)}` : "Tambah"}
+                            </span>
+                        </div>
+                    )}
                     <div className="summary-row total">
                         <span className="summary-label">Total</span>
                         <span className="summary-value">{formatCurrency(currentOrder?.grandTotal || 0)}</span>
