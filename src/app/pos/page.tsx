@@ -880,7 +880,7 @@ export default function POSPage() {
                             <i className="fa-solid fa-arrow-left"></i>
                             Backend
                         </Link>
-                        <Link href="/dashboard/sales" className="header-btn" title="Riwayat Penjualan">
+                        <Link href="/dashboard/sales" className="header-btn" title="Riwayat Penjualan" aria-label="Riwayat Penjualan">
                             <i className="fa-solid fa-clock-rotate-left"></i>
                         </Link>
                         {initData?.hasOpenSession && (
@@ -935,6 +935,7 @@ export default function POSPage() {
                                         type="text" 
                                         className="search-input" 
                                         placeholder="Cari member..." 
+                                        aria-label="Cari member"
                                         value={memberSearch}
                                         onChange={(e) => {
                                             setMemberSearch(e.target.value);
@@ -944,7 +945,7 @@ export default function POSPage() {
                                         onFocus={() => setShowMemberDropdown(true)}
                                     />
                                 </div>
-                                <button className="btn-add-member" title="Tambah Member Baru">
+                                <button className="btn-add-member" title="Tambah Member Baru" aria-label="Tambah Member Baru">
                                     <i className="fa-solid fa-plus"></i>
                                 </button>
                             </div>
@@ -1125,7 +1126,7 @@ export default function POSPage() {
                                         aria-label="Cari layanan"
                                     />
                                     {serviceSearch && (
-                                        <button className="service-search-clear" onClick={() => setServiceSearch("")}>
+                                        <button className="service-search-clear" onClick={() => setServiceSearch("")} aria-label="Hapus Pencarian">
                                             <i className="fa-solid fa-xmark"></i>
                                         </button>
                                     )}
@@ -1177,6 +1178,14 @@ export default function POSPage() {
                                                 key={variant.id}
                                                 className={`service-item ${serviceType} ${isInCart ? "selected" : ""}`}
                                                 onClick={() => addServiceToCart(variant)}
+                                                role="button"
+                                                tabIndex={0}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        e.preventDefault();
+                                                        addServiceToCart(variant);
+                                                    }
+                                                }}
                                             >
                                                 <div className="service-icon">
                                                     <i className={`fa-solid ${variant.icon || "fa-spa"}`}></i>
@@ -1186,7 +1195,7 @@ export default function POSPage() {
                                                     <span><i className="fa-regular fa-clock"></i> {variant.duration} min</span>
                                                 </div>
                                                 <div className="service-price">{formatCurrency(variant.price)}</div>
-                                                <button className="service-add-btn" onClick={(e) => { e.stopPropagation(); addServiceToCart(variant); }}>
+                                                <button className="service-add-btn" onClick={(e) => { e.stopPropagation(); addServiceToCart(variant); }} aria-label="Tambah ke Keranjang">
                                                     <i className="fa-solid fa-plus"></i>
                                                 </button>
                                             </div>
@@ -1228,6 +1237,14 @@ export default function POSPage() {
                                                 key={pkg.id}
                                                 className={`package-card ${pkgType} ${selectedPackage === pkg.id ? "selected" : ""}`}
                                                 onClick={() => addPackageToCart(pkg)}
+                                                role="button"
+                                                tabIndex={0}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        e.preventDefault();
+                                                        addPackageToCart(pkg);
+                                                    }
+                                                }}
                                             >
                                                 {pkg.savings && pkg.savings > 0 && (
                                                     <div className="package-badge">
@@ -1450,7 +1467,7 @@ export default function POSPage() {
                             <div key={item.id} className="cart-item">
                                 <div className="cart-item-header">
                                     <span className="cart-item-name">{item.itemName}</span>
-                                    <button className="cart-item-remove" onClick={() => removeItem(item.id)}>
+                                    <button className="cart-item-remove" onClick={() => removeItem(item.id)} aria-label="Hapus Item">
                                         <i className="fa-solid fa-xmark"></i>
                                     </button>
                                 </div>
@@ -1459,11 +1476,11 @@ export default function POSPage() {
                                         {item.duration > 0 ? `${item.duration} menit` : item.itemDescription}
                                     </span>
                                     <div className="cart-item-qty">
-                                        <button className="qty-btn" onClick={() => updateItemQuantity(item.id, -1)}>
+                                        <button className="qty-btn" onClick={() => updateItemQuantity(item.id, -1)} aria-label="Kurangi Jumlah">
                                             <i className="fa-solid fa-minus"></i>
                                         </button>
                                         <span className="qty-value">{item.quantity}</span>
-                                        <button className="qty-btn" onClick={() => updateItemQuantity(item.id, 1)}>
+                                        <button className="qty-btn" onClick={() => updateItemQuantity(item.id, 1)} aria-label="Tambah Jumlah">
                                             <i className="fa-solid fa-plus"></i>
                                         </button>
                                     </div>
