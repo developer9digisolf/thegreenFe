@@ -1,0 +1,3 @@
+## 2025-05-15 - [Consistent Asynchronous State in POS Systems]
+**Learning:** High-consequence interfaces like POS systems require strict visual and functional feedback for asynchronous operations (e.g., saving, processing payments) to prevent duplicate submissions and user anxiety. A unified `isProcessing` (or `saving`) state across all critical action buttons ensures a predictable and safe interaction model.
+**Action:** Always implement a dedicated processing state for async handlers and use it to disable triggers, update button text, and provide accessible loading indicators (`aria-busy`, spinners).
