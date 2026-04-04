@@ -202,6 +202,7 @@ export default function POSPage() {
     const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
     const [sessionDetail, setSessionDetail] = useState<any>(null);
     const [loadingSessionDetail, setLoadingSessionDetail] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [openingCash, setOpeningCash] = useState("");
     const [closingCash, setClosingCash] = useState("");
@@ -283,6 +284,7 @@ export default function POSPage() {
             showToast("Masukkan jumlah kas awal yang valid", "error");
             return;
         }
+        setIsProcessing(true);
         try {
             const response = await post(rest.cashierSessionOpen, {
                 openingCash: parseFloat(openingCash)
@@ -297,6 +299,8 @@ export default function POSPage() {
         } catch (error) {
             console.error("Failed to open session:", error);
             showToast("Gagal membuka sesi", "error");
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -327,6 +331,7 @@ export default function POSPage() {
         }
         if (!initData?.currentSession) return;
 
+        setIsProcessing(true);
         try {
             const response = await post(rest.cashierSessionClose.replace(":id", initData.currentSession.id.toString()), {
                 actualClosingCash: parseFloat(closingCash)
@@ -342,6 +347,8 @@ export default function POSPage() {
         } catch (error) {
             console.error("Failed to close session:", error);
             showToast("Gagal menutup sesi", "error");
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -506,6 +513,7 @@ export default function POSPage() {
     const holdOrder = async () => {
         if (!currentOrder) return;
 
+        setIsProcessing(true);
         try {
             const response = await post(rest.posOrderHold.replace(":id", currentOrder.id.toString()), {});
             if (response.success) {
@@ -517,6 +525,8 @@ export default function POSPage() {
         } catch (error) {
             console.error("Failed to hold order:", error);
             showToast("Gagal menahan order", "error");
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -570,6 +580,7 @@ export default function POSPage() {
             return;
         }
 
+        setIsProcessing(true);
         try {
             const response = await post(rest.posOrderPay.replace(":id", currentOrder.id.toString()), {
                 payments: payments.map(p => ({
@@ -595,6 +606,8 @@ export default function POSPage() {
         } catch (error) {
             console.error("Failed to process payment:", error);
             showToast("Gagal memproses pembayaran", "error");
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -803,9 +816,11 @@ export default function POSPage() {
                             className="action-btn primary"
                             onClick={handleOpenSession}
                             style={{ flex: 1 }}
+                            disabled={isProcessing}
+                            aria-busy={isProcessing}
                         >
-                            <i className="fa-solid fa-play"></i>
-                            Mulai Sesi
+                            <i className={`fa-solid ${isProcessing ? 'fa-spinner fa-spin' : 'fa-play'}`}></i>
+                            {isProcessing ? 'Memproses...' : 'Mulai Sesi'}
                         </button>
                     </div>
                 </div>
@@ -1533,9 +1548,14 @@ export default function POSPage() {
                 {/* Actions */}
                 <div className="cart-actions">
                     {currentOrder && currentOrder.items.length > 0 && (
-                        <button className="action-btn secondary" onClick={holdOrder}>
-                            <i className="fa-solid fa-pause"></i>
-                            Hold
+                        <button
+                            className="action-btn secondary"
+                            onClick={holdOrder}
+                            disabled={isProcessing}
+                            aria-busy={isProcessing}
+                        >
+                            <i className={`fa-solid ${isProcessing ? 'fa-spinner fa-spin' : 'fa-pause'}`}></i>
+                            {isProcessing ? 'Memproses...' : 'Hold'}
                         </button>
                     )}
                     <button 
@@ -1770,9 +1790,11 @@ export default function POSPage() {
                                         className="action-btn primary"
                                         onClick={handleCloseSession}
                                         style={{ flex: 1, background: "var(--accent-red)" }}
+                                        disabled={isProcessing}
+                                        aria-busy={isProcessing}
                                     >
-                                        <i className="fa-solid fa-power-off"></i>
-                                        Tutup Sesi
+                                        <i className={`fa-solid ${isProcessing ? 'fa-spinner fa-spin' : 'fa-power-off'}`}></i>
+                                        {isProcessing ? 'Memproses...' : 'Tutup Sesi'}
                                     </button>
                                 </div>
                             </>
@@ -1967,16 +1989,17 @@ export default function POSPage() {
                         <button 
                             className="action-btn primary" 
                             onClick={processPayment}
-                            disabled={payments.length === 0 || payments.reduce((sum, p) => sum + p.amount, 0) < currentOrder.grandTotal}
+                            disabled={isProcessing || payments.length === 0 || payments.reduce((sum, p) => sum + p.amount, 0) < currentOrder.grandTotal}
+                            aria-busy={isProcessing}
                             style={{ 
                                 width: "100%", 
                                 padding: "18px",
                                 fontSize: "16px",
-                                opacity: (payments.length === 0 || payments.reduce((sum, p) => sum + p.amount, 0) < currentOrder.grandTotal) ? 0.5 : 1 
+                                opacity: (isProcessing || payments.length === 0 || payments.reduce((sum, p) => sum + p.amount, 0) < currentOrder.grandTotal) ? 0.5 : 1
                             }}
                         >
-                            <i className="fa-solid fa-check-circle"></i>
-                            Proses Pembayaran
+                            <i className={`fa-solid ${isProcessing ? 'fa-spinner fa-spin' : 'fa-check-circle'}`}></i>
+                            {isProcessing ? 'Memproses...' : 'Proses Pembayaran'}
                         </button>
                     </div>
                 </div>
