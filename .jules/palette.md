@@ -1,3 +1,7 @@
-## 2025-05-15 - [Consistent Asynchronous State in POS Systems]
-**Learning:** High-consequence interfaces like POS systems require strict visual and functional feedback for asynchronous operations (e.g., saving, processing payments) to prevent duplicate submissions and user anxiety. A unified `isProcessing` (or `saving`) state across all critical action buttons ensures a predictable and safe interaction model.
-**Action:** Always implement a dedicated processing state for async handlers and use it to disable triggers, update button text, and provide accessible loading indicators (`aria-busy`, spinners).
+## 2025-05-15 - [Keyboard Accessibility for Div-based Buttons]
+**Learning:** In complex POS interfaces where interactive elements are implemented as styled `div`s (e.g., service items or package cards), adding `role="button"`, `tabIndex={0}`, and an `onKeyDown` handler (for Enter/Space) is a necessary pattern to ensure full keyboard accessibility.
+**Action:** Always check for `onClick` handlers on non-interactive elements and supplement them with the ARIA role and keyboard event listeners.
+
+## 2025-05-15 - [Focus Visibility in Custom Themes]
+**Learning:** Custom UI themes often override default browser focus states. Explicitly defining `*:focus-visible` ensures that keyboard users have clear visual feedback without affecting mouse users' experience.
+**Action:** Include a global `focus-visible` style when working with custom-styled design systems that lack clear focus indicators.
