@@ -115,7 +115,7 @@ export const rest = {
 
   master: {
     index: "master/companies",
-    show: "master/companies/ID",
+    show: "master/companies/:ID",
     create: "master/companies",
     update: "master/companies/:ID",
     delete: "master/companies/:ID",

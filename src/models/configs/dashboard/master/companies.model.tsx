@@ -63,12 +63,9 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
       async getCompany(id) {
         try {
           const res = await GetCompanyServie(id);
-          notification.success({
-            message: "Success",
-            description: "success",
-            duration: 2,
-            key: "FUNC-GET_DETAIL_COMPANIES",
-          });
+          if (res?.meta?.code === 20000) {
+            put({ company: res?.data });
+          }
         } catch (err: any) {
           notification.warning({
             message: "Failed to load data",
@@ -81,13 +78,15 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
       async createCompany(data, callback) {
         try {
           const res = await CreateCompanyServie(data);
+          callback(res?.meta?.code);
           notification.success({
             message: "Success",
-            description: "success",
+            description: res?.message,
             duration: 2,
             key: "FUNC-CREATE_COMPANIES",
           });
         } catch (err: any) {
+          callback(402);
           notification.warning({
             message: "Failed to load data",
             description: err?.meta?.message,
@@ -99,13 +98,15 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
       async updateCompany(id, data, callback) {
         try {
           const res = await UpdateCompanyServie(id, data);
+          callback(res?.meta?.code);
           notification.success({
             message: "Success",
-            description: "success",
+            description: res?.message,
             duration: 2,
             key: "FUNC-UPDATE_COMPANIES",
           });
         } catch (err: any) {
+          callback(402);
           notification.warning({
             message: "Failed to load data",
             description: err?.meta?.message,
@@ -117,13 +118,15 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
       async deleteCompany(id, callback) {
         try {
           const res = await DeleteCompanyServie(id);
+          callback(res?.meta?.code);
           notification.success({
             message: "Success",
-            description: "success",
+            description: res?.message,
             duration: 2,
             key: "FUNC-DELETE_COMPANIES",
           });
         } catch (err: any) {
+          callback(402);
           notification.warning({
             message: "Failed to load data",
             description: err?.meta?.message,
