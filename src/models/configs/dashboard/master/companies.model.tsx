@@ -48,14 +48,9 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
       async getCompanies(data) {
         try {
           const res = await GetCompaniesServie(data);
-          console.log({ res });
-
-          notification.success({
-            message: "Success",
-            description: "success",
-            duration: 2,
-            key: "FUNC-GET_COMPANIES",
-          });
+          if (res?.meta.code === 20000) {
+            put({ companies: res?.data, pageInfo: res?.pagination });
+          }
         } catch (err: any) {
           notification.warning({
             message: "Failed to load data",
