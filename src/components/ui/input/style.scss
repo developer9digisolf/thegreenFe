@@ -1,0 +1,331 @@
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type='number'] {
+  text-align: left;
+  -moz-appearance: textfield;
+}
+
+.ant-input-affix-wrapper {
+  &.ant-input-affix-wrapper-focused {
+    border-color: #2191fb !important;
+  }
+}
+
+.ant-input-filled {
+  background-color: #fafafa !important;
+
+  &.ant-input-disabled {
+    background-color: #efefef !important;
+    border: none !important;
+  }
+}
+
+.ant-input-affix-wrapper-filled {
+  background-color: #fafafa !important;
+  border: none !important;
+
+  .ant-input {
+    background-color: transparent !important;
+  }
+}
+
+// LIGHT MODE - InputNumber
+.ant-input-number-filled {
+  background-color: #fafafa !important;
+  border: 1px solid transparent !important;
+  transition: all 0.3s ease !important;
+
+  .ant-input-number-input-wrap {
+    background-color: transparent !important;
+    
+    input {
+      text-align: left;
+      background-color: transparent !important;
+      color: #000000 !important;
+      -webkit-text-fill-color: #000000 !important;
+    }
+  }
+
+  &:hover:not(.ant-input-number-disabled) {
+    border-color: #51b15c !important;
+    box-shadow: 0 0 0 1px rgba(33, 145, 251, 0.1) !important;
+  }
+
+  &.ant-input-number-focused:not(.ant-input-number-disabled) {
+    border-color: #51b15c !important;
+    box-shadow: 0 0 0 2px rgba(33, 145, 251, 0.2) !important;
+    outline: none !important;
+  }
+
+  &.ant-input-number-disabled {
+    background-color: #efefef !important;
+    border: none !important;
+    color: rgba(0, 0, 0, 0.25) !important;
+
+    .ant-input-number-input {
+      color: rgba(0, 0, 0, 0.25) !important;
+      -webkit-text-fill-color: rgba(0, 0, 0, 0.25) !important;
+    }
+  }
+
+  .ant-input-number-handler-wrap {
+    background: transparent !important;
+    border-left: 1px solid #d9d9d9 !important;
+
+    .ant-input-number-handler {
+      &:hover {
+        .ant-input-number-handler-up-inner,
+        .ant-input-number-handler-down-inner {
+          color: #51b15c !important;
+        }
+      }
+    }
+  }
+}
+
+.ant-input-number-affix-wrapper-filled {
+  background-color: #fafafa !important;
+  border: 1px solid transparent !important;
+  transition: all 0.3s ease !important;
+
+  .ant-input-number {
+    background-color: transparent !important;
+    
+    .ant-input-number-input {
+      color: #000000 !important;
+      -webkit-text-fill-color: #000000 !important;
+    }
+  }
+
+  &:hover:not(.ant-input-number-affix-wrapper-disabled) {
+    border-color: #51b15c !important;
+    box-shadow: 0 0 0 1px rgba(33, 145, 251, 0.1) !important;
+  }
+
+  &.ant-input-number-affix-wrapper-focused:not(.ant-input-number-affix-wrapper-disabled) {
+    border-color: #51b15c !important;
+    box-shadow: 0 0 0 2px rgba(33, 145, 251, 0.2) !important;
+    outline: none !important;
+  }
+
+  &.ant-input-number-affix-wrapper-disabled {
+    background-color: #efefef !important;
+    border: none !important;
+
+    .ant-input-number-disabled {
+      background-color: transparent !important;
+    }
+  }
+
+  &.ant-input-number-affix-wrapper-status-error {
+    border-color: #ff4d4f !important;
+
+    &:hover {
+      border-color: #ff7875 !important;
+    }
+
+    &.ant-input-number-affix-wrapper-focused {
+      box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.2) !important;
+    }
+  }
+}
+
+.ant-input-number-large.ant-input-number-filled {
+  padding: 8px 11px;
+}
+
+.ant-input-number-small.ant-input-number-filled {
+  padding: 0px 7px;
+}
+
+// Group Addon - Light Mode
+.ant-input-number-group-addon,
+.ant-input-number-group-wrapper .ant-input-number-group .ant-input-number-group-addon {
+  background-color: #fafafa !important;
+  border: none !important;
+  border-right: none !important;
+  color: #353535 !important;
+
+  &:first-child {
+    border-right: none !important;
+  }
+}
+
+.ant-input-number-group {
+  .ant-input-number-group-addon + .ant-input-number {
+    border-left: none !important;
+  }
+}
+
+.ant-input-number-group:hover:not(.ant-input-number-disabled) {
+  .ant-input-number-group-addon,
+  .ant-input-number {
+    background-color: #fafafa !important;
+  }
+}
+
+.ant-input-number-disabled {
+  background-color: #efefef !important;
+
+  & + .ant-input-number-group-addon,
+  .ant-input-number-group-addon {
+    background-color: #efefef !important;
+    color: rgba(0, 0, 0, 0.25) !important;
+  }
+}
+
+.ant-input-number-group-wrapper-disabled {
+  .ant-input-number-group-addon {
+    background-color: #efefef !important;
+    color: rgba(0, 0, 0, 0.25) !important;
+  }
+
+  .ant-input-number-disabled {
+    background-color: #efefef !important;
+  }
+}
+
+.ant-input-number-focused .ant-input-number-group-addon,
+.ant-input-number-group-wrapper-focused .ant-input-number-group-addon {
+  background-color: #fafafa !important;
+}
+
+:where(.css-dev-only-do-not-override-1kxkgjb).ant-input-number-outlined.ant-input-number-disabled input[disabled] {
+  z-index: 0;
+}
+
+// ==========================================
+// DARK MODE SUPPORT
+// ==========================================
+.dark,
+[data-theme='dark'],
+body.dark-mode {
+  
+  // Input Number Filled - Dark Mode
+  .ant-input-number-filled {
+    background-color: #141414 !important;
+    border: 1px solid #434343 !important;
+
+    .ant-input-number-input-wrap {
+      input {
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        
+        &::placeholder {
+          color: #595959 !important;
+        }
+      }
+    }
+
+    &:hover:not(.ant-input-number-disabled) {
+      border-color: #177ddc !important;
+      box-shadow: 0 0 0 1px rgba(23, 125, 220, 0.1) !important;
+    }
+
+    &.ant-input-number-focused:not(.ant-input-number-disabled) {
+      border-color: #177ddc !important;
+      box-shadow: 0 0 0 2px rgba(23, 125, 220, 0.2) !important;
+    }
+
+    &.ant-input-number-disabled {
+      background-color: #2a2a2a !important;
+      border-color: #2a2a2a !important;
+
+      .ant-input-number-input {
+        color: rgba(255, 255, 255, 0.3) !important;
+        -webkit-text-fill-color: rgba(255, 255, 255, 0.3) !important;
+      }
+    }
+
+    .ant-input-number-handler-wrap {
+      border-left: 1px solid #434343 !important;
+
+      .ant-input-number-handler {
+        &:hover {
+          .ant-input-number-handler-up-inner,
+          .ant-input-number-handler-down-inner {
+            color: #177ddc !important;
+          }
+        }
+      }
+    }
+  }
+
+  // Input Number Affix Wrapper - Dark Mode
+  .ant-input-number-affix-wrapper-filled {
+    background-color: #2a2a2a !important;
+    border: 1px solid #434343 !important;
+
+    .ant-input-number {
+      .ant-input-number-input {
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+      }
+    }
+
+    .ant-input-number-prefix {
+      color: #ffffff !important;
+    }
+
+    &:hover:not(.ant-input-number-affix-wrapper-disabled) {
+      border-color: #177ddc !important;
+      box-shadow: 0 0 0 1px rgba(23, 125, 220, 0.1) !important;
+    }
+
+    &.ant-input-number-affix-wrapper-focused:not(.ant-input-number-affix-wrapper-disabled) {
+      border-color: #177ddc !important;
+      box-shadow: 0 0 0 2px rgba(23, 125, 220, 0.2) !important;
+    }
+
+    &.ant-input-number-affix-wrapper-disabled {
+      background-color: #2a2a2a !important;
+      border-color: #2a2a2a !important;
+    }
+  }
+
+  // Group Addon - Dark Mode
+  .ant-input-number-group-addon,
+  .ant-input-number-group-wrapper .ant-input-number-group .ant-input-number-group-addon {
+    background-color: #2a2a2a !important;
+    border: 1px solid #434343 !important;
+    color: #ffffff !important;
+  }
+
+  .ant-input-number-group:hover:not(.ant-input-number-disabled) {
+    .ant-input-number-group-addon {
+      background-color: #2a2a2a !important;
+    }
+  }
+
+  .ant-input-number-disabled {
+    background-color: #2a2a2a !important;
+
+    & + .ant-input-number-group-addon,
+    .ant-input-number-group-addon {
+      background-color: #2a2a2a !important;
+      color: rgba(255, 255, 255, 0.3) !important;
+    }
+  }
+
+  .ant-input-number-group-wrapper-disabled {
+    .ant-input-number-group-addon {
+      background-color: #2a2a2a !important;
+      color: rgba(255, 255, 255, 0.3) !important;
+    }
+
+    .ant-input-number-disabled {
+      background-color: #2a2a2a !important;
+    }
+  }
+
+  .ant-input-number-focused .ant-input-number-group-addon,
+  .ant-input-number-group-wrapper-focused .ant-input-number-group-addon {
+    background-color: #2a2a2a !important;
+  }
+}
