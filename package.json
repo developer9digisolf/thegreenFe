@@ -28,6 +28,7 @@
     "leaflet": "^1.9.4",
     "next": "14.2.32",
     "react": "^18",
+    "lucide-react": "^0.553.0",
     "react-apexcharts": "^1.9.0",
     "react-data-table-component": "^7.7.0",
     "react-dom": "^18",
@@ -44,7 +45,9 @@
     "tinycolor2": "^1.6.0",
     "zustand": "^4.4.1",
     "html5-qrcode": "^2.3.8",
-    "qrcode": "^1.5.3"
+    "qrcode": "^1.5.3",
+    "lodash": "^4.17.21",
+    "lodash.debounce": "^4.0.8"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^14.2.32",
@@ -63,6 +66,8 @@
     "postcss": "^8",
     "sass": "^1.66.1",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@types/lodash": "^4.17.20",
+    "@types/lodash.debounce": "^4.0.9"
   }
 }

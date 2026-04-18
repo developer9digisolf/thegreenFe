@@ -1,54 +1,65 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Transpile packages only when necessary (Ant Design needs this due to ES modules)
-  transpilePackages: ['@ant-design/icons'],
+  transpilePackages: [
+    "@ant-design/icons",
+    "rc-util",
+    "rc-pagination",
+    "rc-picker",
+    "rc-tree",
+    "rc-menu",
+    "rc-tooltip",
+    "rc-table",
+    "rc-virtual-list",
+  ],
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production' ? {
-      exclude: ['error', 'warn']
-    } : false,
-    // Remove PropTypes from production build
-    removeReactProperties: true
+    removeConsole:
+      process.env.NODE_ENV === "production" ?
+        {
+          exclude: ["error", "warn"],
+        }
+      : false,
   },
   swcMinify: true,
   compress: true,
   eslint: {
-    ignoreDuringBuilds: true
+    ignoreDuringBuilds: true,
   },
   webpack: (config, { isServer }) => {
     // Optimize bundle size
     config.snapshot = {
       ...(config.snapshot ?? {}),
-      managedPaths: [/^(.+?[\\/]node_modules[\\/])(?!@next)/]
-    }
+      managedPaths: [/^(.+?[\\/]node_modules[\\/])(?!@next)/],
+    };
 
     // Optimize moment.js locale imports (if moment is used)
     config.resolve.alias = {
       ...config.resolve.alias,
-    }
+    };
 
-    return config
+    return config;
   },
   typescript: {
-    ignoreBuildErrors: true
+    ignoreBuildErrors: true,
   },
-  distDir: 'dist',
+  distDir: "dist",
   productionBrowserSourceMaps: false,
   images: {
-    domains: []
+    domains: [],
   },
   env: {
-    STORAGE_ENCRYPTION_KEY: 'example2x0x2x3',
-    ENCRYPTION_PREF_KEY: 'xxlSIOACC2733cjsjhaj',
-    BASEURL: 'http://localhost:5100/api/',
+    STORAGE_ENCRYPTION_KEY: "example2x0x2x3",
+    ENCRYPTION_PREF_KEY: "xxlSIOACC2733cjsjhaj",
+    BASEURL: "http://localhost:5100/api/",
   },
   async rewrites() {
-    return {}
-  }
-}
+    return {};
+  },
+};
 
 // Bundle analyzer configuration
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
-  enabled: process.env.ANALYZE === 'true'
-})
+const withBundleAnalyzer = require("@next/bundle-analyzer")({
+  enabled: process.env.ANALYZE === "true",
+});
 
-module.exports = withBundleAnalyzer(nextConfig)
+module.exports = withBundleAnalyzer(nextConfig);
