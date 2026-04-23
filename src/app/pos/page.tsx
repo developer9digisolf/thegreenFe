@@ -202,6 +202,7 @@ export default function POSPage() {
     const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
     const [sessionDetail, setSessionDetail] = useState<any>(null);
     const [loadingSessionDetail, setLoadingSessionDetail] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [openingCash, setOpeningCash] = useState("");
     const [closingCash, setClosingCash] = useState("");
@@ -283,6 +284,7 @@ export default function POSPage() {
             showToast("Masukkan jumlah kas awal yang valid", "error");
             return;
         }
+        setIsProcessing(true);
         try {
             const response = await post(rest.cashierSessionOpen, {
                 openingCash: parseFloat(openingCash)
@@ -297,6 +299,8 @@ export default function POSPage() {
         } catch (error) {
             console.error("Failed to open session:", error);
             showToast("Gagal membuka sesi", "error");
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -327,6 +331,7 @@ export default function POSPage() {
         }
         if (!initData?.currentSession) return;
 
+        setIsProcessing(true);
         try {
             const response = await post(rest.cashierSessionClose.replace(":id", initData.currentSession.id.toString()), {
                 actualClosingCash: parseFloat(closingCash)
@@ -342,6 +347,8 @@ export default function POSPage() {
         } catch (error) {
             console.error("Failed to close session:", error);
             showToast("Gagal menutup sesi", "error");
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -506,6 +513,7 @@ export default function POSPage() {
     const holdOrder = async () => {
         if (!currentOrder) return;
 
+        setIsProcessing(true);
         try {
             const response = await post(rest.posOrderHold.replace(":id", currentOrder.id.toString()), {});
             if (response.success) {
@@ -517,6 +525,8 @@ export default function POSPage() {
         } catch (error) {
             console.error("Failed to hold order:", error);
             showToast("Gagal menahan order", "error");
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -570,6 +580,7 @@ export default function POSPage() {
             return;
         }
 
+        setIsProcessing(true);
         try {
             const response = await post(rest.posOrderPay.replace(":id", currentOrder.id.toString()), {
                 payments: payments.map(p => ({
@@ -595,6 +606,8 @@ export default function POSPage() {
         } catch (error) {
             console.error("Failed to process payment:", error);
             showToast("Gagal memproses pembayaran", "error");
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -803,9 +816,11 @@ export default function POSPage() {
                             className="action-btn primary"
                             onClick={handleOpenSession}
                             style={{ flex: 1 }}
+                            disabled={isProcessing}
+                            aria-busy={isProcessing}
                         >
-                            <i className="fa-solid fa-play"></i>
-                            Mulai Sesi
+                            <i className={`fa-solid ${isProcessing ? 'fa-spinner fa-spin' : 'fa-play'}`}></i>
+                            {isProcessing ? 'Memproses...' : 'Mulai Sesi'}
                         </button>
                     </div>
                 </div>
@@ -880,7 +895,7 @@ export default function POSPage() {
                             <i className="fa-solid fa-arrow-left"></i>
                             Backend
                         </Link>
-                        <Link href="/dashboard/sales" className="header-btn" title="Riwayat Penjualan">
+                        <Link href="/dashboard/sales" className="header-btn" title="Riwayat Penjualan" aria-label="Riwayat Penjualan">
                             <i className="fa-solid fa-clock-rotate-left"></i>
                         </Link>
                         {initData?.hasOpenSession && (
@@ -935,6 +950,7 @@ export default function POSPage() {
                                         type="text" 
                                         className="search-input" 
                                         placeholder="Cari member..." 
+                                        aria-label="Cari member"
                                         value={memberSearch}
                                         onChange={(e) => {
                                             setMemberSearch(e.target.value);
@@ -944,7 +960,7 @@ export default function POSPage() {
                                         onFocus={() => setShowMemberDropdown(true)}
                                     />
                                 </div>
-                                <button className="btn-add-member" title="Tambah Member Baru">
+                                <button className="btn-add-member" title="Tambah Member Baru" aria-label="Tambah Member Baru">
                                     <i className="fa-solid fa-plus"></i>
                                 </button>
                             </div>
@@ -1125,7 +1141,7 @@ export default function POSPage() {
                                         aria-label="Cari layanan"
                                     />
                                     {serviceSearch && (
-                                        <button className="service-search-clear" onClick={() => setServiceSearch("")}>
+                                        <button className="service-search-clear" onClick={() => setServiceSearch("")} aria-label="Hapus Pencarian">
                                             <i className="fa-solid fa-xmark"></i>
                                         </button>
                                     )}
@@ -1177,6 +1193,14 @@ export default function POSPage() {
                                                 key={variant.id}
                                                 className={`service-item ${serviceType} ${isInCart ? "selected" : ""}`}
                                                 onClick={() => addServiceToCart(variant)}
+                                                role="button"
+                                                tabIndex={0}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        e.preventDefault();
+                                                        addServiceToCart(variant);
+                                                    }
+                                                }}
                                             >
                                                 <div className="service-icon">
                                                     <i className={`fa-solid ${variant.icon || "fa-spa"}`}></i>
@@ -1186,7 +1210,7 @@ export default function POSPage() {
                                                     <span><i className="fa-regular fa-clock"></i> {variant.duration} min</span>
                                                 </div>
                                                 <div className="service-price">{formatCurrency(variant.price)}</div>
-                                                <button className="service-add-btn" onClick={(e) => { e.stopPropagation(); addServiceToCart(variant); }}>
+                                                <button className="service-add-btn" onClick={(e) => { e.stopPropagation(); addServiceToCart(variant); }} aria-label="Tambah ke Keranjang">
                                                     <i className="fa-solid fa-plus"></i>
                                                 </button>
                                             </div>
@@ -1228,6 +1252,14 @@ export default function POSPage() {
                                                 key={pkg.id}
                                                 className={`package-card ${pkgType} ${selectedPackage === pkg.id ? "selected" : ""}`}
                                                 onClick={() => addPackageToCart(pkg)}
+                                                role="button"
+                                                tabIndex={0}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        e.preventDefault();
+                                                        addPackageToCart(pkg);
+                                                    }
+                                                }}
                                             >
                                                 {pkg.savings && pkg.savings > 0 && (
                                                     <div className="package-badge">
@@ -1450,7 +1482,7 @@ export default function POSPage() {
                             <div key={item.id} className="cart-item">
                                 <div className="cart-item-header">
                                     <span className="cart-item-name">{item.itemName}</span>
-                                    <button className="cart-item-remove" onClick={() => removeItem(item.id)}>
+                                    <button className="cart-item-remove" onClick={() => removeItem(item.id)} aria-label="Hapus Item">
                                         <i className="fa-solid fa-xmark"></i>
                                     </button>
                                 </div>
@@ -1459,11 +1491,11 @@ export default function POSPage() {
                                         {item.duration > 0 ? `${item.duration} menit` : item.itemDescription}
                                     </span>
                                     <div className="cart-item-qty">
-                                        <button className="qty-btn" onClick={() => updateItemQuantity(item.id, -1)}>
+                                        <button className="qty-btn" onClick={() => updateItemQuantity(item.id, -1)} aria-label="Kurangi Jumlah">
                                             <i className="fa-solid fa-minus"></i>
                                         </button>
                                         <span className="qty-value">{item.quantity}</span>
-                                        <button className="qty-btn" onClick={() => updateItemQuantity(item.id, 1)}>
+                                        <button className="qty-btn" onClick={() => updateItemQuantity(item.id, 1)} aria-label="Tambah Jumlah">
                                             <i className="fa-solid fa-plus"></i>
                                         </button>
                                     </div>
@@ -1533,9 +1565,14 @@ export default function POSPage() {
                 {/* Actions */}
                 <div className="cart-actions">
                     {currentOrder && currentOrder.items.length > 0 && (
-                        <button className="action-btn secondary" onClick={holdOrder}>
-                            <i className="fa-solid fa-pause"></i>
-                            Hold
+                        <button
+                            className="action-btn secondary"
+                            onClick={holdOrder}
+                            disabled={isProcessing}
+                            aria-busy={isProcessing}
+                        >
+                            <i className={`fa-solid ${isProcessing ? 'fa-spinner fa-spin' : 'fa-pause'}`}></i>
+                            {isProcessing ? 'Memproses...' : 'Hold'}
                         </button>
                     )}
                     <button 
@@ -1770,9 +1807,11 @@ export default function POSPage() {
                                         className="action-btn primary"
                                         onClick={handleCloseSession}
                                         style={{ flex: 1, background: "var(--accent-red)" }}
+                                        disabled={isProcessing}
+                                        aria-busy={isProcessing}
                                     >
-                                        <i className="fa-solid fa-power-off"></i>
-                                        Tutup Sesi
+                                        <i className={`fa-solid ${isProcessing ? 'fa-spinner fa-spin' : 'fa-power-off'}`}></i>
+                                        {isProcessing ? 'Memproses...' : 'Tutup Sesi'}
                                     </button>
                                 </div>
                             </>
@@ -1967,16 +2006,17 @@ export default function POSPage() {
                         <button 
                             className="action-btn primary" 
                             onClick={processPayment}
-                            disabled={payments.length === 0 || payments.reduce((sum, p) => sum + p.amount, 0) < currentOrder.grandTotal}
+                            disabled={isProcessing || payments.length === 0 || payments.reduce((sum, p) => sum + p.amount, 0) < currentOrder.grandTotal}
+                            aria-busy={isProcessing}
                             style={{ 
                                 width: "100%", 
                                 padding: "18px",
                                 fontSize: "16px",
-                                opacity: (payments.length === 0 || payments.reduce((sum, p) => sum + p.amount, 0) < currentOrder.grandTotal) ? 0.5 : 1 
+                                opacity: (isProcessing || payments.length === 0 || payments.reduce((sum, p) => sum + p.amount, 0) < currentOrder.grandTotal) ? 0.5 : 1
                             }}
                         >
-                            <i className="fa-solid fa-check-circle"></i>
-                            Proses Pembayaran
+                            <i className={`fa-solid ${isProcessing ? 'fa-spinner fa-spin' : 'fa-check-circle'}`}></i>
+                            {isProcessing ? 'Memproses...' : 'Proses Pembayaran'}
                         </button>
                     </div>
                 </div>

@@ -1,115 +1,123 @@
 export const rest = {
-    // Auth (Admin)
-    authLogin: "auth/login",
-    authRegister: "auth/register",
-    authMe: "auth/me",
-    authValidate: "auth/validate",
-    authLogout: "auth/logout",
+  // Auth (Admin)
+  authLogin: "auth/login",
+  authRegister: "auth/register",
+  authMe: "auth/me",
+  authValidate: "auth/validate",
+  authLogout: "auth/logout",
 
-    // Therapist Auth (Portal Terapis)
-    therapistAuthLogin: "therapist-auth/login",
-    therapistAuthLogout: "therapist-auth/logout",
-    therapistAuthProfile: "therapist-auth/profile",
-    therapistAuthQRToken: "therapist-auth/qr-token",
-    therapistAuthVerifyQR: "therapist-auth/verify-qr",
-    therapistAuthStatus: "therapist-auth/status",
-    therapistAuthCheckOut: "therapist-auth/check-out",
-    therapistAuthAttendance: "therapist-auth/attendance",
+  // Therapist Auth (Portal Terapis)
+  therapistAuthLogin: "therapist-auth/login",
+  therapistAuthLogout: "therapist-auth/logout",
+  therapistAuthProfile: "therapist-auth/profile",
+  therapistAuthQRToken: "therapist-auth/qr-token",
+  therapistAuthVerifyQR: "therapist-auth/verify-qr",
+  therapistAuthStatus: "therapist-auth/status",
+  therapistAuthCheckOut: "therapist-auth/check-out",
+  therapistAuthAttendance: "therapist-auth/attendance",
 
-    // Service Categories
-    serviceCategory: "service-categories",
-    serviceCategoryActive: "service-categories/active",
-    serviceCategoryCheckName: "service-categories/check-name",
-    serviceCategoryDetail: "service-categories/:id",
-    serviceCategoryWithServices: "service-categories/:id/services",
+  // Service Categories
+  serviceCategory: "service-categories",
+  serviceCategoryActive: "service-categories/active",
+  serviceCategoryCheckName: "service-categories/check-name",
+  serviceCategoryDetail: "service-categories/:id",
+  serviceCategoryWithServices: "service-categories/:id/services",
 
-    // Services
-    service: "services",
-    serviceActive: "services/active",
-    serviceDetail: "services/:id",
-    serviceDetailFull: "services/:id/detail",
-    serviceByCategory: "services/category/:categoryId",
+  // Services
+  service: "services",
+  serviceActive: "services/active",
+  serviceDetail: "services/:id",
+  serviceDetailFull: "services/:id/detail",
+  serviceByCategory: "services/category/:categoryId",
 
-    // Service Variants
-    serviceVariants: "services/variants",
-    serviceVariantsByService: "services/:serviceId/variants",
-    serviceVariantDetail: "services/variants/:variantId",
+  // Service Variants
+  serviceVariants: "services/variants",
+  serviceVariantsByService: "services/:serviceId/variants",
+  serviceVariantDetail: "services/variants/:variantId",
 
-    // Packages (Voucher)
-    package: "packages",
-    packageActive: "packages/active",
-    packageDetail: "packages/:id",
-    packageCheckName: "packages/check-name",
+  // Packages (Voucher)
+  package: "packages",
+  packageActive: "packages/active",
+  packageDetail: "packages/:id",
+  packageCheckName: "packages/check-name",
 
-    // Credit Packages
-    creditPackage: "credit-packages",
-    creditPackageActive: "credit-packages/active",
-    creditPackageDetail: "credit-packages/:id",
-    creditPackageCheckName: "credit-packages/check-name",
+  // Credit Packages
+  creditPackage: "credit-packages",
+  creditPackageActive: "credit-packages/active",
+  creditPackageDetail: "credit-packages/:id",
+  creditPackageCheckName: "credit-packages/check-name",
 
-    // Members
-    member: "members",
-    memberActive: "members/active",
-    memberDetail: "members/:id",
-    memberDetailFull: "members/:id/detail",
-    memberCheckPhone: "members/check-phone",
-    memberCheckEmail: "members/check-email",
+  // Members
+  member: "members",
+  memberActive: "members/active",
+  memberDetail: "members/:id",
+  memberDetailFull: "members/:id/detail",
+  memberCheckPhone: "members/check-phone",
+  memberCheckEmail: "members/check-email",
 
-    // Therapists
-    therapist: "therapists",
-    therapistActive: "therapists/active",
-    therapistAvailable: "therapists/available",
-    therapistDetail: "therapists/:id",
-    therapistDetailFull: "therapists/:id/detail",
-    therapistCheckPhone: "therapists/check-phone",
+  // Therapists
+  therapist: "therapists",
+  therapistActive: "therapists/active",
+  therapistAvailable: "therapists/available",
+  therapistDetail: "therapists/:id",
+  therapistDetailFull: "therapists/:id/detail",
+  therapistCheckPhone: "therapists/check-phone",
 
-    // Rooms
-    room: "rooms",
-    roomActive: "rooms/active",
-    roomAvailable: "rooms/available",
-    roomDetail: "rooms/:id",
-    roomDetailFull: "rooms/:id/detail",
-    roomCheckName: "rooms/check-name",
+  // Rooms
+  room: "rooms",
+  roomActive: "rooms/active",
+  roomAvailable: "rooms/available",
+  roomDetail: "rooms/:id",
+  roomDetailFull: "rooms/:id/detail",
+  roomCheckName: "rooms/check-name",
 
-    // Payment Methods
-    paymentMethod: "payment-methods",
-    paymentMethodActive: "payment-methods/active",
-    paymentMethodDetail: "payment-methods/:id",
-    paymentMethodByCode: "payment-methods/code/:code",
-    paymentMethodCheckCode: "payment-methods/check-code",
+  // Payment Methods
+  paymentMethod: "payment-methods",
+  paymentMethodActive: "payment-methods/active",
+  paymentMethodDetail: "payment-methods/:id",
+  paymentMethodByCode: "payment-methods/code/:code",
+  paymentMethodCheckCode: "payment-methods/check-code",
 
-    // Cashier Sessions
-    cashierSession: "cashier-sessions",
-    cashierSessionDetail: "cashier-sessions/:id",
-    cashierSessionDetailFull: "cashier-sessions/:id/detail",
-    cashierSessionCurrent: "cashier-sessions/current",
-    cashierSessionMySession: "cashier-sessions/my-session",
-    cashierSessionHasOpen: "cashier-sessions/has-open-session",
-    cashierSessionOpen: "cashier-sessions/open",
-    cashierSessionClose: "cashier-sessions/:id/close",
-    cashierSessionMovement: "cashier-sessions/:id/movements",
-    cashierSessionBalance: "cashier-sessions/:id/balance",
+  // Cashier Sessions
+  cashierSession: "cashier-sessions",
+  cashierSessionDetail: "cashier-sessions/:id",
+  cashierSessionDetailFull: "cashier-sessions/:id/detail",
+  cashierSessionCurrent: "cashier-sessions/current",
+  cashierSessionMySession: "cashier-sessions/my-session",
+  cashierSessionHasOpen: "cashier-sessions/has-open-session",
+  cashierSessionOpen: "cashier-sessions/open",
+  cashierSessionClose: "cashier-sessions/:id/close",
+  cashierSessionMovement: "cashier-sessions/:id/movements",
+  cashierSessionBalance: "cashier-sessions/:id/balance",
 
-    // POS
-    posInit: "pos/init",
-    posOrders: "pos/orders",
-    posOrdersPending: "pos/orders/pending",
-    posOrderDetail: "pos/orders/:id",
-    posOrderItems: "pos/orders/:id/items",
-    posOrderItem: "pos/orders/:id/items/:itemId",
-    posOrderMember: "pos/orders/:id/member",
-    posOrderDiscount: "pos/orders/:id/discount",
-    posOrderPay: "pos/orders/:id/pay",
-    posOrderHold: "pos/orders/:id/hold",
-    posOrderCancel: "pos/orders/:id",
+  // POS
+  posInit: "pos/init",
+  posOrders: "pos/orders",
+  posOrdersPending: "pos/orders/pending",
+  posOrderDetail: "pos/orders/:id",
+  posOrderItems: "pos/orders/:id/items",
+  posOrderItem: "pos/orders/:id/items/:itemId",
+  posOrderMember: "pos/orders/:id/member",
+  posOrderDiscount: "pos/orders/:id/discount",
+  posOrderPay: "pos/orders/:id/pay",
+  posOrderHold: "pos/orders/:id/hold",
+  posOrderCancel: "pos/orders/:id",
 
-    // Bookings (Admin)
-    booking: "bookings",
-    bookingSummary: "bookings/summary",
-    bookingDetail: "bookings/:id",
+  // Bookings (Admin)
+  booking: "bookings",
+  bookingSummary: "bookings/summary",
+  bookingDetail: "bookings/:id",
 
-    // Sales
-    sales: "sales",
-    salesSummary: "sales/summary",
-    salesDetail: "sales/:id",
-}
+  // Sales
+  sales: "sales",
+  salesSummary: "sales/summary",
+  salesDetail: "sales/:id",
+
+  master: {
+    index: "master/companies",
+    show: "master/companies/:ID",
+    create: "master/companies",
+    update: "master/companies/:ID",
+    delete: "master/companies/:ID",
+  },
+};

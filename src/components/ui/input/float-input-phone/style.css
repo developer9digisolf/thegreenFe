@@ -1,0 +1,78 @@
+.float-label {
+  position: relative;
+  font-size: 11px;
+}
+
+.label {
+  font-weight: normal;
+  position: absolute;
+  pointer-events: none;
+  left: 12px;
+  font-size: 11px;
+  top: 30%;
+  transition: 0.2s ease all;
+}
+
+/* .label.as-label */
+.label.as-label {
+  position: absolute;
+  top: -25%;
+  color: #ed47bf;
+  font-size: 12px !important;
+  background: white;
+  padding: 0 4px;
+  margin-left: -4px;
+}
+
+/* .label.text-float */
+.label.text-float {
+  left: var(--lfloat);
+}
+
+/* .label.text-float.as-label */
+.label.text-float.as-label {
+  left: 12px;
+}
+
+/* .label.as-placeholder */
+.label.as-placeholder {
+  color: gray;
+}
+
+/* .float-input:focus */
+.float-input:focus {
+  border-color: #ed47bf;
+}
+
+.react-international-phone-flag-emoji {
+  width: var(--react-international-phone-flag-width, 14px) !important;
+  height: var(--react-international-phone-flag-height, 14px) !important;
+  box-sizing: border-box;
+}
+
+.important-z-index {
+  z-index: 1 !important;
+}
+
+.bg-button-country {
+  box-shadow: 0px 0px 6px 0px #00000014;
+}
+
+.react-international-phone-country-selector-button__dropdown-arrow {
+  margin-left: 18px;
+}
+
+.custom-drawer {
+  position: sticky !important;
+  top: -0.5px !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  justify-content: center !important;
+  flex-direction: column !important;
+  min-height: 20px !important;
+  margin-bottom: -1px !important;
+  padding-bottom: 15px !important;
+  font-weight: 600;
+  font-size: 16px;
+  background: #ffffff !important;
+}
