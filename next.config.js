@@ -16,8 +16,8 @@ const nextConfig = {
     removeConsole:
       process.env.NODE_ENV === "production"
         ? {
-            exclude: ["error", "warn"],
-          }
+          exclude: ["error", "warn"],
+        }
         : false,
   },
   compress: true,
@@ -31,15 +31,16 @@ const nextConfig = {
     domains: [],
   },
   env: {
-    STORAGE_ENCRYPTION_KEY: "example2x0x2x3",
-    ENCRYPTION_PREF_KEY: "xxlSIOACC2733cjsjhaj",
-    BASEURL: process.env.NEXT_PUBLIC_BASEURL,
+    STORAGE_ENCRYPTION_KEY: process.env.STORAGE_ENCRYPTION_KEY || "example2x0x2x3",
+    ENCRYPTION_PREF_KEY: process.env.ENCRYPTION_PREF_KEY || "xxlSIOACC2733cjsjhaj",
+    BASEURL: process.env.NEXT_PUBLIC_BASEURL || "/api/",
   },
+  // Di next.config.js
   async rewrites() {
     return [
       {
         source: "/api/:path*",
-        destination: "https://green-api-staging.digisolf.com/api/:path*",
+        destination: `${process.env.API_DESTINATION || "https://green-api-staging.digisolf.com"}/api/:path*`,
       },
     ];
   },
