@@ -1,4 +1,4 @@
-import { GenderType, GenderMap } from './member.iface';
+import { type GenderType, GenderMap } from './member.iface';
 
 export type QueueStatus = 'Offline' | 'Available' | 'Busy' | 'Break' | number;
 
@@ -17,7 +17,8 @@ export function getQueueStatusName(status: QueueStatus | null | undefined): stri
     return status;
 }
 
-export { GenderType, GenderMap };
+export type { GenderType };
+export { GenderMap };
 
 export interface ITherapist {
     id: number;

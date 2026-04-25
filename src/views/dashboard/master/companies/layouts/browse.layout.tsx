@@ -130,6 +130,8 @@ export function BrowseCompany(props: IPropsCompany & { handleEdit: (id: number) 
     }
   };
 
+  const subColumns: Column[] = columns.filter(col => col.key !== 'actions');
+
   return (
     <>
       <div className="flex items-start justify-between">
@@ -170,6 +172,8 @@ export function BrowseCompany(props: IPropsCompany & { handleEdit: (id: number) 
         searchText={props?.searchText}
         setSearchText={props?.setSearchText}
         searchPlaceholder="Cari perusahaan..."
+        fetchDetails={async (record) => record.childCompanies || []}
+        subColumns={subColumns}
       />
 
       {deleteModal.open && (
