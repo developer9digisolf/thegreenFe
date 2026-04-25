@@ -25,7 +25,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  distDir: "dist",
   productionBrowserSourceMaps: false,
   images: {
     domains: [],
