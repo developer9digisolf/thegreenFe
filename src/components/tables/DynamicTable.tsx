@@ -15,6 +15,8 @@ import {
   ArrowUpDown,
   Filter,
   LayoutGrid,
+  Search,
+  X
 } from "lucide-react";
 import { debounce } from "lodash";
 
@@ -91,6 +93,8 @@ export interface DynamicTableProps {
   searchable?: boolean;
   onSearch?: (term: string) => void;
   searchPlaceholder?: string;
+  searchText?: string;
+  setSearchText?: (val: string) => void;
   filters?: React.JSX.Element | null;
 }
 
@@ -973,9 +977,14 @@ export function UseDynamicTable({
   searchPlaceholder,
   searchable = true,
   onSearch,
+  searchText,
+  setSearchText,
   filters = null,
 }: DynamicTableProps) {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [localSearchTerm, setLocalSearchTerm] = useState("");
+  
+  const searchTerm = searchText !== undefined ? searchText : localSearchTerm;
+  const setTerm = setSearchText !== undefined ? setSearchText : setLocalSearchTerm;
 
   // Filter isCurrency pada kolom utama
   const permittedColumns = useMemo(
@@ -1088,29 +1097,9 @@ export function UseDynamicTable({
 
   const appliedValues = filterValues ?? emptyFilterValues(filterConfig);
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    submitSearch(value);
+  const handleManualSearch = () => {
+    onSearch?.(searchTerm);
   };
-
-  const onSearchRef = useRef(onSearch);
-  useEffect(() => {
-    onSearchRef.current = onSearch;
-  }, [onSearch]);
-
-  const submitSearch = useMemo(
-    () =>
-      debounce((value: string) => {
-        onSearchRef.current?.(value);
-      }, 1500),
-    [],
-  );
-
-  useEffect(() => {
-    return () => {
-      submitSearch.cancel?.();
-    };
-  }, [submitSearch]);
 
   return (
     <div className="bg-white min-h-[600px] rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -1118,15 +1107,38 @@ export function UseDynamicTable({
       <div className="flex items-center flex-wrap gap-2 justify-between px-6 py-4 border-b border-gray-200">
         <div className="flex items-center gap-3">
           {searchable && (
-            <div className="relative">
-              <input
-                type="text"
-                className="form-input min-w-[400px] w-full sm:w-auto ltr:pl-9 rtl:pr-9"
-                placeholder={searchPlaceholder}
-                value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
-              />
-              <i className="fa-solid fa-magnifying-glass"></i>
+            <div className="flex items-center gap-2">
+              <div className="relative flex items-center group">
+                <Search 
+                  size={16} 
+                  className={`absolute left-3 transition-colors ${searchTerm ? "text-blue-600" : "text-gray-400"}`} 
+                />
+                <input
+                  type="text"
+                  className="w-full sm:w-[350px] bg-gray-50 border border-gray-200 rounded-lg py-2 pl-10 pr-10 text-sm text-gray-700 outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-gray-400"
+                  placeholder={searchPlaceholder || "Search..."}
+                  value={searchTerm}
+                  onChange={(e) => setTerm(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleManualSearch()}
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => {
+                      setTerm("");
+                      onSearch?.("");
+                    }}
+                    className="absolute right-3 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-all"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={handleManualSearch}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all shadow-sm shadow-blue-200 flex items-center gap-2"
+              >
+                Cari
+              </button>
             </div>
           )}
           {showCheckbox && selectedRowIds.length > 0 && (

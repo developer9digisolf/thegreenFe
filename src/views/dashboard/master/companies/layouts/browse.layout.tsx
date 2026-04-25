@@ -14,7 +14,7 @@ import {
 } from "@afx/components/modals/ConfirmActionModal.layout";
 import dayjs from "dayjs";
 
-export function BrowseCompany(props: IPropsCompany) {
+export function BrowseCompany(props: IPropsCompany & { handleEdit: (id: number) => void }) {
   const {
     isLoading,
     state: { companies, pageInfo },
@@ -88,8 +88,7 @@ export function BrowseCompany(props: IPropsCompany) {
             key: "edit",
             label: "Edit",
             onClick: () => {
-              props?.handleToDetail(record?.id);
-              props?.setOpenFormCreate();
+              props?.handleEdit(record?.id);
             },
           },
           {
@@ -167,6 +166,10 @@ export function BrowseCompany(props: IPropsCompany) {
         onPageSizeChange={props?.setPageSize}
         sortState={{ key: null, direction: null }}
         onSortChange={() => {}}
+        onSearch={props?.onSearch}
+        searchText={props?.searchText}
+        setSearchText={props?.setSearchText}
+        searchPlaceholder="Cari perusahaan..."
       />
 
       {deleteModal.open && (

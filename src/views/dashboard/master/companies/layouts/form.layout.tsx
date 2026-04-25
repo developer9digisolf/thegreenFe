@@ -1,4 +1,5 @@
-import { Plus } from "lucide-react";
+import { useEffect } from "react";
+import { Plus, Building2 } from "lucide-react";
 import { UseForm, UseFormItem } from "@afx/components/form/form.layout";
 import UseInput from "@afx/components/ui/input/input.layout";
 import UseInputArea from "@afx/components/ui/input/input-area.layout";
@@ -24,26 +25,42 @@ export function FormCompany(props: IPropsFormCompany) {
   const loading =
     isLoading("createCompany") || isLoading("updateCompany") || false;
 
+  useEffect(() => {
+    if (props?.open) {
+      if (props?.formType === "create") {
+        props?.forms?.resetFields();
+      } else if (company) {
+        props?.forms?.setFieldsValue(company);
+      }
+    }
+  }, [props?.open, company, props?.formType, props?.forms]);
+
   return (
     <Modal
-      width={800}
+      width={700}
       title={
-        <div className="flex items-center gap-4">
-          <Plus size={18} />
-          <Typography className="text-xl">
-            {props?.formType === "create" ?
-              "Tambah"
-            : props?.formType === "detail" ?
-              "Detail"
-            : "Update"}{" "}
-            Company
-          </Typography>
+        <div className="flex items-center gap-3 p-2">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-500/20">
+            {props?.formType === "create" ? <Plus size={20} /> : <Building2 size={20} />}
+          </div>
+          <div className="flex flex-col">
+            <Typography className="text-xl font-bold text-slate-800 m-0 leading-tight">
+              {props?.formType === "create" ?
+                "Tambah"
+              : props?.formType === "detail" ?
+                "Detail"
+              : "Update"}{" "}
+              Company
+            </Typography>
+            <p className="text-xs text-slate-400 font-medium m-0 mt-0.5">Lengkapi informasi data perusahaan Anda</p>
+          </div>
         </div>
       }
       open={props?.open}
       onCancel={() => {
         !loading && props?.onCancle();
       }}
+      destroyOnHidden={true}
       footer={[]}
     >
       <Spin spinning={loading} size="small">
@@ -125,8 +142,8 @@ export function FormCompany(props: IPropsFormCompany) {
                 <UseInputArea
                   standart={false}
                   disabled={props?.formType === "detail" ? true : false}
-                  placeholder="Masukkan alamat..."
-                  className="!border-2 !border-gray-200 focus:!border-orange-500 focus:!ring-4 focus:!ring-orange-100 !rounded-xl transition-all duration-200"
+                  placeholder="Masukkan alamat lengkap perusahaan..."
+                  className="!border-2 !border-gray-100 focus:!border-emerald-500 focus:!ring-4 focus:!ring-emerald-500/10 !rounded-xl transition-all duration-200"
                 />
               </UseFormItem>
             </Col>
@@ -139,61 +156,66 @@ export function FormCompany(props: IPropsFormCompany) {
                 <UseInputArea
                   standart={false}
                   disabled={props?.formType === "detail" ? true : false}
-                  placeholder="Masukkan deskripsi..."
-                  className="!border-2 !border-gray-200 focus:!border-orange-500 focus:!ring-4 focus:!ring-orange-100 !rounded-xl transition-all duration-200"
+                  placeholder="Masukkan deskripsi singkat perusahaan..."
+                  className="!border-2 !border-gray-100 focus:!border-emerald-500 focus:!ring-4 focus:!ring-emerald-500/10 !rounded-xl transition-all duration-200"
                 />
               </UseFormItem>
             </Col>
             <Col span={24}>
               {props?.formType === "create" && (
-                <button
-                  type="button"
-                  onClick={() => props?.handleSubmit()}
-                  disabled={loading}
-                  className={`w-full lg:w-[200px] float-right mt-3 px-4 py-2 rounded-lg font-bold text-lg text-white transition-colors ${
-                    loading ? "!bg-[#999]" : (
-                      "!bg-orange-500 hover:!bg-orange-600"
-                    )
-                  }`}
-                >
-                  Submit
-                </button>
-              )}
-              {props?.formType === "detail" && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    props?.setFormType("update");
-                  }}
-                  disabled={loading}
-                  className={`w-full lg:w-[200px] float-right mt-3 px-4 py-2 rounded-lg font-bold text-lg text-white transition-colors ${
-                    loading ? "!bg-[#999]" : (
-                      "!bg-orange-500 hover:!bg-orange-600"
-                    )
-                  }`}
-                >
-                  Update
-                </button>
-              )}
-              {props?.formType === "update" && (
-                <div className="flex items-center gap-4 justify-end mt-4">
-                  <Typography
-                    className="font-display cursor-pointer shadow-sm border border-gray-100 p-2 px-6 w-full lg:w-[200px] rounded-lg text-center text-base font-semibold"
-                    onClick={() => props?.setFormType("detail")}
-                  >
-                    Kembali
-                  </Typography>
+                <div className="flex justify-end mt-6 border-t border-slate-100 pt-6">
                   <button
                     type="button"
                     onClick={() => props?.handleSubmit()}
                     disabled={loading}
-                    className={`w-full lg:w-[200px] px-4 py-2 rounded-lg font-bold text-lg text-white transition-colors ${
-                      loading ? "!bg-[#999]" : (
-                        "!bg-orange-500 hover:!bg-orange-600"
+                    className={`w-full lg:w-[200px] px-6 py-3 rounded-xl font-bold text-base text-white transition-all shadow-md hover:shadow-emerald-500/20 active:scale-95 ${
+                      loading ? "bg-slate-400 cursor-not-allowed" : (
+                        "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
                       )
                     }`}
                   >
-                    Submit
+                    {loading ? "Processing..." : "Simpan Company"}
+                  </button>
+                </div>
+              )}
+              {props?.formType === "detail" && (
+                <div className="flex justify-end mt-6 border-t border-slate-100 pt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      props?.setFormType("update");
+                    }}
+                    disabled={loading}
+                    className={`w-full lg:w-[200px] px-6 py-3 rounded-xl font-bold text-base text-white transition-all shadow-md hover:shadow-emerald-500/20 active:scale-95 ${
+                      loading ? "bg-slate-400 cursor-not-allowed" : (
+                        "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
+                      )
+                    }`}
+                  >
+                    Edit Data
+                  </button>
+                </div>
+              )}
+              {props?.formType === "update" && (
+                <div className="flex items-center gap-4 justify-end mt-6 border-t border-slate-100 pt-6">
+                  <button
+                    type="button"
+                    className="px-6 py-3 rounded-xl text-slate-500 bg-slate-50 hover:bg-slate-100 font-bold transition-all"
+                    onClick={() => props?.setFormType("detail")}
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => props?.handleSubmit()}
+                    disabled={loading}
+                    className={`w-full lg:w-[200px] px-6 py-3 rounded-xl font-bold text-base text-white transition-all shadow-md hover:shadow-emerald-500/20 active:scale-95 ${
+                      loading ? "bg-slate-400 cursor-not-allowed" : (
+                        "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
+                      )
+                    }`}
+                  >
+                    {loading ? "Saving..." : "Simpan Perubahan"}
                   </button>
                 </div>
               )}

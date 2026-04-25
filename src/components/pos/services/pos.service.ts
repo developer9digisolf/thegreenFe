@@ -6,7 +6,7 @@
 import request from '@afx/utils/request.utils';
 import { PosInitData, Order, Member, CashierSession } from '../types/pos.types';
 
-const API_BASE = process.env.NEXT_PUBLIC_BASEURL || 'http://localhost:5100/api/';
+const API_BASE = process.env.NEXT_PUBLIC_BASEURL;
 
 // Endpoints
 const POS_ENDPOINTS = {

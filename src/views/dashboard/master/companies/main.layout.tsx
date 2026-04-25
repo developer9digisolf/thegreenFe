@@ -26,12 +26,12 @@ export default function CompanyView() {
   const [forms] = Form.useForm<IReqFormCompany>();
   const [formType, setFormType] = useState<string>("create");
 
-  const handleSearch = useRef(
-    debounce((value: string) => {
-      setKeywords(value);
-      setPage(1);
-    }, 1500),
-  ).current;
+  const [tempSearch, setTempSearch] = useState<string>("");
+
+  const handleSearch = () => {
+    setKeywords(tempSearch);
+    setPage(1);
+  };
 
   const getCompanies = () => {
     const params = {
@@ -121,11 +121,19 @@ export default function CompanyView() {
     <>
       <BrowseCompany
         {...{ page, pageSize, setPage, setPageSize }}
+        onSearch={handleSearch}
+        searchText={tempSearch}
+        setSearchText={setTempSearch}
         setOpenFormCreate={() => {
           setFormType("create");
           setOpenFormCreate(true);
         }}
         handleToDetail={(v: number) => handleDetail(v)}
+        handleEdit={(id: number) => {
+          useActions<"getCompany">("getCompany", [id], true);
+          setFormType("update");
+          setOpenFormCreate(true);
+        }}
         handleDelete={(v: number) => handleDelete(v)}
       />
 

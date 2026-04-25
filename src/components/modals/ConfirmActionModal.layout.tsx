@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { X } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -706,145 +707,168 @@ export function ConfirmActionModal({
       onKeyDown={handleKeyDown}
     >
       <div
-        className={`bg-white dark:bg-dark rounded-xl border border-[#e0e6ed] dark:border-[#1b2e4b] flex flex-col max-h-[calc(100vh-2rem)] overflow-hidden ${className}`}
+        className={`bg-white dark:bg-dark rounded-2xl border border-[#e0e6ed] dark:border-[#1b2e4b] flex flex-col max-h-[calc(100vh-2rem)] overflow-hidden shadow-2xl transition-all ${fields?.length === 0 ? "w-full max-w-[400px]" : "w-full max-w-[500px]"} ${className}`}
       >
-        {/* ── Header ── */}
-        <div className="flex items-start gap-3 px-6 pt-5 pb-4 border-b border-[#e0e6ed] dark:border-[#1b2e4b]">
-          {icon && (
-            <div
-              className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${styles.icon}`}
-            >
-              <ActionIcon name={icon} className="w-4 h-4" />
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <p className="text-base font-semibold text-gray-800 dark:text-white leading-tight">
-              {title}
-            </p>
-            {subtitle && (
-              <span
-                className={`inline-block mt-1.5 px-2 py-0.5 rounded text-xs font-mono font-medium tracking-wide ${styles.badge}`}
-              >
-                {subtitle}
-              </span>
-            )}
-            {fields?.length !== 0 && description && (
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                {description}
-              </p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className="flex-shrink-0 p-1.5 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-40"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-
-        {/* ── No Fields: simple confirm ── */}
-        {fields?.length === 0 && (
-          <div className="flex flex-col justify-center gap-2 items-center py-4">
-            <ActionIcon name="question" className="w-12 h-12 text-yellow-400" />
-            <span className="text-center">{description}</span>
-          </div>
-        )}
-
-        {/* ── Fields ── */}
-        {fields.length > 0 && (
-          <div className="px-6 py-4 space-y-4 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {(fields as FieldOrGroup[]).map((fieldOrGroup) => {
-              // ── GROUPED FIELD ──
-              if (isFieldGroup(fieldOrGroup)) {
-                return (
-                  <div
-                    key={fieldOrGroup.groupKey}
-                    className="rounded-lg border border-[#e0e6ed] dark:border-[#1b2e4b] overflow-hidden"
-                  >
-                    {/* Group Header */}
-                    <div className="px-3 py-2 bg-gray-50 dark:bg-dark-light border-b border-[#e0e6ed] dark:border-[#1b2e4b]">
-                      <p className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
-                        {fieldOrGroup.groupLabel}
-                      </p>
-                    </div>
-                    {/* Group Fields */}
-                    <div className="px-3 py-3 space-y-3">
-                      {fieldOrGroup.fields.map((field) =>
-                        renderFieldWithFirstRef(field),
-                      )}
-                    </div>
+        {/* ── LAYOUT A: PREMIUM ASYMMETRIC CONFIRMATION (NO FIELDS) ── */}
+        {fields?.length === 0 ? (
+          <div className="flex flex-col relative group">
+            {/* Ambient background glow */}
+            <div className={`absolute -inset-1 opacity-20 blur-2xl transition-all duration-500 group-hover:opacity-30 ${variant === 'danger' ? 'bg-red-500' : 'bg-emerald-500'}`}></div>
+            
+            <div className="relative bg-white dark:bg-dark-light">
+              <div className="flex justify-end p-4 absolute right-0 top-0 z-10">
+                <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-slate-400 hover:text-slate-600">
+                  <X size={18} />
+                </button>
+              </div>
+              
+              <div className="flex flex-col md:flex-row items-start gap-8 p-10 pt-12">
+                {/* Visual Icon Section */}
+                <div className="flex-shrink-0 relative">
+                  <div className={`w-20 h-20 rounded-[28%] flex items-center justify-center relative z-10 shadow-2xl transform -rotate-3 transition-transform hover:rotate-0 duration-500 ${styles.icon.replace('w-9 h-9', 'w-20 h-20')}`}>
+                    <ActionIcon name={icon || "question"} className="w-10 h-10" />
                   </div>
-                );
-              }
-
-              // ── FLAT FIELD ──
-              return renderFieldWithFirstRef(fieldOrGroup);
-            })}
-          </div>
-        )}
-
-        {/* ── Footer ── */}
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-[#e0e6ed] dark:border-[#1b2e4b] bg-gray-50 dark:bg-dark-light">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className="btn btn-outline-secondary px-5 disabled:opacity-50"
-          >
-            {cancelLabel}
-          </button>
-          <button
-            type="button"
-            onClick={handleConfirm}
-            disabled={loading}
-            className={`btn px-5 border flex items-center gap-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${styles.btn}`}
-          >
-            {loading ?
-              <>
-                <svg
-                  className="animate-spin w-4 h-4 flex-shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
+                  {/* Decorative element */}
+                  <div className={`absolute -bottom-2 -right-2 w-20 h-20 rounded-[28%] opacity-20 blur-sm -z-0 rotate-12 ${variant === 'danger' ? 'bg-red-400' : 'bg-emerald-400'}`}></div>
+                </div>
+                
+                {/* Content Section */}
+                <div className="flex-1 space-y-4">
+                  <div className="space-y-1">
+                    <h3 className={`text-2xl font-black tracking-tight leading-none ${variant === 'danger' ? 'text-red-600' : 'text-emerald-600'}`}>
+                      {title}
+                    </h3>
+                    {subtitle && (
+                      <div className="flex items-center gap-2">
+                        <div className={`h-1 w-8 rounded-full ${variant === 'danger' ? 'bg-red-500/20' : 'bg-emerald-500/20'}`}></div>
+                        <span className={`text-[10px] font-black tracking-[0.2em] uppercase opacity-60 ${variant === 'danger' ? 'text-red-700' : 'text-emerald-700'}`}>
+                          Ref: {subtitle}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <p className="text-slate-500 dark:text-slate-400 text-base leading-relaxed font-medium max-w-sm">
+                    {description}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Premium Footer with integrated buttons */}
+              <div className="flex flex-col md:flex-row items-center gap-3 p-8 pt-2 bg-slate-50/50 dark:bg-dark/20">
+                <button
+                  onClick={handleConfirm}
+                  disabled={loading}
+                  className={`flex-[2] w-full py-4 rounded-2xl font-black text-white shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-3 relative overflow-hidden group/btn ${variant === 'danger' ? 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 shadow-red-500/25' : 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 shadow-emerald-500/25'} disabled:opacity-50`}
                 >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                  />
+                  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
+                  {loading && (
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                  )}
+                  <span className="relative z-10 tracking-wide">{confirmLabel}</span>
+                </button>
+                
+                <button
+                  onClick={onClose}
+                  disabled={loading}
+                  className="flex-1 w-full py-4 rounded-2xl font-bold text-slate-400 hover:text-slate-600 hover:bg-white dark:hover:bg-dark-light transition-all disabled:opacity-40 border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+                >
+                  {cancelLabel}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* ── LAYOUT B: FORM CONFIRMATION (WITH FIELDS) ── */
+          <>
+            <div className="flex items-start gap-3 px-6 pt-6 pb-5 border-b border-[#e0e6ed] dark:border-[#1b2e4b]">
+              {icon && (
+                <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${styles.icon}`}>
+                  <ActionIcon name={icon} className="w-5 h-5" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-lg font-bold text-gray-800 dark:text-white leading-tight">
+                  {title}
+                </p>
+                {subtitle && (
+                  <span className={`inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase ${styles.badge}`}>
+                    {subtitle}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={loading}
+                className="flex-shrink-0 p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                Memproses...
-              </>
-            : <>
-                {icon && (
-                  <ActionIcon name={icon} className="w-4 h-4 flex-shrink-0" />
+              </button>
+            </div>
+
+            <div className="px-6 py-6 space-y-5 overflow-y-auto max-h-[400px]">
+              {description && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                  {description}
+                </p>
+              )}
+              
+              {(fields as FieldOrGroup[]).map((fieldOrGroup) => {
+                if (isFieldGroup(fieldOrGroup)) {
+                  let groupFirstFieldAssigned = false;
+                  return (
+                    <div key={fieldOrGroup.groupKey} className="rounded-xl border border-slate-100 overflow-hidden">
+                      <div className="px-3 py-2 bg-slate-50 border-b border-slate-100">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                          {fieldOrGroup.groupLabel}
+                        </p>
+                      </div>
+                      <div className="p-4 space-y-4">
+                        {fieldOrGroup.fields.map((field) => {
+                          const isFirst = !groupFirstFieldAssigned;
+                          if (isFirst) groupFirstFieldAssigned = true;
+                          return renderField(field, isFirst);
+                        })}
+                      </div>
+                    </div>
+                  );
+                }
+                return renderFieldWithFirstRef(fieldOrGroup);
+              })}
+            </div>
+
+            <div className="px-6 py-5 border-t border-[#e0e6ed] bg-slate-50/50 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={loading}
+                className="px-6 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-700 transition-all disabled:opacity-40"
+              >
+                {cancelLabel}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirm}
+                disabled={loading}
+                className={`px-8 py-2.5 text-sm font-bold rounded-xl transition-all active:scale-95 flex items-center gap-2 shadow-lg ${styles.btn} disabled:opacity-50`}
+              >
+                {loading && (
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
                 )}
                 {confirmLabel}
-              </>
-            }
-          </button>
-        </div>
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -58,7 +58,6 @@ export default async function request<T = any, R = any>({
             bodyType === "formData" ?
               "multipart/form-data"
             : "application/json;charset=UTF-8",
-          "Access-Control-Allow-Origin": "*",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         method,
