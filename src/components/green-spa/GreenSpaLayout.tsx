@@ -64,24 +64,60 @@ const menuConfig: MenuSection[] = [
     section: "SETTINGS",
     items: [
       { 
-        key: "master", 
-        label: "Master Data", 
+        key: "manage-access", 
+        label: "Manage Access", 
+        icon: "fa-solid fa-user-shield", 
+        roles: ["Owner", "Admin"],
+        subItems: [
+          { key: "user-branch", label: "User Has Branch", icon: "fa-solid fa-code-branch", path: "/dashboard/manage-access/user-has-branch" },
+          { key: "user-company", label: "User Has Company", icon: "fa-solid fa-building-user", path: "/dashboard/manage-access/user-has-company" },
+          { key: "user-list", label: "User List", icon: "fa-solid fa-users-gear", path: "/dashboard/manage-access/users" },
+        ]
+      },
+      { 
+        key: "master-group", 
+        label: "Master", 
         icon: "fa-solid fa-database", 
         roles: ["Owner", "Admin"],
         subItems: [
-          { key: "company", label: "Perusahaan", icon: "fa-solid fa-building", path: "/dashboard/master/companies" },
+          { key: "service-category", label: "Service Categories", icon: "fa-solid fa-list-ul", path: "/dashboard/master/service-categories" },
+          { key: "service", label: "Services", icon: "fa-solid fa-hand-holding-heart", path: "/dashboard/master/services" },
+          { key: "shift", label: "Shift", icon: "fa-solid fa-clock", path: "/dashboard/master/shifts" },
+          { key: "payment-method", label: "Payment Method", icon: "fa-solid fa-credit-card", path: "/dashboard/master/payment-methods" },
           { key: "member", label: "Member", icon: "fa-solid fa-users", path: "/dashboard/master/members" },
-          { key: "service-category", label: "Kategori Layanan", icon: "fa-solid fa-list-ul", path: "/dashboard/master/service-categories" },
-          { key: "service", label: "Layanan", icon: "fa-solid fa-hand-holding-heart", path: "/dashboard/master/services" },
-          { key: "therapist", label: "Therapist", icon: "fa-solid fa-user-doctor", path: "/dashboard/master/therapists" },
+          { key: "room", label: "Ruangan", icon: "fa-solid fa-door-open", path: "/dashboard/master/rooms" },
+        ]
+      },
+      { 
+        key: "organizations", 
+        label: "Organizations", 
+        icon: "fa-solid fa-sitemap", 
+        roles: ["Owner", "Admin"],
+        subItems: [
+          { key: "company", label: "Company", icon: "fa-solid fa-building", path: "/dashboard/master/companies" },
+          { key: "branch", label: "Branch", icon: "fa-solid fa-shop", path: "/dashboard/master/branches" },
+          { key: "employee", label: "Employee", icon: "fa-solid fa-user-doctor", path: "/dashboard/master/therapists" },
+          { key: "position", label: "Position", icon: "fa-solid fa-user-tie", path: "/dashboard/master/positions" },
+          { key: "department", label: "Department", icon: "fa-solid fa-building-columns", path: "/dashboard/master/departments" },
+        ]
+      },
+      { 
+        key: "branch-service", 
+        label: "Branch Service", 
+        icon: "fa-solid fa-briefcase", 
+        roles: ["Owner", "Admin"],
+        subItems: [
+          { key: "service-variant", label: "Service Variant", icon: "fa-solid fa-tags", path: "/dashboard/master/service-variants" },
+          { key: "service-package", label: "Service Package", icon: "fa-solid fa-box-open", path: "/dashboard/master/packages" },
           { key: "voucher-package", label: "Paket Voucher", icon: "fa-solid fa-box-archive", path: "/dashboard/master/voucher-packages" },
           { key: "credit-package", label: "Paket Kredit", icon: "fa-solid fa-coins", path: "/dashboard/master/credit-packages" },
-          { key: "room", label: "Ruangan", icon: "fa-solid fa-door-open", path: "/dashboard/master/rooms" },
         ]
       },
     ]
   }
 ];
+
+
 
 export default function GreenSpaLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
