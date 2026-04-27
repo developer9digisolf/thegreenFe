@@ -128,5 +128,12 @@ export const rest = {
       update: "master/branches/:ID",
       delete: "master/branches/:ID",
     },
+    positions: {
+      index: "master/positions",
+      show: "master/positions/:ID",
+      create: "master/positions",
+      update: "master/positions/:ID",
+      delete: "master/positions/:ID",
+    },
   },
 };
