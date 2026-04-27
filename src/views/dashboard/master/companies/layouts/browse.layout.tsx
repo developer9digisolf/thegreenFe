@@ -173,6 +173,7 @@ export function BrowseCompany(props: IPropsCompany & { handleEdit: (id: number) 
         setSearchText={props?.setSearchText}
         searchPlaceholder="Cari perusahaan..."
         fetchDetails={async (record) => record.childCompanies || []}
+        checkCanExpand={(record) => record.childCompanies?.length > 0}
         subColumns={subColumns}
       />
 

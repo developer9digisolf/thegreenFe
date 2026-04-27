@@ -63,11 +63,14 @@ export default function CompanyView() {
             "createCompany",
             [
               val,
-              (code: number) => {
-                if (code === 20000) {
-                  forms.resetFields();
-                  setOpenFormCreate(false);
-                  getCompanies();
+              (code: any) => {
+                const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
+                if (isSuccess) {
+                  setTimeout(() => {
+                    setOpenFormCreate(false);
+                    forms.resetFields();
+                    getCompanies();
+                  }, 0);
                 }
               },
             ],
@@ -79,12 +82,15 @@ export default function CompanyView() {
             [
               company?.id,
               val,
-              (code: number) => {
-                if (code === 20000) {
-                  forms.resetFields();
-                  setOpenFormCreate(false);
-                  getCompanies();
-                  setFormType("create");
+              (code: any) => {
+                const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
+                if (isSuccess) {
+                  setTimeout(() => {
+                    setOpenFormCreate(false);
+                    forms.resetFields();
+                    getCompanies();
+                    setFormType("create");
+                  }, 0);
                 }
               },
             ],
@@ -107,8 +113,9 @@ export default function CompanyView() {
       "deleteCompany",
       [
         id,
-        (code: number) => {
-          if (code === 20000) {
+        (code: any) => {
+          const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
+          if (isSuccess) {
             getCompanies();
           }
         },

@@ -19,9 +19,9 @@ const SEO = ({ title, titleTemplate, description }: IProps) => {
 };
 
 SEO.defaultProps = {
-    title: "Doar",
-    titleTemplate: "Responsive React Admin Template",
-    description: "Responsive React Admin Template",
+    title: "Management System",
+    titleTemplate: "The Green Spa",
+    description: "The Green Spa Management System",
 };
 
 export default SEO;

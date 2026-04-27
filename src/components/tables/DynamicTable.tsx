@@ -96,6 +96,7 @@ export interface DynamicTableProps {
   searchText?: string;
   setSearchText?: (val: string) => void;
   filters?: React.JSX.Element | null;
+  checkCanExpand?: (record: any) => boolean;
 }
 
 export const emptyFilterValues = (config: FilterSection[]): FilterValues =>
@@ -828,6 +829,7 @@ interface TableRowProps {
   detailsCache: Record<string | number, any[]>;
   onDetailsFetched: (id: string | number, details: any[]) => void;
   totalCols: number;
+  checkCanExpand?: (record: any) => boolean;
 }
 
 function TableRow({
@@ -842,6 +844,7 @@ function TableRow({
   detailsCache,
   onDetailsFetched,
   totalCols,
+  checkCanExpand,
 }: TableRowProps) {
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -849,7 +852,7 @@ function TableRow({
   const rowId = row.id;
   const isSelected = selectedRowIdsSet.has(rowId);
   const cachedDetails = rowId !== null ? detailsCache[rowId] : undefined;
-  const canExpand = fetchDetails !== undefined;
+  const canExpand = fetchDetails !== undefined && (checkCanExpand ? checkCanExpand(row) : true);
 
   const handleExpand = useCallback(async () => {
     if (!expanded && cachedDetails === undefined && fetchDetails) {
@@ -980,6 +983,7 @@ export function UseDynamicTable({
   searchText,
   setSearchText,
   filters = null,
+  checkCanExpand,
 }: DynamicTableProps) {
   const [localSearchTerm, setLocalSearchTerm] = useState("");
   
@@ -1254,6 +1258,7 @@ export function UseDynamicTable({
                 detailsCache={detailsCache}
                 onDetailsFetched={handleDetailsFetched}
                 totalCols={totalCols}
+                checkCanExpand={checkCanExpand}
               />
             ))}
             {pagedData.length === 0 && (

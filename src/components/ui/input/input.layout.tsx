@@ -1,4 +1,4 @@
-import { Flex, Input, Tooltip } from "antd";
+import { Flex, Input, Tooltip, Space } from "antd";
 import { SizeType } from "antd/es/config-provider/SizeContext";
 import React from "react";
 import "./style.scss";
@@ -45,6 +45,23 @@ export default function UseInput(props: IInput): React.JSX.Element {
     style: { fontSize: "17px" },
   };
 
+  const inputNode = (
+    <Input
+      {...others}
+      {...(typeof standart !== "boolean" || standart ? standartLayouts : {})}
+      disabled={props.disabled}
+      prefix={props.prefix as any}
+      size={props?.size || "large"}
+      variant={props.variants}
+      placeholder={props.placeholder}
+      onPressEnter={(v: any) => props.onPressEnter?.(v.target.value)}
+      type={props.type}
+      suffix={props.suffix as any}
+      allowClear={props.allowClear}
+      readOnly={props.readonly}
+    />
+  );
+
   return (
     <div className="w-full h-fit relative">
       {props.exclamation && (
@@ -58,21 +75,14 @@ export default function UseInput(props: IInput): React.JSX.Element {
           </Flex>
         </Tooltip>
       )}
-      <Input
-        {...others}
-        {...(typeof standart !== "boolean" || standart ? standartLayouts : {})}
-        disabled={props.disabled}
-        addonBefore={props.addonBefore as any}
-        prefix={props.prefix as any}
-        size={props?.size || "large"}
-        variant={props.variants}
-        placeholder={props.placeholder}
-        onPressEnter={(v: any) => props.onPressEnter?.(v.target.value)}
-        type={props.type}
-        suffix={props.suffix as any}
-        allowClear={props.allowClear}
-        readOnly={props.readonly}
-      />
+      {props.addonBefore ?
+        <Space.Compact className="w-full">
+          <div className="ant-input-group-addon !flex !items-center !px-3 !bg-gray-50 !border !border-gray-200 !text-gray-500 !text-sm">
+            {props.addonBefore}
+          </div>
+          {inputNode}
+        </Space.Compact>
+      : inputNode}
     </div>
   );
 }

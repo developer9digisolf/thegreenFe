@@ -24,7 +24,7 @@ export interface IResCompany {
 export interface IReqFormCompany {
   code: string;
   name: string;
-  parentId: number;
+  parentId?: number | null;
   description: string;
   address: string;
   phone: string;

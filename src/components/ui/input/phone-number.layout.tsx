@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Input, Select } from "antd";
+import { Input, Select, Space } from "antd";
 import { SizeType } from "antd/es/config-provider/SizeContext";
 
 const { Option } = Select;
@@ -29,9 +29,9 @@ export default function UseInputPhoneNumber(props: IPropInputPhoneNumber) {
   );
 
   return (
-    <div>
+    <Space.Compact className="w-full">
+      {prefixSelector}
       <Input
-        addonBefore={prefixSelector}
         value={phoneNumber}
         onChange={onNumberChange}
         style={{ width: "100%" }}
@@ -39,6 +39,6 @@ export default function UseInputPhoneNumber(props: IPropInputPhoneNumber) {
         maxLength={15}
         size={props?.size || "large"}
       />
-    </div>
+    </Space.Compact>
   );
 }

@@ -1,7 +1,7 @@
 import React from 'react'
 import { IModelDefinitions } from '@afx/interfaces/global.iface'
 import { IExample, IResExample } from '@afx/interfaces/example.iface'
-import { notification } from 'antd'
+import { notification } from '@afx/utils/antd-global'
 import { ExamplePostService } from '@afx/services/example.service'
 
 // declaring interface Action for Model (Required)

@@ -1,5 +1,5 @@
 import { IModelDefinitions } from "@afx/interfaces/global.iface";
-import { notification } from "antd";
+import { notification } from "@afx/utils/antd-global";
 import { ExamplePostService } from "@afx/services/example.service";
 import {
   IReqCompany,
@@ -53,8 +53,8 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
           }
         } catch (err: any) {
           notification.warning({
-            message: "Failed to load data",
-            description: err?.meta?.message,
+            title: "Failed to load data",
+            description: err?.message || err?.meta?.message || "Terjadi kesalahan pada server",
             duration: 2,
             key: "FUNC-GET_COMPANIES",
           });
@@ -68,8 +68,8 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
           }
         } catch (err: any) {
           notification.warning({
-            message: "Failed to load data",
-            description: err?.meta?.message,
+            title: "Failed to load data",
+            description: err?.message || err?.meta?.message || "Terjadi kesalahan pada server",
             duration: 2,
             key: "FUNC-GET_DETAIL_COMPANIES",
           });
@@ -80,7 +80,7 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
           const res = await CreateCompanyServie(data);
           callback(res?.meta?.code);
           notification.success({
-            message: "Success",
+            title: "Success",
             description: res?.message,
             duration: 2,
             key: "FUNC-CREATE_COMPANIES",
@@ -88,8 +88,8 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
         } catch (err: any) {
           callback(402);
           notification.warning({
-            message: "Failed to load data",
-            description: err?.meta?.message,
+            title: "Failed to load data",
+            description: err?.message || err?.meta?.message || "Terjadi kesalahan pada server",
             duration: 2,
             key: "FUNC-CREATE_COMPANIES",
           });
@@ -100,7 +100,7 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
           const res = await UpdateCompanyServie(id, data);
           callback(res?.meta?.code);
           notification.success({
-            message: "Success",
+            title: "Success",
             description: res?.message,
             duration: 2,
             key: "FUNC-UPDATE_COMPANIES",
@@ -108,8 +108,8 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
         } catch (err: any) {
           callback(402);
           notification.warning({
-            message: "Failed to load data",
-            description: err?.meta?.message,
+            title: "Failed to load data",
+            description: err?.message || err?.meta?.message || "Terjadi kesalahan pada server",
             duration: 2,
             key: "FUNC-UPDATE_COMPANIES",
           });
@@ -120,7 +120,7 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
           const res = await DeleteCompanyServie(id);
           callback(res?.meta?.code);
           notification.success({
-            message: "Success",
+            title: "Success",
             description: res?.message,
             duration: 2,
             key: "FUNC-DELETE_COMPANIES",
@@ -128,8 +128,8 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
         } catch (err: any) {
           callback(402);
           notification.warning({
-            message: "Failed to load data",
-            description: err?.meta?.message,
+            title: "Failed to load data",
+            description: err?.message || err?.meta?.message || "Terjadi kesalahan pada server",
             duration: 2,
             key: "FUNC-DELETE_COMPANIES",
           });

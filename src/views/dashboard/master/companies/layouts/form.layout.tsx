@@ -9,7 +9,7 @@ import {
   IStateCompany,
 } from "@afx/models/dashboard/master/companies.model";
 import { useStore } from "@afx/store/core";
-import { Col, Modal, Row, Spin, Typography } from "antd";
+import { Col, Modal, Row, Select, Spin, Typography } from "antd";
 
 const itemLayouts = {
   wrapperCol: { span: 24 },
@@ -18,7 +18,7 @@ const itemLayouts = {
 
 export function FormCompany(props: IPropsFormCompany) {
   const {
-    state: { company },
+    state: { company, companies },
     isLoading,
   } = useStore<IStateCompany, IActionCompany>("companies");
 
@@ -94,6 +94,29 @@ export function FormCompany(props: IPropsFormCompany) {
                   standart={false}
                   placeholder="Masukkan nama company"
                   disabled={props?.formType === "detail" ? true : false}
+                />
+              </UseFormItem>
+            </Col>
+            <Col span={24}>
+              <UseFormItem
+                name="parentId"
+                label="Parent Company"
+                {...itemLayouts}
+              >
+                <Select
+                  showSearch
+                  placeholder="Pilih parent company (opsional)"
+                  allowClear
+                  disabled={props?.formType === "detail" ? true : false}
+                  className="w-full h-[46px] custom-select"
+                  options={(companies || [])
+                    .filter(c => c.id !== company?.id) // Prevent self-parenting
+                    .map(c => ({ 
+                      label: `${c.name} (${c.code})`,
+                      value: c.id 
+                    }))
+                  }
+                  optionFilterProp="label"
                 />
               </UseFormItem>
             </Col>

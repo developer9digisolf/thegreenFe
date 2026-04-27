@@ -71,7 +71,8 @@
       "@doar/shared/*": [
         "./src/packages/shared/*"
       ]
-    }
+    },
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
     "next-env.d.ts",
