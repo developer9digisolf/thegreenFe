@@ -1,4 +1,5 @@
-import { type GenderType, GenderMap } from './member.iface';
+import type { GenderType } from './member.iface';
+import { GenderMap } from './member.iface';
 
 export type QueueStatus = 'Offline' | 'Available' | 'Busy' | 'Break' | number;
 
