@@ -93,16 +93,30 @@ export default async function request<T = any, R = any>({
         const status = error?.response?.status;
         const errPayload = error?.response?.data;
 
+        // Debugging for development
+        if (process.env.NODE_ENV === 'development') {
+          console.error(`[API Error] ${method} ${url}`, {
+            status,
+            error: errPayload || error.message,
+            fullError: error
+          });
+        }
+
         // Handle 401 Unauthorized - redirect to login
         if (status === 401) {
-          // Clear auth data
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("THEGREEN@TOKEN");
-            localStorage.removeItem("THEGREEN@USER");
+          // In development, we skip auto-logout redirect for debugging purposes
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[Auth] 401 Unauthorized detected. Skipping auto-logout redirect for debugging.');
+          } else {
+            // Clear auth data
+            if (typeof window !== "undefined") {
+              localStorage.removeItem("THEGREEN@TOKEN");
+              localStorage.removeItem("THEGREEN@USER");
 
-            // Only redirect if not already on login page
-            if (!window.location.pathname.includes("/auth/login")) {
-              window.location.href = "/auth/login";
+              // Only redirect if not already on login page
+              if (!window.location.pathname.includes("/auth/login")) {
+                window.location.href = "/auth/login";
+              }
             }
           }
 
@@ -126,7 +140,7 @@ export default async function request<T = any, R = any>({
           });
         }
 
-        // Handle other errors
+        // Handle other errors with meta structure
         if (errPayload && errPayload.meta) {
           return reject({
             success: errPayload.meta.success,
@@ -135,6 +149,7 @@ export default async function request<T = any, R = any>({
           });
         }
 
+        // Default error handler
         return reject({
           success: false,
           message:
