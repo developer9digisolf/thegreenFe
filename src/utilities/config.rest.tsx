@@ -114,10 +114,19 @@ export const rest = {
   salesDetail: "sales/:id",
 
   master: {
-    index: "master/companies",
-    show: "master/companies/:ID",
-    create: "master/companies",
-    update: "master/companies/:ID",
-    delete: "master/companies/:ID",
+    companies: {
+      index: "master/companies",
+      show: "master/companies/:ID",
+      create: "master/companies",
+      update: "master/companies/:ID",
+      delete: "master/companies/:ID",
+    },
+    branches: {
+      index: "master/branches",
+      show: "master/branches/:ID",
+      create: "master/branches",
+      update: "master/branches/:ID",
+      delete: "master/branches/:ID",
+    },
   },
 };

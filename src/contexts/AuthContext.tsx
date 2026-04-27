@@ -110,15 +110,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Not authenticated
         if (!authState.isAuthenticated) {
+            // Check if auth is disabled via env
+            if (process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true') {
+                console.warn('Auth is disabled via NEXT_PUBLIC_DISABLE_AUTH');
+                return;
+            }
+
             // Allow public routes
-            if (isPublicRoute || isRootRoute) return
+            if (isPublicRoute || isRootRoute) return;
 
             // Redirect to login for protected routes
             if (process.env.NODE_ENV === 'development') {
-                console.log('Not authenticated, redirecting to login...')
+                console.log('Not authenticated, redirecting to login...');
             }
-            router.push('/auth/login')
-            return
+            router.push('/auth/login');
+            return;
         }
 
         // Authenticated - check role-based access

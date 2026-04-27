@@ -938,7 +938,7 @@ function TableRow({
                 </div>
               : <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
                   <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 text-xs font-medium text-gray-600">
-                    Detail Item ({detailData.length} item)
+                    Detail Anak Perusahaan ({detailData.length} item)
                   </div>
                   {subColumns && subColumns.length > 0 ?
                     <InnerTable columns={subColumns} data={detailData} />
