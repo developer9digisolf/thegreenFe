@@ -147,5 +147,12 @@ export const rest = {
       create: "master/branch-operating-hours",
       update: "master/branch-operating-hours/:ID",
     },
+    shifts: {
+      index: "master/shifts",
+      show: "master/shifts/:ID",
+      create: "master/shifts",
+      update: "master/shifts/:ID",
+      delete: "master/shifts/:ID",
+    },
   },
 };
