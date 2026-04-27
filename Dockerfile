@@ -21,7 +21,7 @@ ARG NEXT_PUBLIC_BASEURL
 ENV NEXT_PUBLIC_BASEURL=${NEXT_PUBLIC_BASEURL}
 
 # Build the application
-RUN npm run build && ls -la /app/dist/
+RUN npm run build && ls -la /app/.next/
 
 # Production stage
 FROM node:18-alpine AS runner
@@ -37,11 +37,9 @@ RUN adduser --system --uid 1001 nextjs
 # Copy necessary files from builder
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.js ./next.config.js
-
-# Copy public folder only if it exists (optional)
-COPY --from=builder /app/src ./src
 
 # Set correct permissions
 RUN chown -R nextjs:nodejs /app
