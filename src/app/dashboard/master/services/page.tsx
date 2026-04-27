@@ -1,11 +1,55 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Select, InputNumber, message } from "antd";
-import { IService, IServiceDetail, ICreateServiceRequest, IUpdateServiceRequest, ICreateServiceVariantRequest, IServiceVariant } from "@afx/interfaces/service.iface";
-import { ServiceGetAllService, ServiceGetDetailService, ServiceCreateService, ServiceUpdateService, ServiceDeleteService, VariantAddService, VariantUpdateService, VariantDeleteService } from "@afx/services/service.service";
+import { 
+  Typography, 
+  Button, 
+  Tag, 
+  Modal, 
+  Form, 
+  notification, 
+  Row, 
+  Col, 
+  Select, 
+  Spin, 
+  InputNumber,
+  Space,
+  Divider,
+  Dropdown,
+  MenuProps
+} from "antd";
+import { 
+  MoreOutlined, 
+  PlusOutlined, 
+  UnorderedListOutlined,
+  ClockCircleOutlined,
+  TagOutlined,
+  DeleteOutlined,
+  PlusCircleOutlined
+} from "@ant-design/icons";
+import { 
+  ServiceGetAllService, 
+  ServiceGetDetailService, 
+  ServiceCreateService, 
+  ServiceUpdateService, 
+  ServiceDeleteService, 
+  VariantAddService, 
+  VariantUpdateService, 
+  VariantDeleteService 
+} from "@afx/services/service.service";
 import { ServiceCategoryGetActiveService } from "@afx/services/service-category.service";
 import { IServiceCategory } from "@afx/interfaces/service-category.iface";
+import { IService, IServiceDetail, ICreateServiceRequest, IUpdateServiceRequest } from "@afx/interfaces/service.iface";
+import { UseDynamicTable, Column } from "@afx/components/tables/DynamicTable";
+import { ConfirmActionModal, ActionPresets } from "@afx/components/modals/ConfirmActionModal.layout";
+import { UseForm, UseFormItem } from "@afx/components/form/form.layout";
+import UseInput from "@afx/components/ui/input/input.layout";
+import UseInputArea from "@afx/components/ui/input/input-area.layout";
+
+const itemLayouts = {
+  wrapperCol: { span: 24 },
+  labelCol: { span: 24 },
+};
 
 interface VariantFormData {
     id?: number;
@@ -19,42 +63,31 @@ interface VariantFormData {
 }
 
 export default function MasterServices() {
-    const [services, setServices] = useState<IService[]>([]);
     const [loading, setLoading] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [services, setServices] = useState<IService[]>([]);
     const [categories, setCategories] = useState<IServiceCategory[]>([]);
-    const [pagination, setPagination] = useState({
-        current: 1,
-        pageSize: 10,
-        total: 0
-    });
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
     const [searchText, setSearchText] = useState("");
+    const [tempSearch, setTempSearch] = useState("");
     const [filterCategory, setFilterCategory] = useState<number | undefined>(undefined);
 
-    const [showAddModal, setShowAddModal] = useState(false);
+    const [openForm, setOpenForm] = useState(false);
+    const [formType, setFormType] = useState<"create" | "update" | "detail">("create");
     const [selectedService, setSelectedService] = useState<IServiceDetail | null>(null);
-    const [formData, setFormData] = useState<{
-        name: string;
-        categoryId: number | undefined;
-        description: string;
-        icon: string;
-        sortOrder: number;
-        isActive: boolean;
-    }>({
-        name: "",
-        categoryId: undefined,
-        description: "",
-        icon: "",
-        sortOrder: 0,
-        isActive: true
-    });
     const [variants, setVariants] = useState<VariantFormData[]>([]);
-    const [saving, setSaving] = useState(false);
+    const [forms] = Form.useForm();
 
-    // Fetch Data
-    const fetchData = async (page = 1, search?: string, categoryId?: number) => {
+    const [deleteModal, setDeleteModal] = useState<{ open: boolean; id: number | null; name: string }>({
+        open: false,
+        id: null,
+        name: ""
+    });
+
+    const fetchData = async (page = pagination.current, pageSize = pagination.pageSize, search = searchText, categoryId = filterCategory) => {
         setLoading(true);
         try {
-            const params: any = { page, pageSize: pagination.pageSize };
+            const params: any = { page, pageSize };
             if (search) params.search = search;
             if (categoryId) params.categoryId = categoryId;
             
@@ -67,8 +100,12 @@ export default function MasterServices() {
                     total: res.pagination?.total || 0
                 });
             }
-        } catch (error) {
-            console.error("Failed to fetch services:", error);
+        } catch (err: any) {
+            console.error("Failed to fetch services", err);
+            notification.error({ 
+                message: "Gagal Memuat Data",
+                description: err?.message || "Terjadi kesalahan saat memuat data layanan"
+            });
         } finally {
             setLoading(false);
         }
@@ -88,29 +125,16 @@ export default function MasterServices() {
     useEffect(() => {
         fetchData();
         fetchCategories();
-    }, []);
+    }, [pagination.current, pagination.pageSize, searchText, filterCategory]);
 
     const handleSearch = () => {
-        fetchData(1, searchText, filterCategory);
+        setSearchText(tempSearch);
+        setPagination(prev => ({ ...prev, current: 1 }));
     };
 
-    const handleCategoryFilter = (value: number | undefined) => {
-        setFilterCategory(value);
-        fetchData(1, searchText, value);
-    };
-
-    // Modal Handlers
-    const handleOpenCreateModal = () => {
+    const handleOpenCreate = () => {
+        setFormType("create");
         setSelectedService(null);
-        setFormData({
-            name: "",
-            categoryId: undefined,
-            description: "",
-            icon: "",
-            sortOrder: 0,
-            isActive: true
-        });
-        // Start with one empty variant
         setVariants([{
             label: "",
             duration: 60,
@@ -119,23 +143,16 @@ export default function MasterServices() {
             isActive: true,
             isNew: true
         }]);
-        setShowAddModal(true);
+        setOpenForm(true);
     };
 
-    const handleOpenEditModal = async (service: IService) => {
+    const handleOpenEdit = async (service: IService) => {
+        setLoading(true);
         try {
-            setLoading(true);
             const res = await ServiceGetDetailService(service.id);
             if (res.success && res.data) {
+                setFormType("update");
                 setSelectedService(res.data);
-                setFormData({
-                    name: res.data.name,
-                    categoryId: res.data.categoryId,
-                    description: res.data.description || "",
-                    icon: res.data.icon || "",
-                    sortOrder: res.data.sortOrder,
-                    isActive: res.data.isActive
-                });
                 setVariants(res.data.variants.map(v => ({
                     id: v.id,
                     label: v.label || "",
@@ -146,17 +163,41 @@ export default function MasterServices() {
                     isNew: false,
                     isDeleted: false
                 })));
-                setShowAddModal(true);
+                setOpenForm(true);
             }
-        } catch (error) {
-            console.error("Failed to fetch service detail:", error);
-            message.error("Gagal mengambil detail layanan");
+        } catch (error: any) {
+            notification.error({ message: "Gagal mengambil detail layanan", description: error.message });
         } finally {
             setLoading(false);
         }
     };
 
-    // Variant Handlers
+    const handleOpenDetail = async (service: IService) => {
+        setLoading(true);
+        try {
+            const res = await ServiceGetDetailService(service.id);
+            if (res.success && res.data) {
+                setFormType("detail");
+                setSelectedService(res.data);
+                setVariants(res.data.variants.map(v => ({
+                    id: v.id,
+                    label: v.label || "",
+                    duration: v.duration,
+                    price: v.price,
+                    sortOrder: v.sortOrder,
+                    isActive: v.isActive,
+                    isNew: false,
+                    isDeleted: false
+                })));
+                setOpenForm(true);
+            }
+        } catch (error: any) {
+            notification.error({ message: "Gagal mengambil detail layanan", description: error.message });
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleAddVariant = () => {
         const maxSort = variants.length > 0 ? Math.max(...variants.map(v => v.sortOrder)) : -1;
         setVariants([...variants, {
@@ -172,12 +213,10 @@ export default function MasterServices() {
     const handleRemoveVariant = (index: number) => {
         const variant = variants[index];
         if (variant.id && !variant.isNew) {
-            // Mark existing variant as deleted
             const updated = [...variants];
             updated[index] = { ...variant, isDeleted: true };
             setVariants(updated);
         } else {
-            // Remove new variant from array
             setVariants(variants.filter((_, i) => i !== index));
         }
     };
@@ -188,84 +227,21 @@ export default function MasterServices() {
         setVariants(updated);
     };
 
-    // Save Handler
     const handleSave = async () => {
-        // Validation
-        if (!formData.name?.trim()) {
-            message.warning("Nama layanan wajib diisi");
-            return;
-        }
-        if (!formData.categoryId) {
-            message.warning("Kategori wajib dipilih");
-            return;
-        }
-
-        const activeVariants = variants.filter(v => !v.isDeleted);
-        if (activeVariants.length === 0) {
-            message.warning("Minimal harus ada 1 variasi harga");
-            return;
-        }
-
-        for (const v of activeVariants) {
-            if (!v.duration || v.duration <= 0) {
-                message.warning("Durasi harus lebih dari 0");
-                return;
-            }
-            if (v.price < 0) {
-                message.warning("Harga tidak boleh negatif");
-                return;
-            }
-        }
-
-        setSaving(true);
         try {
-            if (selectedService) {
-                // UPDATE MODE
-                // 1. Update service info
-                const updatePayload: IUpdateServiceRequest = {
-                    name: formData.name.trim(),
-                    categoryId: formData.categoryId,
-                    description: formData.description?.trim() || undefined,
-                    icon: formData.icon?.trim() || undefined,
-                    sortOrder: formData.sortOrder,
-                    isActive: formData.isActive
-                };
-                await ServiceUpdateService(selectedService.id, updatePayload);
+            const values = await forms.validateFields();
+            
+            const activeVariants = variants.filter(v => !v.isDeleted);
+            if (activeVariants.length === 0) {
+                notification.warning({ message: "Validasi Gagal", description: "Minimal harus ada 1 variasi harga" });
+                return;
+            }
 
-                // 2. Handle variants
-                for (const v of variants) {
-                    if (v.isDeleted && v.id) {
-                        // Delete existing variant
-                        await VariantDeleteService(v.id);
-                    } else if (v.isNew && !v.isDeleted) {
-                        // Add new variant
-                        await VariantAddService(selectedService.id, {
-                            label: v.label?.trim() || undefined,
-                            duration: v.duration,
-                            price: v.price,
-                            sortOrder: v.sortOrder
-                        });
-                    } else if (v.id && !v.isDeleted) {
-                        // Update existing variant
-                        await VariantUpdateService(v.id, {
-                            label: v.label?.trim() || undefined,
-                            duration: v.duration,
-                            price: v.price,
-                            sortOrder: v.sortOrder,
-                            isActive: v.isActive
-                        });
-                    }
-                }
+            setSaving(true);
 
-                message.success("Layanan berhasil diperbarui");
-            } else {
-                // CREATE MODE
+            if (formType === "create") {
                 const createPayload: ICreateServiceRequest = {
-                    categoryId: formData.categoryId,
-                    name: formData.name.trim(),
-                    description: formData.description?.trim() || undefined,
-                    icon: formData.icon?.trim() || undefined,
-                    sortOrder: formData.sortOrder,
+                    ...values,
                     variants: activeVariants.map(v => ({
                         label: v.label?.trim() || undefined,
                         duration: v.duration,
@@ -276,41 +252,84 @@ export default function MasterServices() {
 
                 const res = await ServiceCreateService(createPayload);
                 if (res.success) {
-                    message.success("Layanan berhasil ditambahkan");
+                    notification.success({ message: "Layanan berhasil ditambahkan" });
+                    setOpenForm(false);
+                    fetchData(1);
                 } else {
-                    message.error(res.message || "Gagal membuat layanan");
-                    return;
+                    notification.error({ message: "Gagal Menyimpan", description: res.message });
                 }
-            }
+            } else if (selectedService) {
+                // Update Service
+                const updatePayload: IUpdateServiceRequest = { ...values };
+                await ServiceUpdateService(selectedService.id, updatePayload);
 
-            setShowAddModal(false);
-            fetchData(pagination.current, searchText, filterCategory);
-        } catch (error: any) {
-            console.error(error);
-            message.error(error.message || "Terjadi kesalahan saat menyimpan");
+                // Handle variants
+                for (const v of variants) {
+                    if (v.isDeleted && v.id) {
+                        await VariantDeleteService(v.id);
+                    } else if (v.isNew && !v.isDeleted) {
+                        await VariantAddService(selectedService.id, {
+                            label: v.label?.trim() || undefined,
+                            duration: v.duration,
+                            price: v.price,
+                            sortOrder: v.sortOrder
+                        });
+                    } else if (v.id && !v.isDeleted) {
+                        await VariantUpdateService(v.id, {
+                            label: v.label?.trim() || undefined,
+                            duration: v.duration,
+                            price: v.price,
+                            sortOrder: v.sortOrder,
+                            isActive: v.isActive
+                        });
+                    }
+                }
+
+                notification.success({ message: "Layanan berhasil diperbarui" });
+                setOpenForm(false);
+                fetchData();
+            }
+        } catch (err: any) {
+            console.error(err);
+            if (err?.errorFields) {
+                notification.warning({
+                    message: "Validasi Gagal",
+                    description: err.errorFields[0].errors[0],
+                });
+            } else {
+                notification.error({ 
+                    message: "Gagal Menyimpan",
+                    description: err?.message || "Terjadi kesalahan saat menyimpan data"
+                });
+            }
         } finally {
             setSaving(false);
         }
     };
 
-    const handleDelete = async (id: number, name: string) => {
-        if (!confirm(`Apakah Anda yakin ingin menghapus layanan "${name}"?`)) return;
-
+    const handleDeleteConfirm = async () => {
+        if (!deleteModal.id) return;
+        setLoading(true);
         try {
-            const res = await ServiceDeleteService(id);
+            const res = await ServiceDeleteService(deleteModal.id);
             if (res.success) {
-                message.success("Layanan berhasil dihapus");
-                fetchData(pagination.current, searchText, filterCategory);
+                notification.success({ message: "Layanan berhasil dihapus" });
+                setDeleteModal({ open: false, id: null, name: "" });
+                fetchData();
             } else {
-                message.error(res.message || "Gagal menghapus layanan");
+                notification.error({ message: "Gagal Menghapus", description: res.message });
             }
-        } catch (error: any) {
-            console.error(error);
-            message.error(error.message || "Terjadi kesalahan saat menghapus");
+        } catch (err: any) {
+            console.error(err);
+            notification.error({ 
+                message: "Gagal Menghapus",
+                description: err?.message || "Terjadi kesalahan saat menghapus layanan"
+            });
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Helpers
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat("id-ID", {
             style: "currency",
@@ -318,15 +337,6 @@ export default function MasterServices() {
             minimumFractionDigits: 0,
         }).format(amount);
     };
-
-    const getCategoryDetails = (id: number) => {
-        return categories.find(c => c.id === id) || { name: 'Unknown', color: '#ccc', icon: 'fa-solid fa-spa' };
-    };
-
-    const categoryOptions = categories.map(cat => ({
-        label: cat.name,
-        value: cat.id
-    }));
 
     const formatPriceRange = (service: IService) => {
         if (!service.minPrice && !service.maxPrice) return "-";
@@ -339,401 +349,423 @@ export default function MasterServices() {
     const formatDurationRange = (service: IService) => {
         if (!service.minDuration && !service.maxDuration) return "-";
         if (service.minDuration === service.maxDuration) {
-            return `${service.minDuration} menit`;
+            return `${service.minDuration}m`;
         }
-        return `${service.minDuration} - ${service.maxDuration} menit`;
+        return `${service.minDuration} - ${service.maxDuration}m`;
     };
 
+    const columns: Column[] = [
+        {
+            key: "id",
+            title: "ID",
+            width: "70px",
+            align: "center",
+        },
+        {
+            key: "name",
+            title: "Layanan",
+            width: "300px",
+            render: (_: any, record: IService) => {
+                const cat = categories.find(c => c.id === record.categoryId);
+                return (
+                    <div className="flex items-center gap-3">
+                        <div 
+                            className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm shrink-0"
+                            style={{ backgroundColor: `${cat?.color || '#059669'}15`, color: cat?.color || '#059669' }}
+                        >
+                            <i className={record.icon || cat?.icon || "fa-solid fa-spa"} />
+                        </div>
+                        <div className="flex flex-col">
+                            <div className="font-bold text-slate-700 truncate">{record.name}</div>
+                            <div className="text-[10px] text-slate-400 truncate max-w-[200px]">{record.description || "Tidak ada deskripsi"}</div>
+                        </div>
+                    </div>
+                );
+            }
+        },
+        {
+            key: "categoryName",
+            title: "Kategori",
+            width: "150px",
+            render: (v: string, record: IService) => {
+                const cat = categories.find(c => c.id === record.categoryId);
+                return (
+                    <Tag 
+                        icon={<TagOutlined />} 
+                        style={{ backgroundColor: `${cat?.color || '#64748b'}10`, color: cat?.color || '#64748b', borderColor: `${cat?.color || '#64748b'}20` }}
+                        className="rounded-full px-3 font-medium border"
+                    >
+                        {v || cat?.name || "-"}
+                    </Tag>
+                );
+            }
+        },
+        {
+            key: "duration",
+            title: "Durasi",
+            width: "140px",
+            align: "center",
+            render: (_: any, record: IService) => (
+                <div className="flex items-center justify-center gap-1.5 text-slate-600 font-medium bg-slate-50 py-1 px-2 rounded-lg border border-slate-100">
+                    <ClockCircleOutlined className="text-slate-400 text-xs" />
+                    <span>{formatDurationRange(record)}</span>
+                </div>
+            )
+        },
+        {
+            key: "price",
+            title: "Harga",
+            width: "220px",
+            render: (_: any, record: IService) => (
+                <div className="font-bold text-emerald-600 bg-emerald-50 py-1 px-3 rounded-lg border border-emerald-100 inline-block">
+                    {formatPriceRange(record)}
+                </div>
+            )
+        },
+        {
+            key: "isActive",
+            title: "Status",
+            width: "100px",
+            align: "center",
+            render: (v: boolean) => (
+                <Tag color={v ? "green" : "red"} className="rounded-full px-3">
+                    {v ? "Aktif" : "Nonaktif"}
+                </Tag>
+            )
+        },
+        {
+            key: "actions",
+            title: "Aksi",
+            width: "100px",
+            align: "center",
+            render: (_: any, record: IService) => {
+                const items: MenuProps["items"] = [
+                    { key: "detail", label: "Detail", onClick: () => handleOpenDetail(record) },
+                    { key: "edit", label: "Edit", onClick: () => handleOpenEdit(record) },
+                    { type: "divider" },
+                    { 
+                        key: "delete", 
+                        label: "Hapus", 
+                        danger: true, 
+                        onClick: () => setDeleteModal({ open: true, id: record.id, name: record.name }) 
+                    },
+                ];
+                return (
+                    <div className="flex justify-center">
+                        <Dropdown menu={{ items }} trigger={["click"]}>
+                            <Button type="text" icon={<MoreOutlined />} />
+                        </Dropdown>
+                    </div>
+                );
+            }
+        }
+    ];
+
     return (
-        <>
-            <div className="page-header">
+        <div className="p-4 lg:p-8">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
                 <div>
-                    <h1 className="page-title">Master Layanan</h1>
-                    <p className="page-subtitle">Kelola daftar layanan spa yang tersedia</p>
+                    <Typography.Title level={2} className="!m-0 text-slate-800 font-extrabold tracking-tight">
+                        Master Layanan
+                    </Typography.Title>
+                    <Typography.Text className="text-slate-400 font-medium">
+                        Kelola menu layanan spa, durasi, dan variasi harga
+                    </Typography.Text>
                 </div>
-                <button className="btn btn-primary" onClick={handleOpenCreateModal}>
-                    <i className="fa-solid fa-plus"></i>
+                <Button 
+                    type="primary" 
+                    size="large" 
+                    icon={<PlusOutlined />}
+                    onClick={handleOpenCreate}
+                    className="h-12 px-8 rounded-2xl font-bold shadow-lg shadow-emerald-500/20 bg-emerald-500 hover:bg-emerald-600 border-none transition-all active:scale-95"
+                >
                     Tambah Layanan
-                </button>
+                </Button>
             </div>
 
-            {/* Stats */}
-            <div className="stats-row">
-                <div className="stat-card">
-                    <div className="stat-icon green">
-                        <i className="fa-solid fa-spa"></i>
-                    </div>
-                    <div className="stat-value">{pagination.total}</div>
-                    <div className="stat-label">Total Layanan</div>
-                </div>
-                <div className="stat-card">
-                    <div className="stat-icon blue">
-                        <i className="fa-solid fa-folder"></i>
-                    </div>
-                    <div className="stat-value">{categories.length}</div>
-                    <div className="stat-label">Kategori</div>
-                </div>
-            </div>
-
-            {/* Table */}
-            <div className="card">
-                <div className="card-header">
-                    <h3 className="card-title">Daftar Layanan</h3>
-                    <div className="filters">
-                        <div className="search-box">
-                            <i className="fa-solid fa-magnifying-glass"></i>
-                            <input 
-                                type="text" 
-                                placeholder="Cari layanan..." 
-                                value={searchText}
-                                onChange={(e) => setSearchText(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            <div className="bg-white rounded-[2.5rem] p-6 lg:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100">
+                <UseDynamicTable
+                    columns={columns}
+                    data={services}
+                    loading={loading}
+                    pageInfo={{
+                        currentPage: pagination.current,
+                        pageSize: pagination.pageSize,
+                        total: pagination.total
+                    }}
+                    onPageChange={(p) => setPagination(prev => ({ ...prev, current: p }))}
+                    onPageSizeChange={(s) => setPagination(prev => ({ ...prev, pageSize: s, current: 1 }))}
+                    searchText={tempSearch}
+                    setSearchText={setTempSearch}
+                    onSearch={handleSearch}
+                    searchPlaceholder="Cari nama layanan..."
+                    filters={
+                        <div className="flex items-center gap-3">
+                            <Typography.Text className="text-slate-400 font-medium whitespace-nowrap">Filter by:</Typography.Text>
+                            <Select
+                                placeholder="Semua Kategori"
+                                style={{ width: 220 }}
+                                className="custom-select-large"
+                                allowClear
+                                value={filterCategory}
+                                onChange={(val) => {
+                                    setFilterCategory(val);
+                                    setPagination(prev => ({ ...prev, current: 1 }));
+                                }}
+                                options={categories.map(cat => ({ label: cat.name, value: cat.id }))}
                             />
                         </div>
-                        <Select
-                            placeholder="Semua Kategori"
-                            style={{ width: 180, height: 40 }}
-                            allowClear
-                            value={filterCategory}
-                            onChange={handleCategoryFilter}
-                            options={categoryOptions}
-                        />
-                        <button className="btn btn-secondary" onClick={handleSearch}>
-                            Cari
-                        </button>
-                    </div>
-                </div>
-                <div className="card-body">
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                <th style={{ width: '60px' }}>ID</th>
-                                <th>Layanan</th>
-                                <th>Kategori</th>
-                                <th>Variasi</th>
-                                <th>Durasi</th>
-                                <th>Harga</th>
-                                <th>Status</th>
-                                <th style={{ width: '100px' }}>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {loading ? (
-                                <tr>
-                                    <td colSpan={8} style={{ textAlign: "center", padding: "20px" }}>
-                                        Loading...
-                                    </td>
-                                </tr>
-                            ) : services.length === 0 ? (
-                                <tr>
-                                    <td colSpan={8} style={{ textAlign: "center", padding: "20px" }}>
-                                        Tidak ada data layanan
-                                    </td>
-                                </tr>
-                            ) : (
-                                services.map((service) => {
-                                    const cat = getCategoryDetails(service.categoryId);
-                                    return (
-                                        <tr key={service.id}>
-                                            <td>{service.id}</td>
-                                            <td>
-                                                <div className="service-info">
-                                                    <div
-                                                        className="service-icon"
-                                                        style={{ backgroundColor: `${cat.color}20`, color: cat.color || '#555' }}
-                                                    >
-                                                        <i className={service.icon || cat.icon || "fa-solid fa-spa"}></i>
-                                                    </div>
-                                                    <div>
-                                                        <div className="service-name">{service.name}</div>
-                                                        <div className="service-desc">{service.description}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span
-                                                    className="category-tag"
-                                                    style={{
-                                                        backgroundColor: `${cat.color}15`,
-                                                        color: cat.color,
-                                                        border: `1px solid ${cat.color}30`
-                                                    }}
-                                                >
-                                                    <i className={cat.icon || "fa-solid fa-tag"} style={{ marginRight: "5px" }}></i>
-                                                    {service.categoryName || cat.name}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span className="badge badge-blue">
-                                                    {service.variantCount} variasi
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span className="duration-tag">
-                                                    <i className="fa-regular fa-clock"></i>
-                                                    {formatDurationRange(service)}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span className="price-tag" suppressHydrationWarning>
-                                                    {formatPriceRange(service)}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span className={`badge ${service.isActive ? "badge-green" : "badge-red"}`}>
-                                                    {service.isActive ? "Aktif" : "Nonaktif"}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div className="action-buttons">
-                                                    <button
-                                                        className="btn-action"
-                                                        title="Edit"
-                                                        onClick={() => handleOpenEditModal(service)}
-                                                    >
-                                                        <i className="fa-solid fa-pen"></i>
-                                                    </button>
-                                                    <button
-                                                        className="btn-action delete"
-                                                        title="Hapus"
-                                                        onClick={() => handleDelete(service.id, service.name)}
-                                                    >
-                                                        <i className="fa-solid fa-trash"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-                <div className="table-footer">
-                    <div className="table-info">
-                        Menampilkan {services.length > 0 ? (pagination.current - 1) * pagination.pageSize + 1 : 0}-
-                        {Math.min(pagination.current * pagination.pageSize, pagination.total)} dari {pagination.total} layanan
-                    </div>
-                    {pagination.total > pagination.pageSize && (
-                        <div className="pagination">
-                            <button
-                                className="page-btn"
-                                disabled={pagination.current === 1}
-                                onClick={() => fetchData(pagination.current - 1, searchText, filterCategory)}
-                            >
-                                <i className="fa-solid fa-chevron-left"></i>
-                            </button>
-                            <span style={{ padding: '0 12px' }}>
-                                Page {pagination.current} of {Math.ceil(pagination.total / pagination.pageSize)}
-                            </span>
-                            <button
-                                className="page-btn"
-                                disabled={pagination.current * pagination.pageSize >= pagination.total}
-                                onClick={() => fetchData(pagination.current + 1, searchText, filterCategory)}
-                            >
-                                <i className="fa-solid fa-chevron-right"></i>
-                            </button>
-                        </div>
-                    )}
-                </div>
+                    }
+                />
             </div>
 
-            {/* Add/Edit Service Modal */}
-            <div className={`modal-overlay ${showAddModal ? "show" : ""}`}>
-                <div className="modal" style={{ maxWidth: '700px' }}>
-                    <div className="modal-header">
-                        <h3 className="modal-title">
-                            {selectedService ? "Edit Layanan" : "Tambah Layanan Baru"}
-                        </h3>
-                        <button className="modal-close" onClick={() => setShowAddModal(false)}>
-                            &times;
-                        </button>
-                    </div>
-                    <div className="modal-body">
-                        <div className="form-group">
-                            <label className="form-label">
-                                Nama Layanan <span className="required">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                className="form-input"
-                                placeholder="Contoh: Balinese Massage"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            />
+            {/* Modal Form */}
+            <Modal
+                width={850}
+                open={openForm}
+                onCancel={() => !saving && setOpenForm(false)}
+                footer={null}
+                centered
+                destroyOnHidden
+                title={
+                    <div className="flex items-center gap-4 p-2">
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-500/20">
+                            <UnorderedListOutlined style={{ fontSize: 24 }} />
                         </div>
-
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label className="form-label">
-                                    Kategori <span className="required">*</span>
-                                </label>
-                                <Select
-                                    showSearch
-                                    placeholder="-- Pilih Kategori --"
-                                    optionFilterProp="label"
-                                    style={{ width: '100%', height: '40px' }}
-                                    value={formData.categoryId || null}
-                                    onChange={(value) => setFormData({ ...formData, categoryId: value })}
-                                    options={categoryOptions}
-                                />
-                            </div>
-                            {selectedService && (
-                                <div className="form-group">
-                                    <label className="form-label">Status</label>
-                                    <Select
-                                        style={{ width: '100%', height: '40px' }}
-                                        value={formData.isActive ? "active" : "inactive"}
-                                        onChange={(value) => setFormData({ ...formData, isActive: value === "active" })}
-                                        options={[
-                                            { label: "Aktif", value: "active" },
-                                            { label: "Nonaktif", value: "inactive" }
-                                        ]}
-                                    />
+                        <div className="flex flex-col">
+                            <Typography className="text-xl font-bold text-slate-800 m-0 leading-tight">
+                                {formType === "create" ? "Tambah" : formType === "detail" ? "Detail" : "Update"} Layanan
+                            </Typography>
+                            <p className="text-xs text-slate-400 font-medium m-0 mt-1">Kelola informasi layanan dan variasi harga</p>
+                        </div>
+                    </div>
+                }
+                className="custom-modal"
+            >
+                <Spin spinning={saving || (loading && formType !== "create")}>
+                    <UseForm form={forms} initialValues={selectedService || { sortOrder: 0, isActive: true }}>
+                        <Row gutter={[24, 0]} className="mt-6">
+                            <Col span={24} md={16}>
+                                <div className="bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100 mb-6">
+                                    <Typography.Title level={5} className="!mb-4 text-slate-800 flex items-center gap-2">
+                                        <div className="w-2 h-6 bg-emerald-500 rounded-full" />
+                                        Informasi Dasar
+                                    </Typography.Title>
+                                    <Row gutter={[16, 0]}>
+                                        <Col span={24}>
+                                            <UseFormItem name="name" label="Nama Layanan" {...itemLayouts} rules={[{ required: true, message: "Nama wajib diisi" }]}>
+                                                <UseInput placeholder="Contoh: Balinese Massage" disabled={formType === "detail"} />
+                                            </UseFormItem>
+                                        </Col>
+                                        <Col span={24} md={12}>
+                                            <UseFormItem name="categoryId" label="Kategori" {...itemLayouts} rules={[{ required: true, message: "Kategori wajib dipilih" }]}>
+                                                <Select 
+                                                    className="w-full h-[46px] custom-select" 
+                                                    placeholder="Pilih Kategori"
+                                                    disabled={formType === "detail"}
+                                                    options={categories.map(cat => ({ label: cat.name, value: cat.id }))}
+                                                />
+                                            </UseFormItem>
+                                        </Col>
+                                        <Col span={24} md={12}>
+                                            <UseFormItem name="icon" label="Icon (FontAwesome)" {...itemLayouts}>
+                                                <UseInput placeholder="fa-solid fa-spa" disabled={formType === "detail"} />
+                                            </UseFormItem>
+                                        </Col>
+                                        <Col span={24}>
+                                            <UseFormItem name="description" label="Deskripsi" {...itemLayouts}>
+                                                <UseInputArea placeholder="Deskripsi singkat layanan..." disabled={formType === "detail"} rows={2} />
+                                            </UseFormItem>
+                                        </Col>
+                                    </Row>
                                 </div>
-                            )}
-                        </div>
+                            </Col>
+                            
+                            <Col span={24} md={8}>
+                                <div className="bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100 h-full">
+                                    <Typography.Title level={5} className="!mb-4 text-slate-800 flex items-center gap-2">
+                                        <div className="w-2 h-6 bg-blue-500 rounded-full" />
+                                        Pengaturan
+                                    </Typography.Title>
+                                    <UseFormItem name="sortOrder" label="Urutan Tampil" {...itemLayouts}>
+                                        <UseInput type="number" placeholder="0" disabled={formType === "detail"} />
+                                    </UseFormItem>
+                                    <UseFormItem name="isActive" label="Status Layanan" {...itemLayouts}>
+                                        <Select 
+                                            className="w-full h-[46px] custom-select" 
+                                            disabled={formType === "detail"}
+                                            options={[
+                                                { label: "Aktif", value: true },
+                                                { label: "Nonaktif", value: false }
+                                            ]}
+                                        />
+                                    </UseFormItem>
+                                </div>
+                            </Col>
 
-                        <div className="form-group">
-                            <label className="form-label">Deskripsi</label>
-                            <textarea
-                                className="form-textarea"
-                                rows={2}
-                                placeholder="Deskripsi singkat layanan..."
-                                value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            ></textarea>
-                        </div>
-
-                        {/* Variants Section */}
-                        <div className="form-group">
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                                <label className="form-label" style={{ margin: 0 }}>
-                                    Variasi Harga <span className="required">*</span>
-                                </label>
-                                <button 
-                                    type="button" 
-                                    className="btn btn-secondary btn-sm"
-                                    onClick={handleAddVariant}
-                                    style={{ padding: '6px 12px', fontSize: '13px' }}
-                                >
-                                    <i className="fa-solid fa-plus"></i>
-                                    Tambah Variasi
-                                </button>
-                            </div>
-
-                            <div className="variants-table">
-                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                    <thead>
-                                        <tr style={{ backgroundColor: '#f8f9fa' }}>
-                                            <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', width: '25%' }}>Label</th>
-                                            <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', width: '25%' }}>Durasi (menit)</th>
-                                            <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', width: '35%' }}>Harga</th>
-                                            <th style={{ padding: '10px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', width: '15%' }}>Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {variants.filter(v => !v.isDeleted).length === 0 ? (
-                                            <tr>
-                                                <td colSpan={4} style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
-                                                    Belum ada variasi. Klik "Tambah Variasi" untuk menambahkan.
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            variants.map((variant, index) => {
-                                                if (variant.isDeleted) return null;
-                                                return (
-                                                    <tr key={index} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                                                        <td style={{ padding: '8px' }}>
-                                                            <input
-                                                                type="text"
-                                                                className="form-input"
-                                                                placeholder="Standard"
-                                                                value={variant.label}
-                                                                onChange={(e) => handleVariantChange(index, 'label', e.target.value)}
-                                                                style={{ height: '36px' }}
-                                                            />
-                                                        </td>
-                                                        <td style={{ padding: '8px' }}>
-                                                            <InputNumber
-                                                                min={1}
-                                                                max={480}
-                                                                value={variant.duration}
-                                                                onChange={(value) => handleVariantChange(index, 'duration', value || 60)}
-                                                                style={{ width: '100%', height: '36px' }}
-                                                                addonAfter="menit"
-                                                            />
-                                                        </td>
-                                                        <td style={{ padding: '8px' }}>
-                                                            <InputNumber
-                                                                min={0}
-                                                                value={variant.price}
-                                                                onChange={(value) => handleVariantChange(index, 'price', value || 0)}
-                                                                style={{ width: '100%', height: '36px' }}
-                                                                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                                                                parser={(value) => Number(value?.replace(/\./g, '') || 0)}
-                                                                addonBefore="Rp"
-                                                            />
-                                                        </td>
-                                                        <td style={{ padding: '8px', textAlign: 'center' }}>
-                                                            <button
-                                                                type="button"
-                                                                className="btn-action delete"
-                                                                onClick={() => handleRemoveVariant(index)}
-                                                                title="Hapus variasi"
-                                                                disabled={variants.filter(v => !v.isDeleted).length <= 1}
-                                                                style={{
-                                                                    opacity: variants.filter(v => !v.isDeleted).length <= 1 ? 0.5 : 1,
-                                                                    cursor: variants.filter(v => !v.isDeleted).length <= 1 ? 'not-allowed' : 'pointer'
-                                                                }}
-                                                            >
-                                                                <i className="fa-solid fa-trash"></i>
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })
+                            <Col span={24}>
+                                <div className="bg-white p-6 rounded-[2rem] border-2 border-slate-50 mt-4">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <Typography.Title level={5} className="!m-0 text-slate-800 flex items-center gap-2">
+                                            <div className="w-2 h-6 bg-amber-500 rounded-full" />
+                                            Variasi Harga & Durasi
+                                        </Typography.Title>
+                                        {formType !== "detail" && (
+                                            <Button 
+                                                type="dashed" 
+                                                icon={<PlusCircleOutlined />} 
+                                                onClick={handleAddVariant}
+                                                className="rounded-xl font-bold text-emerald-600 border-emerald-200 hover:text-emerald-700 hover:border-emerald-300"
+                                            >
+                                                Tambah Variasi
+                                            </Button>
                                         )}
-                                    </tbody>
-                                </table>
-                            </div>
-                            <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                                <i className="fa-solid fa-info-circle" style={{ marginRight: '5px' }}></i>
-                                Minimal harus ada 1 variasi harga. Label bersifat opsional.
-                            </p>
-                        </div>
-                    </div>
-                    <div className="modal-footer">
-                        <button
-                            className="btn btn-secondary"
-                            onClick={() => {
-                                setShowAddModal(false);
-                                setSelectedService(null);
-                            }}
-                            disabled={saving}
-                        >
-                            Batal
-                        </button>
-                        <button 
-                            className="btn btn-primary" 
-                            onClick={handleSave}
-                            disabled={saving}
-                        >
-                            {saving ? (
-                                <>
-                                    <i className="fa-solid fa-spinner fa-spin"></i>
-                                    Menyimpan...
-                                </>
-                            ) : (
-                                <>
-                                    <i className="fa-solid fa-check"></i>
-                                    Simpan Layanan
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </>
+                                    </div>
+
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full border-separate border-spacing-y-3">
+                                            <thead>
+                                                <tr className="text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                                    <th className="px-4 text-left pb-2">Label</th>
+                                                    <th className="px-4 text-left pb-2" style={{ width: '150px' }}>Durasi (menit)</th>
+                                                    <th className="px-4 text-left pb-2" style={{ width: '220px' }}>Harga</th>
+                                                    {formType !== "detail" && <th className="px-4 text-center pb-2" style={{ width: '80px' }}>Aksi</th>}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {variants.filter(v => !v.isDeleted).map((variant, index) => {
+                                                    const realIndex = variants.indexOf(variant);
+                                                    return (
+                                                        <tr key={index} className="bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                                                            <td className="px-4 py-3 rounded-l-2xl">
+                                                                <UseInput 
+                                                                    placeholder="Contoh: Single, Couple, dll" 
+                                                                    value={variant.label} 
+                                                                    onChange={(e) => handleVariantChange(realIndex, 'label', e.target.value)}
+                                                                    disabled={formType === "detail"}
+                                                                />
+                                                            </td>
+                                                            <td className="px-4 py-3">
+                                                                <InputNumber 
+                                                                    min={1} 
+                                                                    value={variant.duration} 
+                                                                    onChange={(val) => handleVariantChange(realIndex, 'duration', val || 60)}
+                                                                    className="w-full h-[46px] rounded-xl flex items-center border-2 border-slate-100"
+                                                                    disabled={formType === "detail"}
+                                                                />
+                                                            </td>
+                                                            <td className="px-4 py-3">
+                                                                <InputNumber 
+                                                                    min={0} 
+                                                                    value={variant.price} 
+                                                                    onChange={(val) => handleVariantChange(realIndex, 'price', val || 0)}
+                                                                    className="w-full h-[46px] rounded-xl flex items-center border-2 border-slate-100 font-bold text-emerald-600"
+                                                                    formatter={(value) => `Rp ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                                                                    parser={(value) => value?.replace(/Rp\s?|(\.*)/g, '') as any}
+                                                                    disabled={formType === "detail"}
+                                                                />
+                                                            </td>
+                                                            {formType !== "detail" && (
+                                                                <td className="px-4 py-3 rounded-r-2xl text-center">
+                                                                    <Button 
+                                                                        danger 
+                                                                        type="text" 
+                                                                        icon={<DeleteOutlined />} 
+                                                                        onClick={() => handleRemoveVariant(realIndex)}
+                                                                        disabled={variants.filter(v => !v.isDeleted).length <= 1}
+                                                                        className="hover:bg-red-50 rounded-xl"
+                                                                    />
+                                                                </td>
+                                                            )}
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div className="mt-4 p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-start gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-amber-200 flex items-center justify-center shrink-0">
+                                            <Typography.Text className="text-amber-700 font-bold">!</Typography.Text>
+                                        </div>
+                                        <div>
+                                            <Typography.Text className="text-amber-800 font-bold block">Penting</Typography.Text>
+                                            <Typography.Text className="text-amber-700 text-xs">
+                                                Setiap layanan harus memiliki minimal satu variasi harga. Jika layanan hanya memiliki satu harga, biarkan label kosong atau isi dengan "Standard".
+                                            </Typography.Text>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Col>
+
+                            <Col span={24} className="mt-12 flex justify-end gap-3 pt-8 border-t border-slate-100">
+                                {formType !== "detail" ? (
+                                    <>
+                                        <Button 
+                                            size="large" 
+                                            className="rounded-xl px-8 border-none bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 h-12" 
+                                            onClick={() => setOpenForm(false)}
+                                        >
+                                            Batal
+                                        </Button>
+                                        <Button 
+                                            type="primary" 
+                                            size="large" 
+                                            className="rounded-xl px-10 bg-emerald-500 hover:bg-emerald-600 border-none font-bold text-white h-12 shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+                                            onClick={handleSave}
+                                            loading={saving}
+                                        >
+                                            Simpan Layanan
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <Button 
+                                        type="primary" 
+                                        size="large" 
+                                        className="rounded-xl px-10 bg-emerald-500 hover:bg-emerald-600 border-none font-bold text-white h-12 shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+                                        onClick={() => setFormType("update")}
+                                    >
+                                        Edit Data
+                                    </Button>
+                                )}
+                            </Col>
+                        </Row>
+                    </UseForm>
+                </Spin>
+            </Modal>
+
+            {/* Modal Delete */}
+            {deleteModal.open && (
+                <ConfirmActionModal
+                    config={ActionPresets.delete(deleteModal.name)}
+                    onConfirm={handleDeleteConfirm}
+                    onClose={() => setDeleteModal({ open: false, id: null, name: "" })}
+                    loading={loading}
+                />
+            )}
+
+            <style jsx global>{`
+                .custom-select .ant-select-selector,
+                .custom-select-large .ant-select-selector {
+                    height: 46px !important;
+                    border-radius: 12px !important;
+                    border: 2px solid #f1f5f9 !important;
+                    background-color: #fafafa !important;
+                    display: flex !important;
+                    align-items: center !important;
+                }
+                .custom-select .ant-select-selection-item,
+                .custom-select-large .ant-select-selection-item {
+                    line-height: 42px !important;
+                    font-weight: 500 !important;
+                }
+                .custom-modal .ant-modal-content {
+                    border-radius: 2.5rem !important;
+                    padding: 2rem !important;
+                }
+                .custom-modal .ant-modal-header {
+                    margin-bottom: 2rem !important;
+                }
+            `}</style>
+        </div>
     );
 }

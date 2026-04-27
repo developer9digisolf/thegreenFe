@@ -47,6 +47,7 @@ export interface IPropsBranch {
   searchText: string;
   setSearchText: (text: string) => void;
   onSearch: (text: string) => void;
+  handleOperatingHours: (record: any) => void;
 }
 
 export interface IPropsFormBranch {

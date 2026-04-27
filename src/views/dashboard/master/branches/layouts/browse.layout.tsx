@@ -109,6 +109,13 @@ export function BrowseBranch(props: IPropsBranch & { handleEdit: (id: number) =>
             },
           },
           {
+            key: "operating-hours",
+            label: "Jam Operasional",
+            onClick: () => {
+              props?.handleOperatingHours(record);
+            },
+          },
+          {
             type: "divider",
           },
           {

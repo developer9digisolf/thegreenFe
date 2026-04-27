@@ -11,4 +11,5 @@ import BranchView from "./main.layout";
 
 export default useModel(BranchView, () => [
   require("@afx/models/dashboard/master/branches.model").default,
+  require("@afx/models/dashboard/master/branch-operating-hours.model").default,
 ]);

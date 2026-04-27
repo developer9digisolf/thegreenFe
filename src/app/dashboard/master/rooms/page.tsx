@@ -1,7 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Select, InputNumber, message } from "antd";
+import { 
+  Typography, 
+  Button, 
+  Tag, 
+  Modal, 
+  Form, 
+  notification, 
+  Row, 
+  Col, 
+  Select, 
+  Spin, 
+  InputNumber,
+  Divider,
+  Dropdown,
+  MenuProps
+} from "antd";
+import { 
+  MoreOutlined, 
+  PlusOutlined, 
+  HomeOutlined,
+  TeamOutlined,
+  InfoCircleOutlined,
+  CheckCircleOutlined,
+  ToolOutlined,
+  ExclamationCircleOutlined
+} from "@ant-design/icons";
 import { 
     GetRoomsService, 
     CreateRoomService, 
@@ -14,21 +39,38 @@ import {
     IUpdateRoomRequest,
     getRoomStatusName 
 } from "@afx/interfaces/room.iface";
+import { UseDynamicTable, Column } from "@afx/components/tables/DynamicTable";
+import { ConfirmActionModal, ActionPresets } from "@afx/components/modals/ConfirmActionModal.layout";
+import { UseForm, UseFormItem } from "@afx/components/form/form.layout";
+import UseInput from "@afx/components/ui/input/input.layout";
+import UseInputArea from "@afx/components/ui/input/input-area.layout";
+
+const itemLayouts = {
+  wrapperCol: { span: 24 },
+  labelCol: { span: 24 },
+};
 
 export default function MasterRooms() {
     const [loading, setLoading] = useState(false);
+    const [saving, setSaving] = useState(false);
     const [rooms, setRooms] = useState<IRoom[]>([]);
     const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
     const [searchText, setSearchText] = useState("");
+    const [tempSearch, setTempSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("");
 
-    const [showModal, setShowModal] = useState(false);
+    const [openForm, setOpenForm] = useState(false);
+    const [formType, setFormType] = useState<"create" | "update" | "detail">("create");
     const [selectedRoom, setSelectedRoom] = useState<IRoom | null>(null);
+    const [forms] = Form.useForm();
 
-    // Form state
-    const [formData, setFormData] = useState<Partial<IRoom>>({});
+    const [deleteModal, setDeleteModal] = useState<{ open: boolean; id: number | null; name: string }>({
+        open: false,
+        id: null,
+        name: ""
+    });
 
-    const fetchData = async (page = 1, pageSize = 10, search?: string, status?: string) => {
+    const fetchData = async (page = pagination.current, pageSize = pagination.pageSize, search = searchText, status = statusFilter) => {
         setLoading(true);
         try {
             const params: any = { page, pageSize };
@@ -44,9 +86,12 @@ export default function MasterRooms() {
                     total: res.pagination?.total || 0
                 });
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error("Failed to fetch rooms", err);
-            message.error("Gagal memuat data ruangan");
+            notification.error({ 
+                message: "Gagal Memuat Data",
+                description: err?.message || "Terjadi kesalahan saat memuat data ruangan"
+            });
         } finally {
             setLoading(false);
         }
@@ -54,393 +99,394 @@ export default function MasterRooms() {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [pagination.current, pagination.pageSize, searchText, statusFilter]);
 
     const handleSearch = () => {
-        fetchData(1, pagination.pageSize, searchText, statusFilter);
+        setSearchText(tempSearch);
+        setPagination(prev => ({ ...prev, current: 1 }));
     };
 
-    const handleOpenCreateModal = () => {
+    const handleOpenCreate = () => {
+        setFormType("create");
         setSelectedRoom(null);
-        setFormData({
-            name: "",
-            capacity: 1,
-            description: ""
-        });
-        setShowModal(true);
+        setOpenForm(true);
     };
 
-    const handleOpenEditModal = (room: IRoom) => {
+    const handleOpenEdit = (room: IRoom) => {
+        setFormType("update");
         setSelectedRoom(room);
-        setFormData({ ...room });
-        setShowModal(true);
+        setOpenForm(true);
+    };
+
+    const handleOpenDetail = (room: IRoom) => {
+        setFormType("detail");
+        setSelectedRoom(room);
+        setOpenForm(true);
     };
 
     const handleSave = async () => {
-        if (!formData.name) {
-            message.error("Nama ruangan harus diisi!");
-            return;
-        }
-
         try {
-            if (selectedRoom) {
-                // Update
-                const payload: IUpdateRoomRequest = {
-                    name: formData.name,
-                    capacity: formData.capacity || 1,
-                    description: formData.description || undefined,
-                    status: typeof formData.status === 'number' ? formData.status : undefined,
-                    isActive: formData.isActive
-                };
-                const res = await UpdateRoomService(selectedRoom.id, payload);
+            const values = await forms.validateFields();
+            setSaving(true);
+
+            if (formType === "create") {
+                const res = await CreateRoomService(values as ICreateRoomRequest);
                 if (res.success) {
-                    message.success("Ruangan berhasil diupdate");
-                    setShowModal(false);
-                    fetchData(pagination.current, pagination.pageSize, searchText, statusFilter);
+                    notification.success({ message: "Ruangan berhasil ditambahkan" });
+                    setOpenForm(false);
+                    fetchData(1);
                 } else {
-                    message.error(res.message || "Gagal mengupdate ruangan");
+                    notification.error({ message: "Gagal Menyimpan", description: res.message });
                 }
-            } else {
-                // Create
-                const payload: ICreateRoomRequest = {
-                    name: formData.name!,
-                    capacity: formData.capacity || 1,
-                    description: formData.description || undefined
-                };
-                const res = await CreateRoomService(payload);
+            } else if (selectedRoom) {
+                const res = await UpdateRoomService(selectedRoom.id, values as IUpdateRoomRequest);
                 if (res.success) {
-                    message.success("Ruangan berhasil ditambahkan");
-                    setShowModal(false);
-                    fetchData(1, pagination.pageSize, searchText, statusFilter);
+                    notification.success({ message: "Ruangan berhasil diperbarui" });
+                    setOpenForm(false);
+                    fetchData();
                 } else {
-                    message.error(res.message || "Gagal membuat ruangan");
+                    notification.error({ message: "Gagal Menyimpan", description: res.message });
                 }
             }
         } catch (err: any) {
             console.error(err);
-            message.error(err.message || "Terjadi kesalahan saat menyimpan");
+            if (err?.errorFields) {
+                notification.warning({
+                    message: "Validasi Gagal",
+                    description: err.errorFields[0].errors[0],
+                });
+            } else {
+                notification.error({ 
+                    message: "Gagal Menyimpan",
+                    description: err?.message || "Terjadi kesalahan saat menyimpan data"
+                });
+            }
+        } finally {
+            setSaving(false);
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!confirm("Apakah Anda yakin ingin menghapus ruangan ini?")) return;
-
+    const handleDeleteConfirm = async () => {
+        if (!deleteModal.id) return;
+        setLoading(true);
         try {
-            const res = await DeleteRoomService(id);
+            const res = await DeleteRoomService(deleteModal.id);
             if (res.success) {
-                message.success("Ruangan berhasil dihapus");
-                fetchData(pagination.current, pagination.pageSize, searchText, statusFilter);
+                notification.success({ message: "Ruangan berhasil dihapus" });
+                setDeleteModal({ open: false, id: null, name: "" });
+                fetchData();
             } else {
-                message.error(res.message || "Gagal menghapus ruangan");
+                notification.error({ message: "Gagal Menghapus", description: res.message });
             }
         } catch (err: any) {
             console.error(err);
-            message.error(err.message || "Terjadi kesalahan saat menghapus");
+            notification.error({ 
+                message: "Gagal Menghapus",
+                description: err?.message || "Terjadi kesalahan saat menghapus ruangan"
+            });
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handlePageChange = (page: number) => {
-        fetchData(page, pagination.pageSize, searchText, statusFilter);
-    };
-
-    const getStatusBadgeClass = (status: any): string => {
-        const statusName = getRoomStatusName(status).toLowerCase();
-        switch (statusName) {
-            case 'available': return 'badge-green';
-            case 'occupied': return 'badge-yellow';
-            case 'maintenance': return 'badge-red';
-            default: return 'badge-gray';
+    const getStatusTag = (status: number) => {
+        const name = getRoomStatusName(status);
+        switch (name.toLowerCase()) {
+            case 'available': 
+                return <Tag icon={<CheckCircleOutlined />} color="green" className="rounded-full px-3">Available</Tag>;
+            case 'occupied': 
+                return <Tag icon={<ExclamationCircleOutlined />} color="orange" className="rounded-full px-3">Occupied</Tag>;
+            case 'maintenance': 
+                return <Tag icon={<ToolOutlined />} color="red" className="rounded-full px-3">Maintenance</Tag>;
+            default: 
+                return <Tag className="rounded-full px-3">{name}</Tag>;
         }
     };
 
-    const getStatusIcon = (status: any): string => {
-        const statusName = getRoomStatusName(status).toLowerCase();
-        switch (statusName) {
-            case 'available': return 'fa-solid fa-check-circle';
-            case 'occupied': return 'fa-solid fa-user';
-            case 'maintenance': return 'fa-solid fa-tools';
-            default: return 'fa-solid fa-question-circle';
+    const columns: Column[] = [
+        {
+            key: "id",
+            title: "ID",
+            width: "70px",
+            align: "center",
+        },
+        {
+            key: "name",
+            title: "Ruangan",
+            width: "250px",
+            render: (_: any, record: IRoom) => (
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 shrink-0">
+                        <HomeOutlined />
+                    </div>
+                    <div className="flex flex-col">
+                        <div className="font-bold text-slate-700">{record.name}</div>
+                        <div className="text-[10px] text-slate-400 truncate max-w-[200px]">{record.description || "Tidak ada deskripsi"}</div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            key: "capacity",
+            title: "Kapasitas",
+            width: "120px",
+            align: "center",
+            render: (v: number) => (
+                <div className="flex items-center justify-center gap-1.5 text-slate-600 font-bold bg-slate-50 py-1 px-3 rounded-lg border border-slate-100">
+                    <TeamOutlined className="text-slate-400 text-xs" />
+                    <span>{v} Org</span>
+                </div>
+            )
+        },
+        {
+            key: "status",
+            title: "Status Ruang",
+            width: "150px",
+            align: "center",
+            render: (v: number) => getStatusTag(v)
+        },
+        {
+            key: "isActive",
+            title: "Aktif",
+            width: "100px",
+            align: "center",
+            render: (v: boolean) => (
+                <Tag color={v ? "green" : "red"} className="rounded-full px-3">
+                    {v ? "Aktif" : "Nonaktif"}
+                </Tag>
+            )
+        },
+        {
+            key: "actions",
+            title: "Aksi",
+            width: "100px",
+            align: "center",
+            render: (_: any, record: IRoom) => {
+                const items: MenuProps["items"] = [
+                    { key: "detail", label: "Detail", onClick: () => handleOpenDetail(record) },
+                    { key: "edit", label: "Edit", onClick: () => handleOpenEdit(record) },
+                    { type: "divider" },
+                    { 
+                        key: "delete", 
+                        label: "Hapus", 
+                        danger: true, 
+                        onClick: () => setDeleteModal({ open: true, id: record.id, name: record.name }) 
+                    },
+                ];
+                return (
+                    <div className="flex justify-center">
+                        <Dropdown menu={{ items }} trigger={["click"]}>
+                            <Button type="text" icon={<MoreOutlined />} />
+                        </Dropdown>
+                    </div>
+                );
+            }
         }
-    };
+    ];
 
     return (
-        <>
-            <div className="page-header">
+        <div className="p-4 lg:p-8">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
                 <div>
-                    <h1 className="page-title">Master Ruangan</h1>
-                    <p className="page-subtitle">Kelola data ruangan treatment spa</p>
+                    <Typography.Title level={2} className="!m-0 text-slate-800 font-extrabold tracking-tight">
+                        Master Ruangan
+                    </Typography.Title>
+                    <Typography.Text className="text-slate-400 font-medium">
+                        Kelola kapasitas dan status ketersediaan ruangan treatment
+                    </Typography.Text>
                 </div>
-                <button className="btn btn-primary" onClick={handleOpenCreateModal}>
-                    <i className="fa-solid fa-plus"></i>
+                <Button 
+                    type="primary" 
+                    size="large" 
+                    icon={<PlusOutlined />}
+                    onClick={handleOpenCreate}
+                    className="h-12 px-8 rounded-2xl font-bold shadow-lg shadow-emerald-500/20 bg-emerald-500 hover:bg-emerald-600 border-none transition-all active:scale-95"
+                >
                     Tambah Ruangan
-                </button>
+                </Button>
             </div>
 
-            {/* Table */}
-            <div className="card">
-                <div className="card-header">
-                    <h3 className="card-title">Daftar Ruangan</h3>
-                    <div className="filters">
-                        <div className="search-box">
-                            <i className="fa-solid fa-magnifying-glass"></i>
-                            <input 
-                                type="text" 
-                                placeholder="Cari nama ruangan..." 
-                                value={searchText}
-                                onChange={(e) => setSearchText(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            <div className="bg-white rounded-[2.5rem] p-6 lg:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100">
+                <UseDynamicTable
+                    columns={columns}
+                    data={rooms}
+                    loading={loading}
+                    pageInfo={{
+                        currentPage: pagination.current,
+                        pageSize: pagination.pageSize,
+                        total: pagination.total
+                    }}
+                    onPageChange={(p) => setPagination(prev => ({ ...prev, current: p }))}
+                    onPageSizeChange={(s) => setPagination(prev => ({ ...prev, pageSize: s, current: 1 }))}
+                    searchText={tempSearch}
+                    setSearchText={setTempSearch}
+                    onSearch={handleSearch}
+                    searchPlaceholder="Cari nama ruangan..."
+                    filters={
+                        <div className="flex items-center gap-3">
+                            <Typography.Text className="text-slate-400 font-medium whitespace-nowrap">Filter by:</Typography.Text>
+                            <Select
+                                placeholder="Semua Status"
+                                style={{ width: 180 }}
+                                className="custom-select-large"
+                                allowClear
+                                value={statusFilter}
+                                onChange={(val) => {
+                                    setStatusFilter(val || "");
+                                    setPagination(prev => ({ ...prev, current: 1 }));
+                                }}
+                                options={[
+                                    { label: "Available", value: "Available" },
+                                    { label: "Occupied", value: "Occupied" },
+                                    { label: "Maintenance", value: "Maintenance" }
+                                ]}
                             />
                         </div>
-                        <Select
-                            style={{ width: 160 }}
-                            placeholder="Status"
-                            allowClear
-                            value={statusFilter || undefined}
-                            onChange={(value) => {
-                                setStatusFilter(value || "");
-                                fetchData(1, pagination.pageSize, searchText, value || "");
-                            }}
-                            options={[
-                                { label: "Semua Status", value: "" },
-                                { label: "Available", value: "Available" },
-                                { label: "Occupied", value: "Occupied" },
-                                { label: "Maintenance", value: "Maintenance" }
-                            ]}
-                        />
-                        <button className="btn btn-secondary" onClick={handleSearch}>
-                            Cari
-                        </button>
-                    </div>
-                </div>
-                <div className="card-body">
-                    {loading ? (
-                        <div style={{ textAlign: "center", padding: "40px" }}>
-                            <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: 24 }}></i>
-                            <p style={{ marginTop: 8 }}>Loading...</p>
-                        </div>
-                    ) : (
-                        <table className="data-table">
-                            <thead>
-                                <tr>
-                                    <th style={{ width: '60px' }}>ID</th>
-                                    <th>Nama Ruangan</th>
-                                    <th>Deskripsi</th>
-                                    <th style={{ width: '100px' }}>Kapasitas</th>
-                                    <th style={{ width: '120px' }}>Status</th>
-                                    <th style={{ width: '80px' }}>Aktif</th>
-                                    <th style={{ width: '100px' }}>Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {rooms.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={7} style={{ textAlign: "center", padding: "40px" }}>
-                                            <i className="fa-solid fa-door-open" style={{ fontSize: 40, color: "#ccc", marginBottom: 12 }}></i>
-                                            <p>Tidak ada data ruangan</p>
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    rooms.map((room) => (
-                                        <tr key={room.id}>
-                                            <td>{room.id}</td>
-                                            <td>
-                                                <div className="service-info">
-                                                    <div
-                                                        className="service-icon"
-                                                        style={{
-                                                            backgroundColor: getRoomStatusName(room.status) === 'Available' 
-                                                                ? "#dcfce7" 
-                                                                : getRoomStatusName(room.status) === 'Occupied'
-                                                                    ? "#fef3c7"
-                                                                    : "#fee2e2",
-                                                            color: getRoomStatusName(room.status) === 'Available' 
-                                                                ? "#16a34a" 
-                                                                : getRoomStatusName(room.status) === 'Occupied'
-                                                                    ? "#d97706"
-                                                                    : "#dc2626",
-                                                        }}
-                                                    >
-                                                        <i className="fa-solid fa-door-open"></i>
-                                                    </div>
-                                                    <div className="service-name">{room.name}</div>
-                                                </div>
-                                            </td>
-                                            <td>{room.description || "-"}</td>
-                                            <td style={{ textAlign: 'center' }}>
-                                                <span style={{ 
-                                                    display: 'inline-flex', 
-                                                    alignItems: 'center', 
-                                                    gap: 6,
-                                                    fontWeight: 600 
-                                                }}>
-                                                    <i className="fa-solid fa-user" style={{ fontSize: 12, color: '#888' }}></i>
-                                                    {room.capacity}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span className={`badge ${getStatusBadgeClass(room.status)}`}>
-                                                    <i className={getStatusIcon(room.status)} style={{ marginRight: 4, fontSize: 10 }}></i>
-                                                    {getRoomStatusName(room.status)}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span className={`badge ${room.isActive ? "badge-green" : "badge-red"}`}>
-                                                    {room.isActive ? "Ya" : "Tidak"}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div className="action-buttons">
-                                                    <button
-                                                        className="btn-action"
-                                                        title="Edit"
-                                                        onClick={() => handleOpenEditModal(room)}
-                                                    >
-                                                        <i className="fa-solid fa-pen"></i>
-                                                    </button>
-                                                    <button
-                                                        className="btn-action delete"
-                                                        title="Hapus"
-                                                        onClick={() => handleDelete(room.id)}
-                                                    >
-                                                        <i className="fa-solid fa-trash"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    )}
-                </div>
-                <div className="table-footer">
-                    <div className="table-info">
-                        Menampilkan {rooms.length > 0 ? ((pagination.current - 1) * pagination.pageSize) + 1 : 0}-
-                        {Math.min(pagination.current * pagination.pageSize, pagination.total)} dari {pagination.total} ruangan
-                    </div>
-                    {pagination.total > pagination.pageSize && (
-                        <div className="pagination">
-                            <button 
-                                className="btn btn-sm"
-                                disabled={pagination.current === 1}
-                                onClick={() => handlePageChange(pagination.current - 1)}
-                            >
-                                Prev
-                            </button>
-                            <span style={{ padding: '0 12px' }}>
-                                Page {pagination.current} of {Math.ceil(pagination.total / pagination.pageSize)}
-                            </span>
-                            <button 
-                                className="btn btn-sm"
-                                disabled={pagination.current >= Math.ceil(pagination.total / pagination.pageSize)}
-                                onClick={() => handlePageChange(pagination.current + 1)}
-                            >
-                                Next
-                            </button>
-                        </div>
-                    )}
-                </div>
+                    }
+                />
             </div>
 
-            {/* Add/Edit Room Modal */}
-            <div className={`modal-overlay ${showModal ? "show" : ""}`}>
-                <div className="modal" style={{ maxWidth: 500 }}>
-                    <div className="modal-header">
-                        <h3 className="modal-title">
-                            {selectedRoom ? "Edit Ruangan" : "Tambah Ruangan Baru"}
-                        </h3>
-                        <button className="modal-close" onClick={() => setShowModal(false)}>
-                            &times;
-                        </button>
-                    </div>
-                    <div className="modal-body">
-                        <div className="form-group">
-                            <label className="form-label">
-                                Nama Ruangan <span className="required">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                className="form-input"
-                                placeholder="Contoh: Room 1, VIP Room, dll"
-                                value={formData.name || ""}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            />
+            {/* Modal Form */}
+            <Modal
+                width={550}
+                open={openForm}
+                onCancel={() => !saving && setOpenForm(false)}
+                footer={null}
+                centered
+                destroyOnHidden
+                title={
+                    <div className="flex items-center gap-4 p-2">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600 shadow-sm border border-amber-500/20">
+                            <HomeOutlined style={{ fontSize: 24 }} />
                         </div>
-
-                        <div className="form-row">
-                            <div className="form-group" style={{ flex: 1 }}>
-                                <label className="form-label">Kapasitas</label>
-                                <InputNumber
-                                    style={{ width: '100%', height: 40 }}
-                                    min={1}
-                                    max={10}
-                                    value={formData.capacity || 1}
-                                    onChange={(value) => setFormData({ ...formData, capacity: value || 1 })}
-                                />
-                                <small style={{ color: '#888', marginTop: 4, display: 'block' }}>
-                                    Jumlah maksimal orang dalam ruangan
-                                </small>
-                            </div>
-                            {selectedRoom && (
-                                <div className="form-group" style={{ flex: 1 }}>
-                                    <label className="form-label">Status</label>
-                                    <Select
-                                        style={{ width: '100%', height: 40 }}
-                                        value={typeof formData.status === 'number' ? formData.status : 0}
-                                        onChange={(value) => setFormData({ ...formData, status: value })}
+                        <div className="flex flex-col">
+                            <Typography className="text-xl font-bold text-slate-800 m-0 leading-tight">
+                                {formType === "create" ? "Tambah" : formType === "detail" ? "Detail" : "Update"} Ruangan
+                            </Typography>
+                            <p className="text-xs text-slate-400 font-medium m-0 mt-1">Kelola informasi ruangan dan kapasitas treatment</p>
+                        </div>
+                    </div>
+                }
+                className="custom-modal"
+            >
+                <Spin spinning={saving || (loading && formType !== "create")}>
+                    <UseForm form={forms} initialValues={selectedRoom || { status: 0, capacity: 1, isActive: true }}>
+                        <Row gutter={[24, 0]} className="mt-6">
+                            <Col span={24}>
+                                <UseFormItem name="name" label="Nama Ruangan" {...itemLayouts} rules={[{ required: true, message: "Nama wajib diisi" }]}>
+                                    <UseInput placeholder="Contoh: VIP Room 01, Treatment Room A" disabled={formType === "detail"} />
+                                </UseFormItem>
+                            </Col>
+                            <Col span={24} md={12}>
+                                <UseFormItem name="capacity" label="Kapasitas (Orang)" {...itemLayouts} rules={[{ required: true, message: "Kapasitas wajib diisi" }]}>
+                                    <InputNumber 
+                                        min={1} 
+                                        max={20} 
+                                        className="w-full h-[46px] rounded-xl flex items-center border-2 border-slate-100" 
+                                        disabled={formType === "detail"} 
+                                    />
+                                </UseFormItem>
+                            </Col>
+                            <Col span={24} md={12}>
+                                <UseFormItem name="status" label="Status Ketersediaan" {...itemLayouts}>
+                                    <Select 
+                                        className="w-full h-[46px] custom-select" 
+                                        disabled={formType === "detail"}
                                         options={[
                                             { label: "Available", value: 0 },
                                             { label: "Occupied", value: 1 },
                                             { label: "Maintenance", value: 2 }
                                         ]}
                                     />
-                                </div>
-                            )}
-                        </div>
+                                </UseFormItem>
+                            </Col>
+                            <Col span={24}>
+                                <UseFormItem name="description" label="Deskripsi Ruangan" {...itemLayouts}>
+                                    <UseInputArea placeholder="Informasi tambahan tentang fasilitas ruangan..." disabled={formType === "detail"} rows={3} />
+                                </UseFormItem>
+                            </Col>
+                            <Col span={24}>
+                                <UseFormItem name="isActive" label="Status Aktif" {...itemLayouts}>
+                                    <Select 
+                                        className="w-full h-[46px] custom-select" 
+                                        disabled={formType === "detail"}
+                                        options={[
+                                            { label: "Aktif", value: true },
+                                            { label: "Nonaktif", value: false }
+                                        ]}
+                                    />
+                                </UseFormItem>
+                            </Col>
 
-                        <div className="form-group">
-                            <label className="form-label">Deskripsi</label>
-                            <textarea
-                                className="form-textarea"
-                                rows={3}
-                                placeholder="Deskripsi ruangan (opsional)"
-                                value={formData.description || ""}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            ></textarea>
-                        </div>
+                            <Col span={24} className="mt-8 flex justify-end gap-3 pt-6 border-t border-slate-100">
+                                {formType !== "detail" ? (
+                                    <>
+                                        <Button 
+                                            size="large" 
+                                            className="rounded-xl px-8 border-none bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 h-12" 
+                                            onClick={() => setOpenForm(false)}
+                                        >
+                                            Batal
+                                        </Button>
+                                        <Button 
+                                            type="primary" 
+                                            size="large" 
+                                            className="rounded-xl px-10 bg-emerald-500 hover:bg-emerald-600 border-none font-bold text-white h-12 shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+                                            onClick={handleSave}
+                                            loading={saving}
+                                        >
+                                            Simpan Ruangan
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <Button 
+                                        type="primary" 
+                                        size="large" 
+                                        className="rounded-xl px-10 bg-emerald-500 hover:bg-emerald-600 border-none font-bold text-white h-12 shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+                                        onClick={() => setFormType("update")}
+                                    >
+                                        Edit Data
+                                    </Button>
+                                )}
+                            </Col>
+                        </Row>
+                    </UseForm>
+                </Spin>
+            </Modal>
 
-                        {selectedRoom && (
-                            <div className="form-group">
-                                <label className="form-label">Status Aktif</label>
-                                <Select
-                                    style={{ width: '100%', height: 40 }}
-                                    value={formData.isActive}
-                                    onChange={(value) => setFormData({ ...formData, isActive: value })}
-                                    options={[
-                                        { label: "Aktif", value: true },
-                                        { label: "Nonaktif", value: false }
-                                    ]}
-                                />
-                            </div>
-                        )}
-                    </div>
-                    <div className="modal-footer">
-                        <button
-                            className="btn btn-secondary"
-                            onClick={() => {
-                                setShowModal(false);
-                                setSelectedRoom(null);
-                            }}
-                        >
-                            Batal
-                        </button>
-                        <button className="btn btn-primary" onClick={handleSave}>
-                            <i className="fa-solid fa-check"></i>
-                            {selectedRoom ? "Update Ruangan" : "Simpan Ruangan"}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </>
+            {/* Modal Delete */}
+            {deleteModal.open && (
+                <ConfirmActionModal
+                    config={ActionPresets.delete(deleteModal.name)}
+                    onConfirm={handleDeleteConfirm}
+                    onClose={() => setDeleteModal({ open: false, id: null, name: "" })}
+                    loading={loading}
+                />
+            )}
+
+            <style jsx global>{`
+                .custom-select .ant-select-selector,
+                .custom-select-large .ant-select-selector {
+                    height: 46px !important;
+                    border-radius: 12px !important;
+                    border: 2px solid #f1f5f9 !important;
+                    background-color: #fafafa !important;
+                    display: flex !important;
+                    align-items: center !important;
+                }
+                .custom-select .ant-select-selection-item,
+                .custom-select-large .ant-select-selection-item {
+                    line-height: 42px !important;
+                    font-weight: 500 !important;
+                }
+                .custom-modal .ant-modal-content {
+                    border-radius: 2.5rem !important;
+                    padding: 2rem !important;
+                }
+                .custom-modal .ant-modal-header {
+                    margin-bottom: 2rem !important;
+                }
+            `}</style>
+        </div>
     );
 }

@@ -685,11 +685,11 @@ function Pagination({
   };
 
   return (
-    <div className="flex items-center justify-between px-4 py-4 bg-white border-t border-gray-200">
-      <div className="text-sm text-gray-500">
+    <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-4 bg-white border-t border-gray-200 gap-4">
+      <div className="text-sm text-gray-500 order-2 sm:order-1">
         Menampilkan {startItem}–{endItem} dari {total} data
       </div>
-      <div className="flex items-center gap-6">
+      <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 order-1 sm:order-2 w-full sm:w-auto">
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <span>Tampilkan</span>
           <select
@@ -705,7 +705,7 @@ function Pagination({
           </select>
           <span>data</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 overflow-x-auto pb-2 sm:pb-0 max-w-full">
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage <= 1}
@@ -1106,20 +1106,20 @@ export function UseDynamicTable({
   };
 
   return (
-    <div className="bg-white min-h-[600px] rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-white min-h-[400px] sm:min-h-[600px] rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       {/* ── Toolbar ── */}
-      <div className="flex items-center flex-wrap gap-2 justify-between px-6 py-4 border-b border-gray-200">
+      <div className="flex flex-col lg:flex-row lg:items-center gap-4 justify-between px-4 sm:px-6 py-4 border-b border-gray-200">
         <div className="flex items-center gap-3">
           {searchable && (
-            <div className="flex items-center gap-2">
-              <div className="relative flex items-center group">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
+              <div className="relative flex items-center group flex-1">
                 <Search 
                   size={16} 
                   className={`absolute left-3 transition-colors ${searchTerm ? "text-blue-600" : "text-gray-400"}`} 
                 />
                 <input
                   type="text"
-                  className="w-full sm:w-[350px] bg-gray-50 border border-gray-200 rounded-lg py-2 pl-10 pr-10 text-sm text-gray-700 outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-gray-400"
+                  className="w-full sm:w-[300px] xl:w-[400px] bg-gray-50 border border-gray-200 rounded-lg py-2 pl-10 pr-10 text-sm text-gray-700 outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all placeholder:text-gray-400"
                   placeholder={searchPlaceholder || "Search..."}
                   value={searchTerm}
                   onChange={(e) => setTerm(e.target.value)}
@@ -1139,7 +1139,7 @@ export function UseDynamicTable({
               </div>
               <button
                 onClick={handleManualSearch}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all shadow-sm shadow-blue-200 flex items-center gap-2"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all shadow-sm shadow-blue-200 flex items-center justify-center gap-2"
               >
                 Cari
               </button>
@@ -1152,7 +1152,7 @@ export function UseDynamicTable({
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center flex-wrap gap-3 w-full lg:w-auto justify-end">
           {filters !== null && filters}
           <ColumnFilterPopup
             columns={permittedColumns}
@@ -1180,9 +1180,8 @@ export function UseDynamicTable({
         </div>
       </div>
 
-      {/* ── Table ── */}
-      <div className="w-full overflow-x-auto min-h-[500px]">
-        <table className="w-full text-sm text-left border-collapse">
+      <div className="w-full min-h-[400px] table-responsive">
+        <table className="w-full text-sm text-left border-collapse min-w-[800px]">
           <thead className="text-xs text-gray-600 bg-gray-50 border-b">
             <tr>
               <th className="px-4 py-3 w-10" />

@@ -142,5 +142,10 @@ export const rest = {
       update: "master/departments/:ID",
       delete: "master/departments/:ID",
     },
+    branchOperatingHours: {
+      byBranch: "master/branch-operating-hours/branch/:ID",
+      create: "master/branch-operating-hours",
+      update: "master/branch-operating-hours/:ID",
+    },
   },
 };

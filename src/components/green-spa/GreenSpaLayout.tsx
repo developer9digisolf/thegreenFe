@@ -135,10 +135,7 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
       const width = window.innerWidth;
       const mobile = width <= 1024;
       
-      setIsMobile(prev => {
-        if (prev !== mobile) return mobile;
-        return prev;
-      });
+      setIsMobile(mobile);
       
       setIsCollapsed(prev => {
         if (mobile) return true;
@@ -165,6 +162,13 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isCollapsed, isMobile]);
+
+  // Auto close sidebar on mobile when route changes
+  useEffect(() => {
+    if (isMobile && !isCollapsed) {
+      setIsCollapsed(true);
+    }
+  }, [pathname, isMobile]);
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -221,7 +225,7 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
         {/* Mobile Overlay */}
         {!isCollapsed && isMobile && (
           <div 
-            className="fixed inset-0 bg-black/50 z-[999] transition-opacity" 
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[999] transition-all duration-500 ease-in-out opacity-100" 
             onClick={toggleSidebar} 
           />
         )}
@@ -229,8 +233,8 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
         {/* Sidebar */}
         <aside 
           className={`
-            fixed top-0 left-0 h-screen bg-[#0D1117] transition-all duration-300 z-[1000] flex flex-col
-            ${isCollapsed ? (isMobile ? "-left-[280px]" : "w-20") : "w-[280px]"}
+            fixed top-0 left-0 h-screen bg-[#0D1117] transition-all duration-500 ease-in-out z-[1000] flex flex-col shadow-2xl
+            ${isCollapsed ? (isMobile ? "-left-[300px]" : "w-20") : "w-[280px] left-0"}
           `}
         >
           {/* Sidebar Header */}
@@ -247,7 +251,7 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
               {isMobile && !isCollapsed && (
                 <button 
                   onClick={() => setIsCollapsed(true)}
-                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 text-white hover:bg-white/10 transition-all border border-white/10 cursor-pointer shrink-0 ml-2"
+                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 text-white hover:bg-white/20 transition-all border border-white/20 cursor-pointer shrink-0 ml-2 shadow-inner"
                 >
                   <CloseOutlined className="text-lg" />
                 </button>
@@ -403,12 +407,12 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
         {/* Main Wrapper */}
         <div 
           className={`
-            flex-1 flex flex-col min-h-screen transition-all duration-300
+            flex-1 flex flex-col min-h-screen transition-all duration-500 ease-in-out
             ${isMobile ? "ml-0" : (isCollapsed ? "ml-20" : "ml-[280px]")}
           `}
         >
           {/* Top Header */}
-          <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-[90]">
+          <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-[90]">
             <div className="flex items-center gap-5">
               <button 
                 className="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center cursor-pointer text-slate-500 hover:bg-emerald-50 hover:border-emerald-500 hover:text-emerald-500 transition-all"
@@ -422,7 +426,7 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
               </div>
             </div>
 
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 lg:gap-6">
               <div className="flex gap-3">
                 <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-lg text-slate-500 cursor-pointer hover:bg-slate-200 hover:text-slate-900 transition-all">
                   <MoonOutlined />
@@ -448,7 +452,7 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
             </div>
           </header>
 
-          <main className="p-8 flex-1 overflow-y-auto scrollbar-hide">
+          <main className="p-4 lg:p-8 flex-1 overflow-y-auto scrollbar-hide bg-slate-100/50">
             {children}
           </main>
         </div>

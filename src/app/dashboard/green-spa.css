@@ -480,3 +480,10 @@ body {
     color: #10B981;
     border-color: #10B981;
 }
+
+.table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}

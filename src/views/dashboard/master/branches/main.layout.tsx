@@ -5,6 +5,7 @@ import { Form, notification } from "antd";
 import { useEffect, useState } from "react";
 import { BrowseBranch } from "./layouts/browse.layout";
 import { FormBranch } from "./layouts/form.layout";
+import { BranchOperatingHoursModal } from "./layouts/operating-hours.layout";
 import {
   IActionBranch,
   IStateBranch,
@@ -23,6 +24,17 @@ export default function BranchView() {
   const [openFormCreate, setOpenFormCreate] = useState<boolean>(false);
   const [forms] = Form.useForm<IReqFormBranch>();
   const [formType, setFormType] = useState<string>("create");
+
+  // State for Operating Hours Modal
+  const [operatingHoursModal, setOperatingHoursModal] = useState<{
+    open: boolean;
+    branchId: number;
+    branchName: string;
+  }>({
+    open: false,
+    branchId: 0,
+    branchName: "",
+  });
 
   const [tempSearch, setTempSearch] = useState<string>("");
 
@@ -122,6 +134,14 @@ export default function BranchView() {
     );
   };
 
+  const handleOperatingHours = (record: any) => {
+    setOperatingHoursModal({
+      open: true,
+      branchId: record.id,
+      branchName: record.name,
+    });
+  };
+
   return (
     <>
       {(formType === "detail" || !openFormCreate) && (
@@ -141,6 +161,7 @@ export default function BranchView() {
             setOpenFormCreate(true);
           }}
           handleDelete={(v: number) => handleDelete(v)}
+          handleOperatingHours={handleOperatingHours}
         />
       )}
 
@@ -155,6 +176,15 @@ export default function BranchView() {
           }}
           setFormType={(v: any) => setFormType(v)}
           handleSubmit={handleSubmit}
+        />
+      )}
+
+      {operatingHoursModal.open && (
+        <BranchOperatingHoursModal
+          branchId={operatingHoursModal.branchId}
+          branchName={operatingHoursModal.branchName}
+          open={operatingHoursModal.open}
+          onClose={() => setOperatingHoursModal({ ...operatingHoursModal, open: false })}
         />
       )}
     </>

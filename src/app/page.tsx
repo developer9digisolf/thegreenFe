@@ -25,15 +25,15 @@ export default function HomePage() {
       alignItems: 'center',
       justifyContent: 'center',
       height: '100vh',
-      background: 'linear-gradient(135deg, #059669 0%, #0d9488 50%, #14b8a6 100%)'
+      background: '#ffffff'
     }}>
-      <div style={{ textAlign: 'center', color: 'white' }}>
+      <div style={{ textAlign: 'center', color: '#059669' }}>
         <div style={{
           width: 60,
           height: 60,
           borderRadius: '50%',
-          border: '3px solid rgba(255,255,255,0.3)',
-          borderTopColor: 'white',
+          border: '3px solid rgba(5, 150, 105, 0.1)',
+          borderTopColor: '#059669',
           animation: 'spin 1s linear infinite',
           margin: '0 auto 16px'
         }} />
