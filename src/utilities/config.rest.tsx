@@ -135,5 +135,12 @@ export const rest = {
       update: "master/positions/:ID",
       delete: "master/positions/:ID",
     },
+    departments: {
+      index: "master/departments",
+      show: "master/departments/:ID",
+      create: "master/departments",
+      update: "master/departments/:ID",
+      delete: "master/departments/:ID",
+    },
   },
 };
