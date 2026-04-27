@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { lazy } from "react";
+import { lazy, Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Branches | The Green Spa",
@@ -11,5 +11,9 @@ const Branches = lazy(
 );
 
 export default function BranchesRoute() {
-  return <Branches />;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <Branches />
+    </Suspense>
+  );
 }

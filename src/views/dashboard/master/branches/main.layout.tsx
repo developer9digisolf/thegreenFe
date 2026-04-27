@@ -124,35 +124,39 @@ export default function BranchView() {
 
   return (
     <>
-      <BrowseBranch
-        {...{ page, pageSize, setPage, setPageSize }}
-        onSearch={handleSearch}
-        searchText={tempSearch}
-        setSearchText={setTempSearch}
-        setOpenFormCreate={() => {
-          setFormType("create");
-          setOpenFormCreate(true);
-        }}
-        handleToDetail={(v: number) => handleDetail(v)}
-        handleEdit={(id: number) => {
-          useActions<"getBranch">("getBranch", [id], true);
-          setFormType("update");
-          setOpenFormCreate(true);
-        }}
-        handleDelete={(v: number) => handleDelete(v)}
-      />
+      {(formType === "detail" || !openFormCreate) && (
+        <BrowseBranch
+          {...{ page, pageSize, setPage, setPageSize }}
+          onSearch={handleSearch}
+          searchText={tempSearch}
+          setSearchText={setTempSearch}
+          setOpenFormCreate={() => {
+            setFormType("create");
+            setOpenFormCreate(true);
+          }}
+          handleToDetail={(v: number) => handleDetail(v)}
+          handleEdit={(id: number) => {
+            useActions<"getBranch">("getBranch", [id], true);
+            setFormType("update");
+            setOpenFormCreate(true);
+          }}
+          handleDelete={(v: number) => handleDelete(v)}
+        />
+      )}
 
-      <FormBranch
-        {...{ formType, forms }}
-        open={openFormCreate}
-        onCancel={() => {
-          setOpenFormCreate(false);
-          forms.resetFields();
-          setFormType("create");
-        }}
-        setFormType={(v: any) => setFormType(v)}
-        handleSubmit={handleSubmit}
-      />
+      {openFormCreate && (
+        <FormBranch
+          {...{ formType, forms }}
+          open={openFormCreate}
+          onCancel={() => {
+            setOpenFormCreate(false);
+            forms.resetFields();
+            setFormType("create");
+          }}
+          setFormType={(v: any) => setFormType(v)}
+          handleSubmit={handleSubmit}
+        />
+      )}
     </>
   );
 }

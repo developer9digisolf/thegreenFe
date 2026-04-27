@@ -14,12 +14,12 @@ export default function MainLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <title>The Green Spa | Management System</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <ConfigProvider
           theme={{
             token: {

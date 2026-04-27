@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+
 const nextConfig = {
   // Transpile packages only when necessary (Ant Design needs this due to ES modules)
   transpilePackages: [
@@ -12,6 +13,7 @@ const nextConfig = {
     "rc-table",
     "rc-virtual-list",
   ],
+  reactStrictMode: false,
   compiler: {
     removeConsole:
       process.env.NODE_ENV === "production"
@@ -42,6 +44,18 @@ const nextConfig = {
         destination: `${process.env.API_DESTINATION || "https://green-api-staging.digisolf.com"}/api/:path*`,
       },
     ];
+  },
+  // Tambahkan webpack fallback untuk Turbopack
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    return config;
   },
 };
 
