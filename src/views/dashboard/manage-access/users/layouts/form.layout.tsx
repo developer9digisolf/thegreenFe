@@ -17,6 +17,7 @@ import {
 } from "@afx/models/dashboard/manage-access/users.model";
 import { useStore } from "@afx/store/core";
 import { Col, Modal, Row, Spin, Typography, Tabs, Tag, Card, Button, Input, Table, Tooltip, Empty } from "antd";
+import { useAuth } from "@afx/contexts/AuthContext";
 
 const itemLayouts = {
   wrapperCol: { span: 24 },
@@ -59,7 +60,7 @@ const AccessTable = ({
       <Table
         size="small"
         dataSource={data}
-        rowKey={record => String(record.id || record.companyId || record.branchId)}
+        rowKey={record => String(record.id)}
         pagination={false}
         scroll={{ y: 350 }}
         rowSelection={{
@@ -83,7 +84,7 @@ const AccessTable = ({
         className="premium-access-table-compact"
         onRow={(record) => ({
           onClick: () => {
-            const key = String(record.id || record.companyId || record.branchId);
+            const key = String(record.id);
             onSelectChange(selectedKeys.includes(key) ? selectedKeys.filter((k: any) => k !== key) : [...selectedKeys, key]);
           },
         })}
@@ -102,8 +103,13 @@ export function FormUser(props: IPropsFormUser) {
     useActions
   } = useStore<IStateUser, IActionUser>("users");
 
-  const [selAvailable, setSelAvailable] = useState<React.Key[]>([]);
-  const [selAssigned, setSelAssigned] = useState<React.Key[]>([]);
+  const { user: currentUser, refreshUser } = useAuth();
+
+  // Use separate selection states for each tab/pool to avoid key collisions and cross-pollution
+  const [selAvailComp, setSelAvailComp] = useState<React.Key[]>([]);
+  const [selAssignComp, setSelAssignComp] = useState<React.Key[]>([]);
+  const [selAvailBranch, setSelAvailBranch] = useState<React.Key[]>([]);
+  const [selAssignBranch, setSelAssignBranch] = useState<React.Key[]>([]);
 
   const loading =
     isLoading("createUser") || 
@@ -144,26 +150,51 @@ export function FormUser(props: IPropsFormUser) {
   const handleTransfer = (type: 'company' | 'branch', direction: 'add' | 'remove') => {
     if (!user?.id) return;
 
-    const currentAssigned = type === 'company' ? userCompanies : userBranches;
-    const currentKeys = currentAssigned.map(a => String(a.companyId || a.branchId || a.id));
-    
-    let newKeys: number[] = [];
-    
-    if (direction === 'add') {
-      newKeys = [...currentKeys, ...selAvailable.map(String)].map(Number);
-      setSelAvailable([]);
-    } else {
-      newKeys = currentKeys.filter(k => !selAssigned.map(String).includes(k)).map(Number);
-      setSelAssigned([]);
-    }
-
     if (type === 'company') {
-      useActions<"updateUserCompanies">("updateUserCompanies", [user.id, newKeys, () => {
+      const currentIds = userCompanies.map(c => Number(c.companyId));
+      let newIds: number[] = [];
+
+      if (direction === 'add') {
+        const addedIds = selAvailComp.map(Number);
+        newIds = [...currentIds, ...addedIds];
+        setSelAvailComp([]);
+      } else {
+        const removedMappingIds = selAssignComp.map(Number);
+        newIds = userCompanies
+          .filter(c => !removedMappingIds.includes(Number(c.id)))
+          .map(c => Number(c.companyId));
+        setSelAssignComp([]);
+      }
+
+      useActions<"updateUserCompanies">("updateUserCompanies", [user.id, newIds, () => {
         useActions<"getUserCompanies">("getUserCompanies", [user.id], true);
+        // Automatically refresh global switcher if current logged-in user is updated
+        if (Number(user.id) === Number(currentUser?.id)) {
+          refreshUser();
+        }
       }], true);
     } else {
-      useActions<"updateUserBranches">("updateUserBranches", [user.id, newKeys, () => {
+      const currentIds = userBranches.map(b => Number(b.branchId));
+      let newIds: number[] = [];
+
+      if (direction === 'add') {
+        const addedIds = selAvailBranch.map(Number);
+        newIds = [...currentIds, ...addedIds];
+        setSelAvailBranch([]);
+      } else {
+        const removedMappingIds = selAssignBranch.map(Number);
+        newIds = userBranches
+          .filter(b => !removedMappingIds.includes(Number(b.id)))
+          .map(b => Number(b.branchId));
+        setSelAssignBranch([]);
+      }
+
+      useActions<"updateUserBranches">("updateUserBranches", [user.id, newIds, () => {
         useActions<"getUserBranches">("getUserBranches", [user.id], true);
+        // Automatically refresh global switcher if current logged-in user is updated
+        if (Number(user.id) === Number(currentUser?.id)) {
+          refreshUser();
+        }
       }], true);
     }
   };
@@ -179,7 +210,7 @@ export function FormUser(props: IPropsFormUser) {
         <div className="flex flex-col text-left">
           <div className="flex items-center gap-2">
             <Typography className="text-xl font-black text-slate-950 m-0 leading-tight">
-              {props?.formType === "create" ? "New Operator" : "Authority Profile"}
+              {props?.formType === "create" ? "New Operator" : (user?.username ? `@${user.username}` : "Authority Profile")}
             </Typography>
             {props?.formType !== "create" && (
                <Tag className={`rounded-lg px-2 py-0.5 font-black border-none uppercase text-[9px] tracking-widest ${
@@ -203,7 +234,7 @@ export function FormUser(props: IPropsFormUser) {
             onClick={() => props?.setFormType("update")}
             className="h-12 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 border-none font-black text-sm shadow-xl shadow-emerald-600/20 active:scale-95 flex items-center gap-2"
           >
-            Modify Access
+            Modify Account  
           </Button>
         )}
         {(props?.formType === "update" || props?.formType === "create") && (
@@ -230,13 +261,22 @@ export function FormUser(props: IPropsFormUser) {
     </div>
   );
 
-  const availableCompanies = allCompanies.filter(item => 
-    !userCompanies.some(a => String(a.companyId || a.id) === String(item.id))
+  const availableCompanies = (allCompanies || []).filter(item => 
+    !(userCompanies || []).some(a => Number(a.companyId) === Number(item.id))
   );
 
-  const availableBranches = allBranches.filter(item => 
-    !userBranches.some(a => String(a.branchId || a.id) === String(item.id))
+  const availableBranches = (allBranches || []).filter(item => 
+    !(userBranches || []).some(a => Number(a.branchId) === Number(item.id))
   );
+
+  useEffect(() => {
+    console.log("Authority Data Sync:", {
+      user: user?.username,
+      allCompanies: allCompanies?.length,
+      userCompanies: userCompanies?.length,
+      availableCompanies: availableCompanies?.length
+    });
+  }, [user?.username, allCompanies, userCompanies, availableCompanies]);
 
   const tabItems = [
     {
@@ -345,8 +385,8 @@ export function FormUser(props: IPropsFormUser) {
           <div className="py-6 flex items-stretch gap-6 h-[550px]">
             <AccessTable 
               data={availableCompanies}
-              selectedKeys={selAvailable}
-              onSelectChange={setSelAvailable}
+              selectedKeys={selAvailComp}
+              onSelectChange={setSelAvailComp}
               subtitle="GLOBAL POOL"
               title="Available"
               colorClass="bg-slate-800"
@@ -356,20 +396,20 @@ export function FormUser(props: IPropsFormUser) {
             <div className="flex flex-col justify-center gap-4">
               <Button 
                 type="primary"
-                disabled={props?.formType === 'detail' || selAvailable.length === 0}
+                disabled={props?.formType === 'detail' || selAvailComp.length === 0}
                 onClick={() => handleTransfer('company', 'add')}
                 className={`w-12 h-12 rounded-2xl flex items-center justify-center border-none shadow-xl transition-all duration-300 ${
-                  selAvailable.length > 0 ? 'bg-emerald-600 text-white scale-110' : 'bg-slate-100 text-slate-300'
+                  selAvailComp.length > 0 ? 'bg-emerald-600 text-white scale-110' : 'bg-slate-100 text-slate-300'
                 }`}
               >
                 <ChevronRight size={24} strokeWidth={3} />
               </Button>
               <Button 
                 type="primary"
-                disabled={props?.formType === 'detail' || selAssigned.length === 0}
+                disabled={props?.formType === 'detail' || selAssignComp.length === 0}
                 onClick={() => handleTransfer('company', 'remove')}
                 className={`w-12 h-12 rounded-2xl flex items-center justify-center border-none shadow-xl transition-all duration-300 ${
-                  selAssigned.length > 0 ? 'bg-rose-500 text-white scale-110' : 'bg-slate-100 text-slate-300'
+                  selAssignComp.length > 0 ? 'bg-rose-500 text-white scale-110' : 'bg-slate-100 text-slate-300'
                 }`}
               >
                 <ChevronLeft size={24} strokeWidth={3} />
@@ -377,8 +417,8 @@ export function FormUser(props: IPropsFormUser) {
             </div>
             <AccessTable 
               data={userCompanies}
-              selectedKeys={selAssigned}
-              onSelectChange={setSelAssigned}
+              selectedKeys={selAssignComp}
+              onSelectChange={setSelAssignComp}
               subtitle="SECURITY ZONE"
               title="Authorized"
               colorClass="bg-emerald-600"
@@ -400,8 +440,8 @@ export function FormUser(props: IPropsFormUser) {
           <div className="py-6 flex items-stretch gap-6 h-[550px]">
             <AccessTable 
               data={availableBranches}
-              selectedKeys={selAvailable}
-              onSelectChange={setSelAvailable}
+              selectedKeys={selAvailBranch}
+              onSelectChange={setSelAvailBranch}
               subtitle="SITE POOL"
               title="Available"
               colorClass="bg-slate-800"
@@ -411,20 +451,20 @@ export function FormUser(props: IPropsFormUser) {
             <div className="flex flex-col justify-center gap-4">
               <Button 
                 type="primary"
-                disabled={props?.formType === 'detail' || selAvailable.length === 0}
+                disabled={props?.formType === 'detail' || selAvailBranch.length === 0}
                 onClick={() => handleTransfer('branch', 'add')}
                 className={`w-12 h-12 rounded-2xl flex items-center justify-center border-none shadow-xl transition-all duration-300 ${
-                  selAvailable.length > 0 ? 'bg-blue-600 text-white scale-110' : 'bg-slate-100 text-slate-300'
+                  selAvailBranch.length > 0 ? 'bg-blue-600 text-white scale-110' : 'bg-slate-100 text-slate-300'
                 }`}
               >
                 <ChevronRight size={24} strokeWidth={3} />
               </Button>
               <Button 
                 type="primary"
-                disabled={props?.formType === 'detail' || selAssigned.length === 0}
+                disabled={props?.formType === 'detail' || selAssignBranch.length === 0}
                 onClick={() => handleTransfer('branch', 'remove')}
                 className={`w-12 h-12 rounded-2xl flex items-center justify-center border-none shadow-xl transition-all duration-300 ${
-                  selAssigned.length > 0 ? 'bg-rose-500 text-white scale-110' : 'bg-slate-100 text-slate-300'
+                  selAssignBranch.length > 0 ? 'bg-rose-500 text-white scale-110' : 'bg-slate-100 text-slate-300'
                 }`}
               >
                 <ChevronLeft size={24} strokeWidth={3} />
@@ -432,8 +472,8 @@ export function FormUser(props: IPropsFormUser) {
             </div>
             <AccessTable 
               data={userBranches}
-              selectedKeys={selAssigned}
-              onSelectChange={setSelAssigned}
+              selectedKeys={selAssignBranch}
+              onSelectChange={setSelAssignBranch}
               subtitle="AUTHORIZED SITES"
               title="Provisioned"
               colorClass="bg-blue-600"

@@ -9,14 +9,13 @@ import { useAuth } from "@afx/contexts/AuthContext";
 import { getRoleName } from "@afx/interfaces/auth.iface";
 import { 
   SearchOutlined, 
-  BellOutlined, 
-  MoonOutlined, 
   DownOutlined,
   RightOutlined,
   MenuOutlined,
   CloseOutlined
 } from "@ant-design/icons";
 import CompanySwitcher from "./CompanySwitcher";
+import { notification } from "@afx/utils/antd-global";
 import "../../app/dashboard/green-spa.css";
 
 // Define interfaces for menu configuration
@@ -70,8 +69,6 @@ const menuConfig: MenuSection[] = [
         icon: "fa-solid fa-user-shield", 
         roles: ["Owner", "Admin"],
         subItems: [
-          { key: "user-branch", label: "User Has Branch", icon: "fa-solid fa-code-branch", path: "/dashboard/manage-access/user-has-branch" },
-          { key: "user-company", label: "User Has Company", icon: "fa-solid fa-building-user", path: "/dashboard/manage-access/user-has-company" },
           { key: "user-list", label: "User List", icon: "fa-solid fa-users-gear", path: "/dashboard/manage-access/users" },
         ]
       },
@@ -170,6 +167,35 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
       setIsCollapsed(true);
     }
   }, [pathname, isMobile]);
+  
+  // Monitor Network Connectivity
+  useEffect(() => {
+    const handleOnline = () => {
+      notification.success({
+        message: "Jaringan Terhubung",
+        description: "Koneksi internet Anda telah kembali normal.",
+        placement: "bottomRight",
+        duration: 4
+      });
+    };
+
+    const handleOffline = () => {
+      notification.error({
+        message: "Jaringan Terputus",
+        description: "Koneksi internet Anda terputus. Harap periksa koneksi Anda.",
+        placement: "bottomRight",
+        duration: 0 // Stay until closed or online
+      });
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -429,15 +455,6 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
 
             <div className="flex items-center gap-2 lg:gap-6">
               <CompanySwitcher />
-              <div className="flex gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-lg text-slate-500 cursor-pointer hover:bg-slate-200 hover:text-slate-900 transition-all">
-                  <MoonOutlined />
-                </div>
-                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-lg text-slate-500 cursor-pointer hover:bg-slate-200 hover:text-slate-900 transition-all relative">
-                  <BellOutlined />
-                  <div className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 border-2 border-white rounded-full"></div>
-                </div>
-              </div>
 
               <Dropdown menu={{ items: userMenuItems }} trigger={["click"]}>
                 <div className="flex items-center gap-3 py-1.5 px-3 rounded-xl cursor-pointer transition-all border border-transparent hover:bg-emerald-50 hover:border-emerald-100 group">

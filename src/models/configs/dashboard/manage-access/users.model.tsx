@@ -17,7 +17,8 @@ import {
   CreateUserCompanyService,
   DeleteUserCompanyService,
   GetUserBranchesService,
-  UpdateUserBranchesService,
+  CreateUserBranchService,
+  DeleteUserBranchService,
 } from "@afx/services/master/users.service";
 import { GetCompaniesService } from "@afx/services/master/companies.service";
 import { GetBranchesService } from "@afx/services/master/branches.service";
@@ -54,6 +55,21 @@ export type IStateUser = {
   userBranches: any[];
   allCompanies: any[];
   allBranches: any[];
+};
+
+// Internal utility to flatten hierarchical company structures for the selection pool
+const flattenCompanies = (list: any[]): any[] => {
+  if (!Array.isArray(list)) return [];
+  let result: any[] = [];
+  list.forEach(item => {
+    if (!item) return;
+    const { childCompanies, ...rest } = item;
+    result.push(rest);
+    if (Array.isArray(childCompanies) && childCompanies.length > 0) {
+      result = result.concat(flattenCompanies(childCompanies));
+    }
+  });
+  return result;
 };
 
 const UsersModels: IModelDefinitions<IStateUser, IActionUser> = {
@@ -187,13 +203,13 @@ const UsersModels: IModelDefinitions<IStateUser, IActionUser> = {
       },
       async updateUserCompanies(userId, companyIds, callback) {
         const { userCompanies } = getStates("users", (s) => s);
-        const currentCompanyIds = Array.isArray(userCompanies) ? userCompanies.map(c => c.companyId) : [];
+        const currentCompanyIds = Array.isArray(userCompanies) ? userCompanies.map(c => Number(c.companyId)) : [];
         
         // Companies to add (in companyIds but not in currentCompanyIds)
-        const toAdd = companyIds.filter(id => !currentCompanyIds.includes(id));
+        const toAdd = companyIds.filter(id => !currentCompanyIds.includes(Number(id)));
         
         // Companies to delete (in userCompanies but not in companyIds)
-        const toDelete = userCompanies.filter(c => !companyIds.includes(c.companyId));
+        const toDelete = userCompanies.filter(c => !companyIds.map(Number).includes(Number(c.companyId)));
 
         try {
           // Perform deletions
@@ -239,41 +255,69 @@ const UsersModels: IModelDefinitions<IStateUser, IActionUser> = {
       },
       async updateUserBranches(userId, branchIds, callback) {
         const { userBranches } = getStates("users", (s) => s);
+        const currentBranchIds = Array.isArray(userBranches) ? userBranches.map(b => Number(b.branchId)) : [];
+        
+        // Branches to add
+        const toAdd = branchIds.filter(id => !currentBranchIds.includes(Number(id)));
+        
+        // Branches to delete
+        const toDelete = userBranches.filter(b => !branchIds.map(Number).includes(Number(b.branchId)));
+
         try {
-          const res = await UpdateUserBranchesService(userId, branchIds);
-          callback(res?.meta?.code);
+          // Perform deletions
+          for (const item of toDelete) {
+            await DeleteUserBranchService(item.id);
+          }
+
+          // Perform additions
+          for (const branchId of toAdd) {
+            await CreateUserBranchService({ userId, branchId, isActive: true });
+          }
+
+          callback(20000);
           notification.success({
             title: "Success",
-            description: "User branches updated successfully",
+            description: "User branch access updated",
             duration: 2,
           });
+          
+          // Refresh data
+          const res = await GetUserBranchesService(userId);
+          if (res?.meta?.code === 20000) {
+            put({ userBranches: Array.isArray(res?.data) ? res?.data : [] });
+          }
         } catch (err: any) {
           callback(402);
           notification.warning({
-            title: "Failed to update branches",
-            description: err?.message || "Terjadi kesalahan pada server",
+            title: "Partial failure",
+            description: "Some branch access changes might not have been applied",
             duration: 2,
           });
         }
       },
       async getAllCompanies() {
         try {
-          const res = await GetCompaniesService({ Page: 1, PageSize: 100, SortColumn: "createdat", SortDirection: "desc" });
+          const res = await GetCompaniesService({ page: 1, pageSize: 100, sortColumn: "id", sortDirection: "desc" });
           if (res?.meta?.code === 20000) {
-            put({ allCompanies: res?.data });
+            // Flexible data extraction to handle both paginated and flat responses
+            const rawCompanies = res?.data?.pageData || (Array.isArray(res?.data) ? res?.data : []);
+            const flattened = flattenCompanies(rawCompanies);
+            put({ allCompanies: flattened });
           }
         } catch (err: any) {
-          console.error(err);
+          console.error("Authority: Global Company Sync Failed", err);
         }
       },
       async getAllBranches() {
         try {
-          const res = await GetBranchesService({ Page: 1, PageSize: 100, SortColumn: "createdat", SortDirection: "desc" });
+          const res = await GetBranchesService({ page: 1, pageSize: 100, sortColumn: "id", sortDirection: "desc" });
           if (res?.meta?.code === 20000) {
-            put({ allBranches: res?.data });
+            // Flexible data extraction to handle both paginated and flat responses
+            const branches = res?.data?.pageData || (Array.isArray(res?.data) ? res?.data : []);
+            put({ allBranches: branches });
           }
         } catch (err: any) {
-          console.error(err);
+          console.error("Authority: Site Pool Sync Failed", err);
         }
       },
     },

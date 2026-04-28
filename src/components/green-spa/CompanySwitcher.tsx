@@ -52,7 +52,7 @@ const CompanySwitcher = () => {
   };
 
   const menuItems = companies
-    .filter(company => Number(company.id) !== Number(currentCompanyId))
+    .filter(company => Number(company.id) !== Number(currentCompany?.id))
     .map(company => ({
       key: company.id.toString(),
       label: (

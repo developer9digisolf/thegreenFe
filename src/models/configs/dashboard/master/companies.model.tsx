@@ -1,6 +1,5 @@
 import { IModelDefinitions } from "@afx/interfaces/global.iface";
 import { notification } from "@afx/utils/antd-global";
-import { ExamplePostService } from "@afx/services/example.service";
 import {
   IReqCompany,
   IReqFormCompany,
@@ -32,8 +31,36 @@ export type IActionCompany = {
 
 export type IStateCompany = {
   companies: IResCompany[];
+  allCompaniesFlat: IResCompany[]; // All companies flattened for selection
   company: IResCompany;
   pageInfo: IResPagination;
+};
+
+// Recursive helper to flatten the company tree
+const flattenCompanies = (list: any[]): any[] => {
+  if (!Array.isArray(list)) return [];
+  let result: any[] = [];
+  list.forEach(item => {
+    if (!item) return;
+    const { childCompanies, ...rest } = item;
+    result.push(rest);
+    if (Array.isArray(childCompanies) && childCompanies.length > 0) {
+      result = result.concat(flattenCompanies(childCompanies));
+    }
+  });
+  return result;
+};
+
+// Recursive helper to map childCompanies to children for AntD Table compatibility
+const mapHierarchy = (list: any[]): any[] => {
+  if (!Array.isArray(list)) return [];
+  return list.map(item => ({
+    ...item,
+    key: item.id,
+    children: Array.isArray(item.childCompanies) && item.childCompanies.length > 0 
+      ? mapHierarchy(item.childCompanies) 
+      : undefined
+  }));
 };
 
 const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
@@ -41,6 +68,7 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
   model: (put, getStates, getActions) => ({
     state: {
       companies: [],
+      allCompaniesFlat: [],
       company: {} as IResCompany,
       pageInfo: {} as IResPagination,
     },
@@ -49,7 +77,19 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
         try {
           const res = await GetCompaniesService(data);
           if (res?.meta.code === 20000) {
-            put({ companies: res?.data, pageInfo: res?.pagination });
+            const rawData = res?.data?.pageData || (Array.isArray(res?.data) ? res?.data : []);
+            const pageInfo = res?.data?.pageInfo || res?.pagination || {};
+            
+            // Map the hierarchy for the tree table
+            const hierarchy = mapHierarchy(rawData);
+            // Flatten for selects
+            const flatList = flattenCompanies(rawData);
+            
+            put({ 
+              companies: hierarchy, 
+              allCompaniesFlat: flatList,
+              pageInfo: pageInfo 
+            });
           }
         } catch (err: any) {
           notification.warning({

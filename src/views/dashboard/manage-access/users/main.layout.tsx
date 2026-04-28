@@ -61,11 +61,9 @@ export default function UserView() {
           (code: any) => {
             const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
             if (isSuccess) {
-              setTimeout(() => {
-                setOpenFormCreate(false);
-                forms.resetFields();
-                getUsers();
-              }, 0);
+              getUsers();
+              // Keep modal open, but maybe clear password for security
+              forms.setFieldValue('password', '');
             }
           },
         ],
@@ -80,12 +78,8 @@ export default function UserView() {
           (code: any) => {
             const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
             if (isSuccess) {
-              setTimeout(() => {
-                setOpenFormCreate(false);
-                forms.resetFields();
-                getUsers();
-                setFormType("create");
-              }, 0);
+              getUsers();
+              setFormType("detail");
             }
           },
         ],
@@ -134,9 +128,13 @@ export default function UserView() {
         {...{ formType, forms }}
         open={openFormCreate}
         onCancel={() => {
-          setOpenFormCreate(false);
-          forms.resetFields();
-          setFormType("create");
+          if (formType === "update") {
+            setFormType("detail");
+          } else {
+            setOpenFormCreate(false);
+            forms.resetFields();
+            setFormType("create");
+          }
         }}
         setFormType={(v: any) => setFormType(v)}
         handleSubmit={handleSubmit}

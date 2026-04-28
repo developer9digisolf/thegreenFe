@@ -66,11 +66,9 @@ export default function CompanyView() {
               (code: any) => {
                 const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
                 if (isSuccess) {
-                  setTimeout(() => {
-                    setOpenFormCreate(false);
-                    forms.resetFields();
-                    getCompanies();
-                  }, 0);
+                  getCompanies();
+                  // For company creation, we might want to stay open to add branches/etc later
+                  // but for now let's at least keep it open as requested
                 }
               },
             ],
@@ -85,12 +83,8 @@ export default function CompanyView() {
               (code: any) => {
                 const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
                 if (isSuccess) {
-                  setTimeout(() => {
-                    setOpenFormCreate(false);
-                    forms.resetFields();
-                    getCompanies();
-                    setFormType("create");
-                  }, 0);
+                  getCompanies();
+                  setFormType("detail");
                 }
               },
             ],
@@ -148,9 +142,13 @@ export default function CompanyView() {
         {...{ formType, forms }}
         open={openFormCreate}
         onCancle={() => {
-          setOpenFormCreate(false);
-          forms.resetFields();
-          setFormType("create");
+          if (formType === "update") {
+            setFormType("detail");
+          } else {
+            setOpenFormCreate(false);
+            forms.resetFields();
+            setFormType("create");
+          }
         }}
         setFormType={(v: any) => setFormType(v)}
         handleSubmit={handleSubmit}

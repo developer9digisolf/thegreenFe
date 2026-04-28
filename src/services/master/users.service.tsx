@@ -82,10 +82,25 @@ export function GetUserBranchesService(userId: number) {
   });
 }
 
-export function UpdateUserBranchesService(userId: number, branchIds: number[]) {
+export function CreateUserBranchService(data: { userId: number, branchId: number, isActive: boolean }) {
   return request<any>({
-    url: rest.master.users.branches.replace(":ID", userId.toString()),
-    data: { branchIds },
+    url: rest.master.userHasBranches.index,
+    data,
     method: "POST",
+  });
+}
+
+export function UpdateUserBranchService(id: number, data: { isActive: boolean }) {
+  return request<any>({
+    url: rest.master.userHasBranches.detail.replace(":ID", id.toString()),
+    data,
+    method: "PUT",
+  });
+}
+
+export function DeleteUserBranchService(id: number) {
+  return request<any>({
+    url: rest.master.userHasBranches.detail.replace(":ID", id.toString()),
+    method: "DELETE",
   });
 }
