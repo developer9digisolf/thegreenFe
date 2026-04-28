@@ -65,10 +65,11 @@ export default async function request<T = any, R = any>({
         ...extendedItems,
       })
       .then((response) => {
+        // Axios might have failed to parse if the body was empty but content-type was JSON
         const payload = response.data;
 
-        // Check if it follows the TheGreenApi structure containing 'meta'
-        if (payload && payload.meta) {
+        // Ensure we have a valid payload object
+        if (payload && typeof payload === 'object' && payload.meta) {
           const { meta, data } = payload;
           const result: any = {
             success: meta.success,
@@ -85,8 +86,18 @@ export default async function request<T = any, R = any>({
 
           resolve(result);
         } else {
-          // Fallback for direct responses
-          resolve(payload);
+          // Fallback for direct responses or empty bodies
+          // If payload is empty string, return a structured empty success response
+          if (payload === "" || payload === null || payload === undefined) {
+            resolve({
+              success: true,
+              message: "Success",
+              data: null as any,
+              meta: { code: response.status === 204 ? 20000 : response.status }
+            });
+          } else {
+            resolve(payload);
+          }
         }
       })
       .catch((error) => {

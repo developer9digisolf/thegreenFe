@@ -142,9 +142,9 @@ export default function PaymentMethodsView() {
                 </div>
 
                 {pm.requiresReference && (
-                    <div className="mt-4 flex items-center gap-2 p-2 bg-amber-50 rounded-xl border border-amber-100">
-                        <InfoCircleOutlined className="text-amber-500 text-xs" />
-                        <Typography.Text className="text-[10px] text-amber-600 font-medium italic">Memerlukan nomor referensi/struk saat konfirmasi</Typography.Text>
+                    <div className="mt-4 flex items-center gap-2 p-2 bg-warning-50 rounded-xl border border-amber-100">
+                        <InfoCircleOutlined className="text-warning-500 text-xs" />
+                        <Typography.Text className="text-[10px] text-warning-500 font-medium italic">Memerlukan nomor referensi/struk saat konfirmasi</Typography.Text>
                     </div>
                 )}
             </Card>

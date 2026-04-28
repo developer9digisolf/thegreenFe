@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { IUser, IAuthState, getRoleName } from '@afx/interfaces/auth.iface'
-import { AuthHelper } from '@afx/services/auth.service'
+import { AuthHelper, AuthMeService } from '@afx/services/auth.service'
 
 interface AuthContextType extends IAuthState {
     logout: () => void
@@ -31,29 +31,63 @@ const initialAuthState: IAuthState = {
 export function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter()
     const pathname = usePathname()
-    const [authState, setAuthState] = useState<IAuthState>(initialAuthState)
     const [mounted, setMounted] = useState(false)
+    const [authState, setAuthState] = useState<IAuthState>(() => {
+        // Initial state from localStorage if on client
+        if (typeof window !== 'undefined') {
+            const token = AuthHelper.getToken()
+            const user = AuthHelper.getUser()
+            return {
+                isAuthenticated: !!(token && user),
+                user: user || null,
+                token: token || null,
+                loading: false
+            }
+        }
+        return initialAuthState
+    })
+
+    const fetchUserProfile = useCallback(async () => {
+        try {
+            const res = await AuthMeService()
+            if (res.success && res.data) {
+                // Update localStorage via AuthHelper to sync data
+                const currentUser = AuthHelper.getUser()
+                const updatedUser = { ...currentUser, ...res.data }
+                
+                if (typeof window !== 'undefined') {
+                    localStorage.setItem('THEGREEN@USER', JSON.stringify(updatedUser))
+                }
+                
+                setAuthState(prev => ({
+                    ...prev,
+                    user: updatedUser
+                }))
+            }
+        } catch (err) {
+            console.error('Failed to fetch user profile:', err)
+        }
+    }, [])
 
     const checkAuth = useCallback(() => {
-        // Only run on client side
-        if (typeof window === 'undefined') {
-            return
-        }
+        if (typeof window === 'undefined') return
 
         const token = AuthHelper.getToken()
         const user = AuthHelper.getUser()
 
-        if (process.env.NODE_ENV === 'development') {
-            console.log('CheckAuth - Token:', !!token, 'User:', !!user)
-        }
-
-        setAuthState({
+        setAuthState(prev => ({
+            ...prev,
             isAuthenticated: !!(token && user),
             user: user || null,
             token: token || null,
             loading: false
-        })
-    }, [])
+        }))
+        
+        // If authenticated, fetch full profile to get companies/branches
+        if (token && user) {
+            fetchUserProfile()
+        }
+    }, [fetchUserProfile])
 
     const logout = useCallback(() => {
         AuthHelper.clearAuth()
@@ -86,18 +120,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Mark as mounted (client-side only)
     useEffect(() => {
         setMounted(true)
-    }, [])
-
-    // Initial auth check - only after mounted
-    useEffect(() => {
-        if (mounted) {
-            checkAuth()
-        }
-    }, [mounted, checkAuth])
+        // Verify auth again after mount to handle any potential updates from other tabs
+        checkAuth()
+    }, [checkAuth])
 
     // Redirect logic - only after auth check is complete
     useEffect(() => {
-        if (!mounted || authState.loading) return
+        if (!mounted || authState.loading || !pathname) return
 
         const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
         const isTherapistRoute = therapistRoutes.some(route => pathname.startsWith(route))
@@ -111,20 +140,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Not authenticated
         if (!authState.isAuthenticated) {
             // Check if auth is disabled via env
-            if (process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true') {
-                console.warn('Auth is disabled via NEXT_PUBLIC_DISABLE_AUTH');
-                return;
-            }
+            if (process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true') return
 
             // Allow public routes
-            if (isPublicRoute || isRootRoute) return;
+            if (isPublicRoute || isRootRoute) return
 
             // Redirect to login for protected routes
-            if (process.env.NODE_ENV === 'development') {
-                console.log('Not authenticated, redirecting to login...');
-            }
-            router.push('/auth/login');
-            return;
+            router.push('/auth/login')
+            return
         }
 
         // Authenticated - check role-based access
@@ -133,27 +156,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             // Therapist accessing admin routes
             if (role === 'therapist' && isAdminRoute) {
-                if (process.env.NODE_ENV === 'development') {
-                    console.log('Therapist accessing admin route, redirecting to therapist dashboard...')
-                }
                 router.push('/therapist/dashboard')
                 return
             }
 
             // Non-therapist accessing therapist routes
             if (role !== 'therapist' && isTherapistRoute) {
-                if (process.env.NODE_ENV === 'development') {
-                    console.log('Non-therapist accessing therapist route, redirecting to dashboard...')
-                }
                 router.push('/dashboard')
                 return
             }
 
             // Member should not access admin or therapist routes
             if (role === 'member' && (isAdminRoute || isTherapistRoute)) {
-                if (process.env.NODE_ENV === 'development') {
-                    console.log('Member accessing protected route, redirecting to login...')
-                }
                 AuthHelper.clearAuth()
                 router.push('/auth/login')
                 return
@@ -163,13 +177,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Determine if current route requires auth
     const isProtectedRoute = useMemo(
-        () => !publicRoutes.some(route => pathname.startsWith(route))
-            && !kioskRoutes.some(route => pathname.startsWith(route))
-            && pathname !== '/',
+        () => {
+            if (!pathname) return false
+            return !publicRoutes.some(route => pathname.startsWith(route))
+                && !kioskRoutes.some(route => pathname.startsWith(route))
+                && pathname !== '/'
+        },
         [pathname]
     )
 
     // Show loading spinner while checking auth OR when not authenticated on protected route (prevents flash)
+    // Add a small safety: if we are not authenticated but it's been more than a few seconds, 
+    // maybe something is stuck with the router navigation, so we show an error or a retry
     const shouldShowLoading = !mounted || authState.loading || (isProtectedRoute && !authState.isAuthenticated)
 
     if (shouldShowLoading) {
@@ -193,6 +212,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             margin: '0 auto 16px'
                         }} />
                         <div style={{ fontSize: 16 }}>Loading...</div>
+                        {mounted && !authState.isAuthenticated && isProtectedRoute && (
+                            <div style={{ marginTop: 20 }}>
+                                <button 
+                                    onClick={() => window.location.href = '/auth/login'}
+                                    style={{
+                                        background: 'transparent',
+                                        border: '1px solid #059669',
+                                        color: '#059669',
+                                        padding: '6px 12px',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        fontSize: '12px'
+                                    }}
+                                >
+                                    Pindah ke Halaman Login
+                                </button>
+                            </div>
+                        )}
                     </div>
                     <style jsx global>{`
                         @keyframes spin {

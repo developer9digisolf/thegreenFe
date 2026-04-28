@@ -5,6 +5,8 @@ export const rest = {
   authMe: "auth/me",
   authValidate: "auth/validate",
   authLogout: "auth/logout",
+  authSwitchCompany: "auth/switch-company",
+
 
   // Therapist Auth (Portal Terapis)
   therapistAuthLogin: "therapist-auth/login",
@@ -153,6 +155,26 @@ export const rest = {
       create: "master/shifts",
       update: "master/shifts/:ID",
       delete: "master/shifts/:ID",
+    },
+    users: {
+      index: "master/users",
+      show: "master/users/:ID",
+      create: "master/users",
+      update: "master/users/:ID",
+      delete: "master/users/:ID",
+      companies: "master/users/:ID/companies",
+      branches: "master/users/:ID/branches",
+    },
+    userHasCompanies: {
+      index: "master/user-has-companies",
+      detail: "master/user-has-companies/:ID",
+    },
+    userHasBranches: {
+      index: "master/user-has-branches",
+      detail: "master/user-has-branches/:ID",
+    },
+    employees: {
+      index: "master/employees",
     },
   },
 };

@@ -7,7 +7,8 @@ export const RoleMap: Record<number, string> = {
     1: 'Admin',
     2: 'Therapist',
     3: 'Member',
-    4: 'Office'
+    4: 'Office',
+    5: 'Cashier'
 }
 
 // Helper to get role name
@@ -26,6 +27,10 @@ export interface IUser {
     isActive: boolean;
     lastLoginAt?: string;
     createdAt: string;
+    companyId?: number;
+    companyName?: string;
+    companies?: any[];
+    branches?: any[];
 }
 
 // Therapist profile (included when role = Therapist)

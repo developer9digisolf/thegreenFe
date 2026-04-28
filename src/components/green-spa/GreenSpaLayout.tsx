@@ -16,6 +16,7 @@ import {
   MenuOutlined,
   CloseOutlined
 } from "@ant-design/icons";
+import CompanySwitcher from "./CompanySwitcher";
 import "../../app/dashboard/green-spa.css";
 
 // Define interfaces for menu configuration
@@ -427,6 +428,7 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
             </div>
 
             <div className="flex items-center gap-2 lg:gap-6">
+              <CompanySwitcher />
               <div className="flex gap-3">
                 <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-lg text-slate-500 cursor-pointer hover:bg-slate-200 hover:text-slate-900 transition-all">
                   <MoonOutlined />

@@ -39,6 +39,14 @@ export function AuthLogoutService() {
     })
 }
 
+export function AuthSwitchCompanyService(companyId: number) {
+    return request<IAuthResponse>({
+        url: rest.authSwitchCompany,
+        method: 'POST',
+        data: { companyId }
+    })
+}
+
 // Helper functions for token management
 export const AuthHelper = {
     // Save auth data to storage

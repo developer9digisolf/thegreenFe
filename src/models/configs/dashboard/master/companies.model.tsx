@@ -7,11 +7,11 @@ import {
   IResCompany,
 } from "@afx/interfaces/master/company.iface";
 import {
-  CreateCompanyServie,
-  DeleteCompanyServie,
-  GetCompaniesServie,
-  GetCompanyServie,
-  UpdateCompanyServie,
+  CreateCompanyService,
+  DeleteCompanyService,
+  GetCompaniesService,
+  GetCompanyService,
+  UpdateCompanyService,
 } from "@afx/services/master/companies.service";
 import { IResPagination } from "@afx/interfaces/common.iface";
 
@@ -47,7 +47,7 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
     actions: {
       async getCompanies(data) {
         try {
-          const res = await GetCompaniesServie(data);
+          const res = await GetCompaniesService(data);
           if (res?.meta.code === 20000) {
             put({ companies: res?.data, pageInfo: res?.pagination });
           }
@@ -62,7 +62,7 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
       },
       async getCompany(id) {
         try {
-          const res = await GetCompanyServie(id);
+          const res = await GetCompanyService(id);
           if (res?.meta?.code === 20000) {
             put({ company: res?.data });
           }
@@ -77,7 +77,7 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
       },
       async createCompany(data, callback) {
         try {
-          const res = await CreateCompanyServie(data);
+          const res = await CreateCompanyService(data);
           callback(res?.meta?.code);
           notification.success({
             title: "Success",
@@ -97,7 +97,7 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
       },
       async updateCompany(id, data, callback) {
         try {
-          const res = await UpdateCompanyServie(id, data);
+          const res = await UpdateCompanyService(id, data);
           callback(res?.meta?.code);
           notification.success({
             title: "Success",
@@ -117,7 +117,7 @@ const CompaniesModels: IModelDefinitions<IStateCompany, IActionCompany> = {
       },
       async deleteCompany(id, callback) {
         try {
-          const res = await DeleteCompanyServie(id);
+          const res = await DeleteCompanyService(id);
           callback(res?.meta?.code);
           notification.success({
             title: "Success",
