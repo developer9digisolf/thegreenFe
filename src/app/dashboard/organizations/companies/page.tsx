@@ -7,9 +7,9 @@ export const metadata: Metadata = {
 };
 
 const Companies = lazy(
-  () => import("@afx/views/dashboard/master/companies/index.layout"),
+  () => import("@afx/views/dashboard/organizations/companies/index.layout"),
 );
 
-export default function BookingCashierRoute() {
+export default function CompaniesRoute() {
   return <Companies />;
 }

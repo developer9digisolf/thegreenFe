@@ -207,7 +207,7 @@ export function BranchOperatingHoursModal({ branchId, branchName, open, onClose 
         </div>
       }
       className="custom-modal"
-      destroyOnClose
+      destroyOnHidden
     >
       <div className="py-4 max-h-[70vh] overflow-y-auto px-1">
         <Spin spinning={isLoading("getOperatingHours")}>

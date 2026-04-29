@@ -175,6 +175,10 @@ export const rest = {
     },
     employees: {
       index: "master/employees",
+      show: "master/employees/:ID",
+      create: "master/employees",
+      update: "master/employees/:ID",
+      delete: "master/employees/:ID",
     },
   },
 };

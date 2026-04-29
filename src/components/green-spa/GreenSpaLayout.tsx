@@ -92,11 +92,11 @@ const menuConfig: MenuSection[] = [
         icon: "fa-solid fa-sitemap", 
         roles: ["Owner", "Admin"],
         subItems: [
-          { key: "company", label: "Company", icon: "fa-solid fa-building", path: "/dashboard/master/companies" },
-          { key: "branch", label: "Branch", icon: "fa-solid fa-shop", path: "/dashboard/master/branches" },
-          { key: "employee", label: "Employee", icon: "fa-solid fa-user-doctor", path: "/dashboard/master/therapists" },
-          { key: "position", label: "Position", icon: "fa-solid fa-user-tie", path: "/dashboard/master/positions" },
-          { key: "department", label: "Department", icon: "fa-solid fa-building-columns", path: "/dashboard/master/departments" },
+          { key: "company", label: "Company", icon: "fa-solid fa-building", path: "/dashboard/organizations/companies" },
+          { key: "branch", label: "Branch", icon: "fa-solid fa-shop", path: "/dashboard/organizations/branches" },
+          { key: "employee", label: "Employees", icon: "fa-solid fa-user-doctor", path: "/dashboard/organizations/employees" },
+          { key: "position", label: "Position", icon: "fa-solid fa-user-tie", path: "/dashboard/organizations/positions" },
+          { key: "department", label: "Department", icon: "fa-solid fa-building-columns", path: "/dashboard/organizations/departments" },
         ]
       },
       { 

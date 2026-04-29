@@ -34,7 +34,7 @@ export interface IPropsPosition {
   setPageSize: (size: number) => void;
   setOpenFormCreate: () => void;
   handleToDetail: (id: number) => void;
-  handleDelete: (id: number) => void;
+  handleDelete: (id: number, name: string) => void;
   searchText: string;
   setSearchText: (text: string) => void;
   onSearch: (text: string) => void;

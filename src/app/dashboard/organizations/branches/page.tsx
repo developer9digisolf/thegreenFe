@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { lazy, Suspense } from "react";
+import { lazy } from "react";
 
 export const metadata: Metadata = {
   title: "Branches | The Green Spa",
@@ -7,13 +7,9 @@ export const metadata: Metadata = {
 };
 
 const Branches = lazy(
-  () => import("@afx/views/dashboard/master/branches/index.layout"),
+  () => import("@afx/views/dashboard/organization/branches/index.layout"),
 );
 
 export default function BranchesRoute() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <Branches />
-    </Suspense>
-  );
+  return <Branches />;
 }

@@ -3,35 +3,41 @@
 import { useStore } from "@afx/store/core";
 import { Form, notification } from "antd";
 import { useEffect, useState } from "react";
-import { BrowseDepartment } from "./layouts/browse.layout";
-import { FormDepartment } from "./layouts/form.layout";
+import { BrowsePosition } from "./layouts/browse.layout";
+import { FormPosition } from "./layouts/form.layout";
+import { ConfirmActionModal, ActionPresets } from "@afx/components/modals/ConfirmActionModal.layout";
 import {
-  IActionDepartment,
-  IStateDepartment,
-} from "@afx/models/dashboard/master/departments.model";
-import { IReqFormDepartment } from "@afx/interfaces/master/department.iface";
+  IActionPosition,
+  IStatePosition,
+} from "@afx/models/dashboard/master/positions.model";
+import { IReqFormPosition } from "@afx/interfaces/master/position.iface";
 
-export default function DepartmentView() {
+export default function PositionView() {
   const {
     useActions,
-    state: { department },
-  } = useStore<IStateDepartment, IActionDepartment>("departments");
+    state: { position },
+  } = useStore<IStatePosition, IActionPosition>("positions");
 
   const [keyword, setKeywords] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const [openFormCreate, setOpenFormCreate] = useState<boolean>(false);
-  const [forms] = Form.useForm<IReqFormDepartment>();
+  const [forms] = Form.useForm<IReqFormPosition>();
   const [formType, setFormType] = useState<string>("create");
 
   const [tempSearch, setTempSearch] = useState<string>("");
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number; name: string }>({
+    open: false,
+    id: 0,
+    name: "",
+  });
 
   const handleSearch = () => {
     setKeywords(tempSearch);
     setPage(1);
   };
 
-  const getDepartments = () => {
+  const getPositions = () => {
     const params = {
       Search: keyword,
       Page: page,
@@ -39,15 +45,15 @@ export default function DepartmentView() {
       SortColumn: "createdat",
       SortDirection: "desc" as const,
     };
-    useActions<"getDepartments">("getDepartments", [params], true);
+    useActions<"getPositions">("getPositions", [params], true);
   };
 
   useEffect(() => {
-    getDepartments();
+    getPositions();
   }, [page, pageSize, keyword]);
 
   const handleDetail = (id: number) => {
-    useActions<"getDepartment">("getDepartment", [id], true);
+    useActions<"getPosition">("getPosition", [id], true);
     setFormType("detail");
     setOpenFormCreate(true);
   };
@@ -57,8 +63,8 @@ export default function DepartmentView() {
       .validateFields()
       .then((val) => {
         if (formType === "create") {
-          useActions<"createDepartment">(
-            "createDepartment",
+          useActions<"createPosition">(
+            "createPosition",
             [
               val,
               (code: any) => {
@@ -67,7 +73,7 @@ export default function DepartmentView() {
                   setTimeout(() => {
                     setOpenFormCreate(false);
                     forms.resetFields();
-                    getDepartments();
+                    getPositions();
                   }, 0);
                 }
               },
@@ -75,10 +81,10 @@ export default function DepartmentView() {
             true,
           );
         } else {
-          useActions<"updateDepartment">(
-            "updateDepartment",
+          useActions<"updatePosition">(
+            "updatePosition",
             [
-              department?.id,
+              position?.id,
               val,
               (code: any) => {
                 const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
@@ -86,7 +92,7 @@ export default function DepartmentView() {
                   setTimeout(() => {
                     setOpenFormCreate(false);
                     forms.resetFields();
-                    getDepartments();
+                    getPositions();
                     setFormType("create");
                   }, 0);
                 }
@@ -101,20 +107,21 @@ export default function DepartmentView() {
           message: "Validation Failed",
           description: err?.errorFields?.[0]?.errors,
           duration: 2,
-          key: "FUNC-CREATE-DEPARTMENT",
+          key: "FUNC-CREATE-POSITION",
         });
       });
   };
 
   const handleDelete = (id: number) => {
-    useActions<"deleteDepartment">(
-      "deleteDepartment",
+    useActions<"deletePosition">(
+      "deletePosition",
       [
         id,
         (code: any) => {
           const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
           if (isSuccess) {
-            getDepartments();
+            setDeleteConfirm({ open: false, id: 0, name: "" });
+            getPositions();
           }
         },
       ],
@@ -124,7 +131,7 @@ export default function DepartmentView() {
 
   return (
     <>
-      <BrowseDepartment
+      <BrowsePosition
         {...{ page, pageSize, setPage, setPageSize }}
         onSearch={handleSearch}
         searchText={tempSearch}
@@ -135,14 +142,14 @@ export default function DepartmentView() {
         }}
         handleToDetail={(v: number) => handleDetail(v)}
         handleEdit={(id: number) => {
-          useActions<"getDepartment">("getDepartment", [id], true);
+          useActions<"getPosition">("getPosition", [id], true);
           setFormType("update");
           setOpenFormCreate(true);
         }}
-        handleDelete={(v: number) => handleDelete(v)}
+        handleDelete={(id: number, name: string) => setDeleteConfirm({ open: true, id, name })}
       />
 
-      <FormDepartment
+      <FormPosition
         {...{ formType, forms }}
         open={openFormCreate}
         onCancel={() => {
@@ -153,6 +160,15 @@ export default function DepartmentView() {
         setFormType={(v: any) => setFormType(v)}
         handleSubmit={handleSubmit}
       />
+
+      {deleteConfirm.open && (
+        <ConfirmActionModal
+          config={ActionPresets.delete(deleteConfirm.name)}
+          onConfirm={() => handleDelete(deleteConfirm.id)}
+          onClose={() => setDeleteConfirm({ open: false, id: 0, name: "" })}
+          loading={false}
+        />
+      )}
     </>
   );
 }

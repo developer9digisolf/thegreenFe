@@ -10,7 +10,7 @@ import request from '@afx/utils/request.utils'
 
 export function GetTherapistsService(params: ITherapistPaginationRequest) {
     return request<ITherapist[]>({
-        url: rest.therapist,
+        url: rest.master.employees.index,
         method: 'GET',
         data: params
     })
@@ -32,7 +32,7 @@ export function GetAvailableTherapistsService() {
 
 export function GetTherapistByIdService(id: number) {
     return request<ITherapist>({
-        url: rest.therapistDetail.replace(':id', String(id)),
+        url: rest.master.employees.show.replace(':ID', String(id)),
         method: 'GET'
     })
 }
@@ -46,7 +46,7 @@ export function GetTherapistDetailService(id: number) {
 
 export function CreateTherapistService(data: ICreateTherapistRequest) {
     return request<ITherapist>({
-        url: rest.therapist,
+        url: rest.master.employees.create,
         method: 'POST',
         data: data
     })
@@ -54,7 +54,7 @@ export function CreateTherapistService(data: ICreateTherapistRequest) {
 
 export function UpdateTherapistService(id: number, data: IUpdateTherapistRequest) {
     return request<ITherapist>({
-        url: rest.therapistDetail.replace(':id', String(id)),
+        url: rest.master.employees.update.replace(':ID', String(id)),
         method: 'PUT',
         data: data
     })
@@ -62,7 +62,7 @@ export function UpdateTherapistService(id: number, data: IUpdateTherapistRequest
 
 export function DeleteTherapistService(id: number) {
     return request<any>({
-        url: rest.therapistDetail.replace(':id', String(id)),
+        url: rest.master.employees.delete.replace(':ID', String(id)),
         method: 'DELETE'
     })
 }

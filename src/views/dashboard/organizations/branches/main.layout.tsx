@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { BrowseBranch } from "./layouts/browse.layout";
 import { FormBranch } from "./layouts/form.layout";
 import { BranchOperatingHoursModal } from "./layouts/operating-hours.layout";
+import { ConfirmActionModal, ActionPresets } from "@afx/components/modals/ConfirmActionModal.layout";
 import {
   IActionBranch,
   IStateBranch,
@@ -37,6 +38,11 @@ export default function BranchView() {
   });
 
   const [tempSearch, setTempSearch] = useState<string>("");
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number; name: string }>({
+    open: false,
+    id: 0,
+    name: "",
+  });
 
   const handleSearch = () => {
     setKeywords(tempSearch);
@@ -126,6 +132,7 @@ export default function BranchView() {
         (code: any) => {
           const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
           if (isSuccess) {
+            setDeleteConfirm({ open: false, id: 0, name: "" });
             getBranches();
           }
         },
@@ -160,7 +167,7 @@ export default function BranchView() {
             setFormType("update");
             setOpenFormCreate(true);
           }}
-          handleDelete={(v: number) => handleDelete(v)}
+          handleDelete={(id: number, name: string) => setDeleteConfirm({ open: true, id, name })}
           handleOperatingHours={handleOperatingHours}
         />
       )}
@@ -176,6 +183,15 @@ export default function BranchView() {
           }}
           setFormType={(v: any) => setFormType(v)}
           handleSubmit={handleSubmit}
+        />
+      )}
+
+      {deleteConfirm.open && (
+        <ConfirmActionModal
+          config={ActionPresets.delete(deleteConfirm.name)}
+          onConfirm={() => handleDelete(deleteConfirm.id)}
+          onClose={() => setDeleteConfirm({ open: false, id: 0, name: "" })}
+          loading={false}
         />
       )}
 
