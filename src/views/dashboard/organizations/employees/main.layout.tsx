@@ -3,8 +3,8 @@
 import { useStore } from "@afx/store/core";
 import { Form, notification } from "antd";
 import { useEffect, useState } from "react";
-import { BrowseEmployee } from "@afx/views/dashboard/master/employees/layouts/browse.layout";
-import { FormEmployee } from "@afx/views/dashboard/master/employees/layouts/form.layout";
+import { BrowseEmployee } from "./layouts/browse.layout";
+import { FormEmployee } from "./layouts/form.layout";
 import { ConfirmActionModal, ActionPresets } from "@afx/components/modals/ConfirmActionModal.layout";
 import {
   IActionEmployee,
@@ -27,6 +27,7 @@ export default function EmployeeView() {
   const [openFormCreate, setOpenFormCreate] = useState<boolean>(false);
   const [forms] = Form.useForm<IReqFormEmployee>();
   const [formType, setFormType] = useState<string>("create");
+  const [currentId, setCurrentId] = useState<number | null>(null);
   const [tempSearch, setTempSearch] = useState<string>("");
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number; name: string }>({
     open: false,
@@ -66,6 +67,7 @@ export default function EmployeeView() {
   const handleDetail = (id: number) => {
     useEmployeeActions<"getEmployee">("getEmployee", [id], true);
     setFormType("detail");
+    setCurrentId(id);
     setOpenFormCreate(true);
   };
 
@@ -73,12 +75,14 @@ export default function EmployeeView() {
     return forms
       .validateFields()
       .then((val) => {
-        // Format dates to ISO strings for API
+        // Format dates to YYYY-MM-DD for API as requested
         const payload = {
           ...val,
-          dateOfBirth: val.dateOfBirth ? val.dateOfBirth.toISOString() : null,
-          hireDate: val.hireDate ? val.hireDate.toISOString() : null,
+          dateOfBirth: val.dateOfBirth ? val.dateOfBirth.format("YYYY-MM-DD") : null,
+          hireDate: val.hireDate ? val.hireDate.format("YYYY-MM-DD") : null,
         };
+
+        console.log("Employee Payload:", payload);
 
         if (formType === "create") {
           useEmployeeActions<"createEmployee">(
@@ -102,7 +106,7 @@ export default function EmployeeView() {
           useEmployeeActions<"updateEmployee">(
             "updateEmployee",
             [
-              employeeState?.employee?.id,
+              currentId,
               payload,
               (code: any) => {
                 const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
@@ -149,25 +153,24 @@ export default function EmployeeView() {
 
   return (
     <>
-      {(formType === "detail" || !openFormCreate) && (
-        <BrowseEmployee
-          {...{ page, pageSize, setPage, setPageSize }}
-          onSearch={handleSearch}
-          searchText={tempSearch}
-          setSearchText={setTempSearch}
-          setOpenFormCreate={() => {
-            setFormType("create");
-            setOpenFormCreate(true);
-          }}
-          handleToDetail={(v: number) => handleDetail(v)}
-          handleEdit={(id: number) => {
-            useEmployeeActions<"getEmployee">("getEmployee", [id], true);
-            setFormType("update");
-            setOpenFormCreate(true);
-          }}
-          handleDelete={(id: number, name: string) => setDeleteConfirm({ open: true, id, name })}
-        />
-      )}
+      <BrowseEmployee
+        {...{ page, pageSize, setPage, setPageSize }}
+        onSearch={handleSearch}
+        searchText={tempSearch}
+        setSearchText={setTempSearch}
+        setOpenFormCreate={() => {
+          setFormType("create");
+          setOpenFormCreate(true);
+        }}
+        handleToDetail={(v: number) => handleDetail(v)}
+        handleEdit={(id: number) => {
+          useEmployeeActions<"getEmployee">("getEmployee", [id], true);
+          setFormType("update");
+          setCurrentId(id);
+          setOpenFormCreate(true);
+        }}
+        handleDelete={(id: number, name: string) => setDeleteConfirm({ open: true, id, name })}
+      />
 
       {openFormCreate && (
         <FormEmployee
@@ -177,6 +180,7 @@ export default function EmployeeView() {
             setOpenFormCreate(false);
             forms.resetFields();
             setFormType("create");
+            setCurrentId(null);
           }}
           setFormType={(v: any) => setFormType(v)}
           handleSubmit={handleSubmit}

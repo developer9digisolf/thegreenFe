@@ -45,7 +45,7 @@ export default async function request<T = any, R = any>({
     };
   } else {
     extendedItems = {
-      data: bodyType === "formData" ? data : JSON.stringify({ ...data }),
+      data: data,
     };
   }
 

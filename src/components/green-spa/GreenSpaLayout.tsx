@@ -23,7 +23,8 @@ interface SubMenuItem {
   key: string;
   label: string;
   icon: string;
-  path: string;
+  path?: string;
+  subItems?: SubMenuItem[];
 }
 
 interface MenuItem {
@@ -94,7 +95,16 @@ const menuConfig: MenuSection[] = [
         subItems: [
           { key: "company", label: "Company", icon: "fa-solid fa-building", path: "/dashboard/organizations/companies" },
           { key: "branch", label: "Branch", icon: "fa-solid fa-shop", path: "/dashboard/organizations/branches" },
-          { key: "employee", label: "Employees", icon: "fa-solid fa-user-doctor", path: "/dashboard/organizations/employees" },
+          { 
+            key: "employee", 
+            label: "Employees", 
+            icon: "fa-solid fa-user-doctor", 
+            subItems: [
+              { key: "employee-list", label: "List All", icon: "fa-solid fa-users", path: "/dashboard/organizations/employees" },
+              { key: "one-time-shifts", label: "One Time Shifts", icon: "fa-solid fa-calendar-day", path: "/dashboard/organizations/employees/one-time-shifts" },
+              { key: "recurring-shifts", label: "Recurring Shifts", icon: "fa-solid fa-calendar-week", path: "/dashboard/organizations/employees/recurring-shifts" },
+            ]
+          },
           { key: "position", label: "Position", icon: "fa-solid fa-user-tie", path: "/dashboard/organizations/positions" },
           { key: "department", label: "Department", icon: "fa-solid fa-building-columns", path: "/dashboard/organizations/departments" },
         ]
@@ -372,11 +382,21 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
                             menu={{ 
                               items: hasSubItems ? item.subItems?.map(sub => ({
                                 key: sub.key,
-                                label: <Link href={sub.path} className="no-underline">{sub.label}</Link>,
-                                icon: <i className={`${sub.icon} text-xs w-4 flex items-center justify-center`}></i>
+                                label: sub.path ? (
+                                  <Link href={sub.path} className="no-underline">{sub.label}</Link>
+                                ) : (
+                                  <span>{sub.label}</span>
+                                ),
+                                icon: <i className={`${sub.icon} text-xs w-4 flex items-center justify-center`}></i>,
+                                children: sub.subItems?.map(nested => ({
+                                  key: nested.key,
+                                  label: <Link href={nested.path || "#"} className="no-underline">{nested.label}</Link>,
+                                  icon: <i className={`${nested.icon} text-[10px] w-3 flex items-center justify-center`}></i>
+                                }))
                               })) : [] 
                             }} 
                             placement="rightTop"
+                            overlayClassName="premium-dropdown-overlay"
                             disabled={!hasSubItems}
                           >
                             {hasSubItems ? (
@@ -392,19 +412,61 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
                         {/* Submenu */}
                         {hasSubItems && isOpen && (!isCollapsed || isMobile) && (
                           <div className="ml-5 mt-1 pl-3 border-l border-white/10 flex flex-col gap-0.5">
-                            {item.subItems?.map(sub => (
-                              <Link 
-                                key={sub.key} 
-                                href={sub.path}
-                                className={`
-                                  flex items-center gap-3 px-3 py-2 rounded-lg text-sm no-underline transition-all
-                                  ${pathname === sub.path ? "text-emerald-500 font-semibold" : "text-white/40 hover:text-white hover:bg-white/5"}
-                                `}
-                              >
-                                <i className={`${sub.icon} text-xs w-4 flex items-center justify-center opacity-70`}></i>
-                                {sub.label}
-                              </Link>
-                            ))}
+                            {item.subItems?.map(sub => {
+                              const hasNestedItems = !!sub.subItems;
+                              const isNestedOpen = openSubMenus[sub.key] || (searchQuery && hasNestedItems);
+                              const isAnyNestedActive = sub.subItems?.some(s => pathname === s.path);
+                              const isSubActive = pathname === sub.path || isAnyNestedActive;
+
+                              return (
+                                <div key={sub.key}>
+                                  {hasNestedItems ? (
+                                    <div 
+                                      className={`
+                                        flex items-center gap-3 px-3 py-2 rounded-lg text-sm cursor-pointer transition-all
+                                        ${isSubActive ? "text-emerald-500 font-semibold" : "text-white/40 hover:text-white hover:bg-white/5"}
+                                      `}
+                                      onClick={() => toggleSubMenu(sub.key)}
+                                    >
+                                      <i className={`${sub.icon} text-xs w-4 flex items-center justify-center opacity-70`}></i>
+                                      <span className="flex-1">{sub.label}</span>
+                                      <div className="text-[10px] opacity-50">
+                                        {isNestedOpen ? <DownOutlined /> : <RightOutlined />}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <Link 
+                                      href={sub.path || "#"}
+                                      className={`
+                                        flex items-center gap-3 px-3 py-2 rounded-lg text-sm no-underline transition-all
+                                        ${pathname === sub.path ? "text-emerald-500 font-semibold" : "text-white/40 hover:text-white hover:bg-white/5"}
+                                      `}
+                                    >
+                                      <i className={`${sub.icon} text-xs w-4 flex items-center justify-center opacity-70`}></i>
+                                      {sub.label}
+                                    </Link>
+                                  )}
+
+                                  {hasNestedItems && isNestedOpen && (
+                                    <div className="ml-4 mt-1 pl-3 border-l border-white/5 flex flex-col gap-0.5">
+                                      {sub.subItems?.map(nested => (
+                                        <Link 
+                                          key={nested.key} 
+                                          href={nested.path || "#"}
+                                          className={`
+                                            flex items-center gap-3 px-3 py-1.5 rounded-lg text-[13px] no-underline transition-all
+                                            ${pathname === nested.path ? "text-emerald-500 font-semibold" : "text-white/30 hover:text-white hover:bg-white/5"}
+                                          `}
+                                        >
+                                          <i className={`${nested.icon} text-[10px] w-3 flex items-center justify-center opacity-50`}></i>
+                                          {nested.label}
+                                        </Link>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>

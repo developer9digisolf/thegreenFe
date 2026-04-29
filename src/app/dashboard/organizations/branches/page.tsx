@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 const Branches = lazy(
-  () => import("@afx/views/dashboard/organization/branches/index.layout"),
+  () => import("@afx/views/dashboard/organizations/branches/index.layout"),
 );
 
 export default function BranchesRoute() {

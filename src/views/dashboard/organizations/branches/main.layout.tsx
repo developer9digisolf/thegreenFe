@@ -5,6 +5,7 @@ import { Form, notification } from "antd";
 import { useEffect, useState } from "react";
 import { BrowseBranch } from "./layouts/browse.layout";
 import { FormBranch } from "./layouts/form.layout";
+import { useAuth } from "@afx/contexts/AuthContext";
 import { BranchOperatingHoursModal } from "./layouts/operating-hours.layout";
 import { ConfirmActionModal, ActionPresets } from "@afx/components/modals/ConfirmActionModal.layout";
 import {
@@ -18,6 +19,8 @@ export default function BranchView() {
     useActions,
     state: { branch },
   } = useStore<IStateBranch, IActionBranch>("branches");
+
+  const { user } = useAuth();
 
   const [keyword, setKeywords] = useState<string>("");
   const [page, setPage] = useState<number>(1);
@@ -152,24 +155,24 @@ export default function BranchView() {
   return (
     <>
       {(formType === "detail" || !openFormCreate) && (
-        <BrowseBranch
-          {...{ page, pageSize, setPage, setPageSize }}
-          onSearch={handleSearch}
-          searchText={tempSearch}
-          setSearchText={setTempSearch}
-          setOpenFormCreate={() => {
-            setFormType("create");
-            setOpenFormCreate(true);
-          }}
-          handleToDetail={(v: number) => handleDetail(v)}
-          handleEdit={(id: number) => {
-            useActions<"getBranch">("getBranch", [id], true);
-            setFormType("update");
-            setOpenFormCreate(true);
-          }}
-          handleDelete={(id: number, name: string) => setDeleteConfirm({ open: true, id, name })}
-          handleOperatingHours={handleOperatingHours}
-        />
+      <BrowseBranch
+        {...{ page, pageSize, setPage, setPageSize }}
+        onSearch={handleSearch}
+        searchText={tempSearch}
+        setSearchText={setTempSearch}
+        setOpenFormCreate={() => {
+          setFormType("create");
+          setOpenFormCreate(true);
+        }}
+        handleToDetail={(v: number) => handleDetail(v)}
+        handleEdit={(id: number) => {
+          useActions<"getBranch">("getBranch", [id], true);
+          setFormType("update");
+          setOpenFormCreate(true);
+        }}
+        handleDelete={(id: number, name: string) => setDeleteConfirm({ open: true, id, name })}
+        handleOperatingHours={handleOperatingHours}
+      />
       )}
 
       {openFormCreate && (

@@ -180,5 +180,16 @@ export const rest = {
       update: "master/employees/:ID",
       delete: "master/employees/:ID",
     },
+    employeeOneTimeShifts: {
+      index: "master/employee-one-time-shifts",
+      create: "master/employee-one-time-shifts",
+      update: "master/employee-one-time-shifts/:ID",
+      delete: "master/employee-one-time-shifts/:ID",
+      import: "master/employee-one-time-shifts/import",
+    },
+    employeeRecurringShifts: {
+      byEmployee: "master/employee-recurring-shifts/employee/:ID",
+      create: "master/employee-recurring-shifts",
+    },
   },
 };

@@ -236,7 +236,7 @@ export const BrowseEmployee = ({
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderTop: '1px solid #f1f5f9' }}>
                     <div style={{ color: '#64748b', fontSize: 13 }}>
-                        Showing <b>{employees.length > 0 ? ((page - 1) * pageSize) + 1 : 0}</b> to <b>{Math.min(page * pageSize, pageInfo.total)}</b> of <b>{pageInfo.total}</b> employees
+                        Showing <b>{employees.length > 0 ? ((Number(page) - 1) * Number(pageSize)) + 1 : 0}</b> to <b>{Math.min(Number(page) * Number(pageSize), Number(pageInfo?.total) || 0)}</b> of <b>{Number(pageInfo?.total) || 0}</b> employees
                     </div>
                     <Pagination 
                         current={page}
