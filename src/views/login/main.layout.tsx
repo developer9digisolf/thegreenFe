@@ -22,24 +22,18 @@ export default function Login(): React.JSX.Element {
         const roleValue = res.data.user.role
         const role = getRoleName(roleValue).toLowerCase()
         
-        if (role === 'therapist') {
-          if (!res.data.therapist) {
-            message.error('Profil terapis tidak ditemukan. Hubungi admin.')
-            setLoading(false)
-            return
-          }
-          AuthHelper.saveAuth(res.data)
-          message.success(`Selamat datang, ${res.data.therapist.name}!`)
-          setTimeout(() => { window.location.href = '/therapist/dashboard' }, 100)
-        } else if (role === 'member') {
-          message.info('Silakan gunakan aplikasi mobile untuk Member')
-          setLoading(false)
-        } else if (['owner', 'admin', 'office'].includes(role)) {
+        if (['owner', 'admin'].includes(role)) {
           AuthHelper.saveAuth(res.data)
           message.success(`Selamat datang, ${res.data.user.username}!`)
           setTimeout(() => { window.location.href = '/dashboard' }, 100)
+        } else if (role === 'therapist') {
+          message.warning('Terapis silakan login melalui halaman khusus Terapis.')
+          setLoading(false)
+        } else if (role === 'member') {
+          message.info('Silakan gunakan aplikasi mobile untuk Member.')
+          setLoading(false)
         } else {
-          message.error('Role tidak dikenali')
+          message.error('Maaf, Anda tidak memiliki akses ke Dashboard. Hubungi Administrator.')
           setLoading(false)
         }
       } else {

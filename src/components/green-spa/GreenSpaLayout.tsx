@@ -48,8 +48,6 @@ const menuConfig: MenuSection[] = [
     section: "MAIN MENU",
     items: [
       { key: "dashboard", label: "Dashboard", icon: "fa-solid fa-gauge-high", path: "/dashboard", roles: ["Owner", "Admin", "Office"] },
-      { key: "pos", label: "Point of Sale", badge: "POS", icon: "fa-solid fa-cash-register", path: "/dashboard/pos", roles: ["Owner", "Admin"] },
-      { key: "kiosk", label: "Kiosk Check-in", icon: "fa-solid fa-qrcode", path: "/dashboard/kiosk", roles: ["Owner", "Admin"] },
     ]
   },
   {

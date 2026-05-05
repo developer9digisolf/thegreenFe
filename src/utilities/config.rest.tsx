@@ -110,6 +110,14 @@ export const rest = {
   bookingSummary: "bookings/summary",
   bookingDetail: "bookings/:id",
 
+  // Dashboard
+  dashboardSummaryRevenue: "dashboard/summary-revenue",
+  dashboardSalesPerformance: "dashboard/sales-performance",
+  dashboardTopTherapists: "dashboard/top-therapists",
+  dashboardPaymentMethodTotals: "dashboard/payment-method-totals",
+  dashboardRecentSales: "dashboard/recent-sales",
+  dashboardRecentSessions: "dashboard/recent-sessions",
+
   // Sales
   sales: "sales",
   salesSummary: "sales/summary",
