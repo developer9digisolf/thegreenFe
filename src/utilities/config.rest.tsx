@@ -200,5 +200,6 @@ export const rest = {
       create: "master/employee-recurring-shifts",
     },
     attendanceQRSessions: "master/attendance-qr-sessions",
+    devicePairingCodesGenerate: "master/device-pairing-codes/generate",
   },
 };
