@@ -199,5 +199,6 @@ export const rest = {
       byEmployee: "master/employee-recurring-shifts/employee/:ID",
       create: "master/employee-recurring-shifts",
     },
+    attendanceQRSessions: "master/attendance-qr-sessions",
   },
 };

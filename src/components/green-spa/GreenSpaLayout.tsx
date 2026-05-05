@@ -48,20 +48,7 @@ const menuConfig: MenuSection[] = [
     section: "MAIN MENU",
     items: [
       { key: "dashboard", label: "Dashboard", icon: "fa-solid fa-gauge-high", path: "/dashboard", roles: ["Owner", "Admin", "Office"] },
-    ]
-  },
-  {
-    section: "TRANSACTIONS",
-    items: [
-      { key: "sales", label: "Penjualan", icon: "fa-solid fa-file-invoice-dollar", path: "/dashboard/transactions/sales", roles: ["Owner", "Office"] },
-      { key: "bookings", label: "Booking & Sesi", icon: "fa-solid fa-calendar-days", path: "/dashboard/transactions/bookings", roles: ["Owner", "Admin"] },
-      { key: "vouchers", label: "Voucher Terjual", icon: "fa-solid fa-ticket", path: "/dashboard/transactions/vouchers", roles: ["Owner", "Office"] },
-      { key: "cashier-session", label: "Sesi Kasir", icon: "fa-solid fa-clock-rotate-left", path: "/dashboard/transactions/cashier-session", roles: ["Owner", "Admin"] },
-    ]
-  },
-  {
-    section: "SETTINGS",
-    items: [
+      { key: "attendance-qr", label: "Attendance QR", icon: "fa-solid fa-qrcode", path: "/dashboard/attendance-qr", roles: ["Owner", "Admin"] },
       { 
         key: "manage-access", 
         label: "Manage Access", 
@@ -123,14 +110,12 @@ const menuConfig: MenuSection[] = [
   }
 ];
 
-
-
 export default function GreenSpaLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [openSubMenus, setOpenSubMenus] = useState<Record<string, boolean>>({ master: true });
+  const [openSubMenus, setOpenSubMenus] = useState<Record<string, boolean>>({ "manage-access": true, "master-group": true });
   const [isMobile, setIsMobile] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -139,14 +124,16 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
-      const mobile = width <= 1024;
+      const mobile = width <= 768; // Changed to 768px for better mobile detection
       
       setIsMobile(mobile);
       
-      setIsCollapsed(prev => {
-        if (mobile) return true;
-        return false;
-      });
+      // Auto collapse on mobile, auto expand on desktop
+      if (mobile) {
+        setIsCollapsed(true);
+      } else {
+        setIsCollapsed(false);
+      }
     };
     
     handleResize();
@@ -169,7 +156,7 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isCollapsed, isMobile]);
 
-  // Auto close sidebar on mobile when route changes
+  // Close sidebar on mobile when route changes
   useEffect(() => {
     if (isMobile && !isCollapsed) {
       setIsCollapsed(true);
@@ -255,38 +242,49 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
 
   return (
     <ThemeProvider theme={classicTheme}>
-      <div className={`flex min-h-screen bg-slate-100 font-sans ${!isCollapsed && isMobile ? "overflow-hidden" : ""}`}>
+      <div className="flex min-h-screen w-full overflow-x-hidden bg-slate-100 font-sans">
         
-        {/* Mobile Overlay */}
+        {/* Mobile Overlay - More prominent for better UX */}
         {!isCollapsed && isMobile && (
           <div 
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[999] transition-all duration-500 ease-in-out opacity-100" 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[999] transition-all duration-300 ease-in-out opacity-100" 
             onClick={toggleSidebar} 
           />
+        )}
+
+        {/* Mobile Drawer Button - Floating action button for mobile */}
+        {isMobile && isCollapsed && (
+          <button
+            onClick={toggleSidebar}
+            className="fixed bottom-6 right-6 z-[998] w-14 h-14 rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/50 flex items-center justify-center cursor-pointer hover:bg-emerald-600 transition-all duration-300 hover:scale-110 lg:hidden"
+          >
+            <MenuOutlined className="text-xl" />
+          </button>
         )}
 
         {/* Sidebar */}
         <aside 
           className={`
-            fixed top-0 left-0 h-screen bg-[#0D1117] transition-all duration-500 ease-in-out z-[1000] flex flex-col shadow-2xl
-            ${isCollapsed ? (isMobile ? "-left-[300px]" : "w-20") : "w-[280px] left-0"}
+            fixed top-0 h-screen bg-[#0D1117] transition-all duration-300 ease-in-out z-[1000] flex flex-col shadow-2xl
+            ${isCollapsed ? (isMobile ? "-left-[300px]" : "w-20 left-0") : "w-[280px] left-0"}
           `}
         >
           {/* Sidebar Header */}
           <div className={`p-6 flex flex-col gap-4 ${isCollapsed && !isMobile ? "items-center px-2" : ""}`}>
             <div className="flex items-center justify-between w-full">
-              <Link href="/dashboard" className="flex items-center gap-3 no-underline">
+              <Link href="/dashboard" className="flex items-center gap-3 no-underline flex-1 min-w-0">
                 <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white font-extrabold text-xl shadow-lg shadow-emerald-500/30 shrink-0">
                   G
                 </div>
                 {(!isCollapsed || isMobile) && (
-                  <span className="text-white font-bold text-lg tracking-tight whitespace-nowrap">The Green Spa</span>
+                  <span className="text-white font-bold text-lg tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">The Green Spa</span>
                 )}
               </Link>
-              {isMobile && !isCollapsed && (
+              {/* Close button for mobile */}
+              {(!isCollapsed && isMobile) && (
                 <button 
-                  onClick={() => setIsCollapsed(true)}
-                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 text-white hover:bg-white/20 transition-all border border-white/20 cursor-pointer shrink-0 ml-2 shadow-inner"
+                  onClick={toggleSidebar}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 text-white hover:bg-white/20 transition-all border border-white/20 cursor-pointer shrink-0 ml-2"
                 >
                   <CloseOutlined className="text-lg" />
                 </button>
@@ -355,6 +353,10 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
                             if (!isCollapsed || isMobile) toggleSubMenu(item.key);
                           } else if (item.path) {
                             router.push(item.path);
+                            // Close sidebar on mobile after navigation
+                            if (isMobile) {
+                              setIsCollapsed(true);
+                            }
                           }
                         }}
                       >
@@ -439,6 +441,12 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
                                         flex items-center gap-3 px-3 py-2 rounded-lg text-sm no-underline transition-all
                                         ${pathname === sub.path ? "text-emerald-500 font-semibold" : "text-white/40 hover:text-white hover:bg-white/5"}
                                       `}
+                                      onClick={() => {
+                                        // Close sidebar on mobile after navigation
+                                        if (isMobile) {
+                                          setIsCollapsed(true);
+                                        }
+                                      }}
                                     >
                                       <i className={`${sub.icon} text-xs w-4 flex items-center justify-center opacity-70`}></i>
                                       {sub.label}
@@ -455,6 +463,12 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
                                             flex items-center gap-3 px-3 py-1.5 rounded-lg text-[13px] no-underline transition-all
                                             ${pathname === nested.path ? "text-emerald-500 font-semibold" : "text-white/30 hover:text-white hover:bg-white/5"}
                                           `}
+                                          onClick={() => {
+                                            // Close sidebar on mobile after navigation
+                                            if (isMobile) {
+                                              setIsCollapsed(true);
+                                            }
+                                          }}
                                         >
                                           <i className={`${nested.icon} text-[10px] w-3 flex items-center justify-center opacity-50`}></i>
                                           {nested.label}
@@ -494,13 +508,14 @@ export default function GreenSpaLayout({ children }: { children: React.ReactNode
         {/* Main Wrapper */}
         <div 
           className={`
-            flex-1 flex flex-col min-h-screen transition-all duration-500 ease-in-out
+            flex-1 flex flex-col min-w-0 w-full transition-all duration-300 ease-in-out
             ${isMobile ? "ml-0" : (isCollapsed ? "ml-20" : "ml-[280px]")}
           `}
         >
           {/* Top Header */}
           <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-[90]">
             <div className="flex items-center gap-5">
+              {/* Hamburger menu button - Always visible on mobile, visible on desktop when collapsed */}
               <button 
                 className="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center cursor-pointer text-slate-500 hover:bg-emerald-50 hover:border-emerald-500 hover:text-emerald-500 transition-all"
                 onClick={toggleSidebar}

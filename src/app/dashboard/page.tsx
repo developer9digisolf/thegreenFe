@@ -31,7 +31,7 @@ export default function Dashboard() {
         dayjs().subtract(7, 'day'),
         dayjs()
     ]);
-    const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('daily');
+    const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
     const [loading, setLoading] = useState(true);
     
     const [summary, setSummary] = useState<ISummaryRevenue | null>(null);
@@ -120,8 +120,9 @@ export default function Dashboard() {
         colors: ['#10b981', '#3b82f6'],
         plotOptions: {
             bar: {
-                borderRadius: 4,
-                columnWidth: '50%'
+                borderRadius: 6,
+                columnWidth: '35%',
+                dataLabels: { position: 'top' }
             }
         },
         dataLabels: { enabled: false },
@@ -231,8 +232,8 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8 overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-3xl font-extrabold text-slate-900 mb-1 tracking-tight">Dashboard</h1>
                     <p className="text-slate-500 text-sm">Selamat datang di The Green Spa Management System</p>
@@ -244,16 +245,16 @@ export default function Dashboard() {
                 {summaryCards.map((card, index) => {
                     const styles = colorMap[card.color];
                     return (
-                        <div key={index} className={`bg-white rounded-[2rem] p-7 shadow-sm border border-slate-100 hover:shadow-xl ${styles.hover} hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden`}>
+                        <div key={index} className={`bg-white rounded-[2rem] p-5 sm:p-7 shadow-sm border border-slate-100 hover:shadow-xl ${styles.hover} hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden`}>
                             <div className={`w-12 h-12 rounded-2xl ${styles.bg} ${styles.text} flex items-center justify-center text-xl mb-6 group-hover:scale-110 transition-transform`}>
                                 <i className={`fa-solid ${card.icon}`}></i>
                             </div>
-                            <div className="text-3xl font-black text-slate-900 mb-1 tracking-tighter">{card.value}</div>
-                            <div className="text-sm font-semibold text-slate-500 uppercase tracking-wider">{card.title}</div>
+                            <div className="text-2xl sm:text-3xl font-black text-slate-900 mb-1 tracking-tighter truncate">{card.value}</div>
+                            <div className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">{card.title}</div>
                             {card.growth !== undefined && (
-                                <div className={`flex items-center gap-1.5 text-xs font-bold ${card.growth >= 0 ? 'text-emerald-500 bg-emerald-50' : 'text-red-500 bg-red-50'} mt-4 w-fit px-2 py-1 rounded-full`}>
+                                <div className={`flex items-center gap-1.5 text-[10px] sm:text-xs font-bold ${card.growth >= 0 ? 'text-emerald-500 bg-emerald-50' : 'text-red-500 bg-red-50'} mt-4 w-fit px-2 py-1 rounded-full`}>
                                     <i className={`fa-solid ${card.growth >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'}`}></i> {Math.abs(card.growth)}% 
-                                    <span className="font-normal text-slate-400 ml-1">vs periode lalu</span>
+                                    <span className="font-normal text-slate-400 ml-1 hidden sm:inline">vs periode lalu</span>
                                 </div>
                             )}
                             <div className={`absolute top-0 right-0 w-32 h-32 ${styles.blob} rounded-full -mr-16 -mt-16 blur-2xl ${styles.blobHover} transition-colors`}></div>
@@ -264,15 +265,15 @@ export default function Dashboard() {
 
             {/* Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-                <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
-                    <div className="flex items-center justify-between mb-6">
+                <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-5 sm:p-8 shadow-sm border border-slate-100 overflow-hidden">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                         <div className="flex flex-col">
                             <h3 className="text-xl font-extrabold text-slate-900 m-0">Performa Penjualan</h3>
                             <div className="flex items-center gap-2 mt-1">
                                 <Badge status="processing" text="Real-time" className="font-bold text-[10px]" />
                             </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                             <RangePicker 
                                 value={dateRange}
                                 onChange={(dates) => dates && setDateRange([dates[0]!, dates[1]!])}
@@ -281,14 +282,21 @@ export default function Dashboard() {
                             />
                             <Select 
                                 value={period} 
-                                onChange={(val) => setPeriod(val)}
+                                onChange={(val: 'daily' | 'weekly' | 'monthly') => {
+                                    setPeriod(val);
+                                    const end = dayjs();
+                                    let start = dayjs();
+                                    if (val === 'daily') start = end.subtract(7, 'day');
+                                    else if (val === 'weekly') start = end.subtract(1, 'month');
+                                    else if (val === 'monthly') start = end.subtract(3, 'month');
+                                    setDateRange([start, end]);
+                                }}
                                 className="period-select"
                                 bordered={false}
                                 options={[
                                     { value: 'daily', label: 'Daily' },
                                     { value: 'weekly', label: 'Weekly' },
-                                    { value: 'monthly', label: 'Monthly' },
-                                    { value: 'yearly', label: 'Yearly' }
+                                    { value: 'monthly', label: 'Monthly' }
                                 ]}
                             />
                         </div>
@@ -304,7 +312,7 @@ export default function Dashboard() {
                         ) : <Empty description="Tidak ada data penjualan" />
                     )}
                 </div>
-                <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
+                <div className="bg-white rounded-[2.5rem] p-5 sm:p-8 shadow-sm border border-slate-100 overflow-hidden">
                     <h3 className="text-xl font-extrabold text-slate-900 mb-6">Metode Pembayaran</h3>
                     {loading ? <div className="h-[350px] flex items-center justify-center"><Spin /></div> : (
                         paymentMethods && paymentMethods.labels.length > 0 ? (
@@ -323,7 +331,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                 {/* Recent Sales */}
                 <div className="lg:col-span-3 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-                    <div className="p-8 pb-6 flex items-center justify-between">
+                    <div className="p-5 sm:p-8 pb-4 sm:pb-6 flex items-center justify-between">
                         <h3 className="text-xl font-extrabold text-slate-900 m-0">Penjualan Terbaru</h3>
                         <Link href="/dashboard/sales" className="text-emerald-500 text-sm font-bold no-underline hover:underline">Lihat Semua</Link>
                     </div>
@@ -377,10 +385,10 @@ export default function Dashboard() {
 
                 {/* Top Therapists */}
                 <div className="lg:col-span-2 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-                    <div className="p-8 pb-6 flex items-center justify-between">
+                    <div className="p-5 sm:p-8 pb-4 sm:pb-6 flex items-center justify-between">
                         <h3 className="text-xl font-extrabold text-slate-900 m-0">Top Therapist</h3>
                     </div>
-                    <div className="p-8 pt-0 flex flex-col gap-6">
+                    <div className="p-5 sm:p-8 pt-0 flex flex-col gap-4 sm:gap-6">
                         {loading ? <Spin className="mt-4" /> : (
                             topTherapists.length > 0 ? topTherapists.slice(0, 5).map((therapist, idx) => (
                                 <div key={idx} className="flex items-center gap-5 p-4 rounded-3xl hover:bg-slate-50 transition-all group border border-transparent hover:border-slate-100">
@@ -409,7 +417,7 @@ export default function Dashboard() {
 
             {/* Recent Sessions Row */}
             <div className="mt-8 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
-                <div className="p-8 pb-6 flex items-center justify-between">
+                <div className="p-5 sm:p-8 pb-4 sm:pb-6 flex items-center justify-between">
                     <h3 className="text-xl font-extrabold text-slate-900 m-0">Sesi Terkini</h3>
                     <Link href="/dashboard/bookings" className="text-emerald-500 text-sm font-bold no-underline hover:underline">Lihat Semua</Link>
                 </div>
