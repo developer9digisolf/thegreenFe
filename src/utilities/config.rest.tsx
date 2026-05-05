@@ -201,5 +201,12 @@ export const rest = {
     },
     attendanceQRSessions: "master/attendance-qr-sessions",
     devicePairingCodesGenerate: "master/device-pairing-codes/generate",
+    branchServiceVariants: {
+      index: "master/branch-service-variants",
+      show: "master/branch-service-variants/:ID",
+      create: "master/branch-service-variants",
+      update: "master/branch-service-variants/:ID",
+      delete: "master/branch-service-variants/:ID",
+    },
   },
 };

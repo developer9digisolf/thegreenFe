@@ -85,3 +85,40 @@ export interface IUpdateServiceVariantRequest {
     sortOrder?: number;
     isActive?: boolean;
 }
+
+// Branch Service Variant (price override for specific branch)
+export interface IBranchServiceVariant {
+    id: number;
+    branchId: number;
+    branchName: string;
+    serviceVariantId: number;
+    serviceVariantLabel: string;
+    icon?: string;
+    serviceVariantDuration: number;
+    serviceVariantDefaultPrice: number;
+    serviceName: string;
+    price: number;
+    isActive: boolean;
+    sortOrder: number;
+    notes?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface ICreateBranchServiceVariantRequest {
+    branchId: number;
+    serviceVariantId: number;
+    price: number;
+    isActive: boolean;
+    sortOrder: number;
+    notes?: string;
+}
+
+export interface IUpdateBranchServiceVariantRequest {
+    branchId: number;
+    serviceVariantId: number;
+    price: number;
+    isActive: boolean;
+    sortOrder: number;
+    notes?: string;
+}

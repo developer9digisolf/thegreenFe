@@ -210,18 +210,18 @@ export function FormUser(props: IPropsFormUser) {
         <div className="flex flex-col text-left">
           <div className="flex items-center gap-2">
             <Typography className="text-xl font-black text-slate-950 m-0 leading-tight">
-              {props?.formType === "create" ? "New Operator" : (user?.username ? `@${user.username}` : "Authority Profile")}
+              {props?.formType === "create" ? "Tambah Pengguna Baru" : (user?.username ? `@${user.username}` : "Profil Pengguna")}
             </Typography>
             {props?.formType !== "create" && (
                <Tag className={`rounded-lg px-2 py-0.5 font-black border-none uppercase text-[9px] tracking-widest ${
                  props?.formType === 'detail' ? 'bg-emerald-500 text-white' : 'bg-orange-500 text-white'
                }`}>
-                  {props?.formType}
+                  {props?.formType === 'detail' ? 'Detail' : 'Ubah'}
                </Tag>
             )}
           </div>
           <p className="text-[10px] text-slate-400 font-black m-0 mt-1 uppercase tracking-widest opacity-60 flex items-center gap-2">
-            <ShieldAlert size={12} /> Security Protocol Active
+            <ShieldAlert size={12} /> Protokol Keamanan Aktif
           </p>
         </div>
       </div>
@@ -234,7 +234,7 @@ export function FormUser(props: IPropsFormUser) {
             onClick={() => props?.setFormType("update")}
             className="h-12 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 border-none font-black text-sm shadow-xl shadow-emerald-600/20 active:scale-95 flex items-center gap-2"
           >
-            Modify Account  
+            Ubah Akun  
           </Button>
         )}
         {(props?.formType === "update" || props?.formType === "create") && (
@@ -244,7 +244,7 @@ export function FormUser(props: IPropsFormUser) {
               onClick={() => props?.onCancel()}
               className="h-12 px-5 rounded-xl bg-slate-50 text-slate-400 border-none font-bold text-sm hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2"
             >
-              Cancel
+              Batal
             </Button>
             <Button
               type="primary"
@@ -253,7 +253,7 @@ export function FormUser(props: IPropsFormUser) {
               loading={loading}
               className="h-12 px-8 rounded-xl bg-emerald-600 hover:bg-emerald-700 border-none font-black text-sm shadow-xl shadow-emerald-600/20 active:scale-95 flex items-center gap-2"
             >
-              {props?.formType === 'create' ? 'Create User' : 'Save Changes'}
+              {props?.formType === 'create' ? 'Buat Pengguna' : 'Simpan Perubahan'}
             </Button>
           </div>
         )}
@@ -284,7 +284,7 @@ export function FormUser(props: IPropsFormUser) {
       label: (
         <div className="flex items-center gap-2 py-2 group">
           <User size={18} className="group-hover:scale-110 transition-transform" />
-          <span className="text-[10px] uppercase tracking-[0.2em] font-black">Identity</span>
+          <span className="text-[10px] uppercase tracking-[0.2em] font-black">Identitas</span>
         </div>
       ),
       children: (
@@ -295,12 +295,12 @@ export function FormUser(props: IPropsFormUser) {
                 <Col span={12}>
                   <UseFormItem
                     name="username"
-                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Identifier</span>}
+                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Username / ID</span>}
                     {...itemLayouts}
-                    rules={[{ required: true, message: "Username is required" }]}
+                    rules={[{ required: true, message: "Username wajib diisi" }]}
                   >
                     <Input
-                      placeholder="e.g. administrator_01"
+                      placeholder="Contoh: administrator_01"
                       disabled={props?.formType === "detail"}
                       className="rounded-2xl h-16 px-6 border-slate-100 bg-white font-bold text-slate-800 text-lg"
                     />
@@ -309,12 +309,12 @@ export function FormUser(props: IPropsFormUser) {
                 <Col span={12}>
                   <UseFormItem
                     name="email"
-                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Endpoint</span>}
+                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Alamat Email</span>}
                     {...itemLayouts}
-                    rules={[{ required: true, message: "Email is required" }, { type: "email", message: "Invalid email" }]}
+                    rules={[{ required: true, message: "Email wajib diisi" }, { type: "email", message: "Format email tidak valid" }]}
                   >
                     <Input
-                      placeholder="e.g. admin@thegreen.id"
+                      placeholder="Contoh: admin@thegreen.id"
                       disabled={props?.formType === "detail"}
                       className="rounded-2xl h-16 px-6 border-slate-100 bg-white font-bold text-slate-800 text-lg"
                     />
@@ -323,12 +323,12 @@ export function FormUser(props: IPropsFormUser) {
                 <Col span={12}>
                   <UseFormItem
                     name="role"
-                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Authority</span>}
+                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Hak Akses (Role)</span>}
                     {...itemLayouts}
-                    rules={[{ required: true, message: "Role is required" }]}
+                    rules={[{ required: true, message: "Role wajib dipilih" }]}
                   >
                     <UseSelect
-                      placeholder="Select authority..."
+                      placeholder="Pilih hak akses..."
                       disabled={props?.formType === "detail"}
                       options={roleOptions}
                       className="rounded-2xl overflow-hidden h-16 border-slate-100 bg-white"
@@ -338,12 +338,12 @@ export function FormUser(props: IPropsFormUser) {
                 <Col span={12}>
                   <UseFormItem
                     name="employeeId"
-                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Subject</span>}
+                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Kaitkan ke Karyawan</span>}
                     {...itemLayouts}
-                    rules={[{ required: true, message: "Employee is required" }]}
+                    rules={[{ required: true, message: "Karyawan wajib dipilih" }]}
                   >
                     <UseSelect
-                      placeholder="Link to staff..."
+                      placeholder="Pilih karyawan..."
                       disabled={props?.formType === "detail"}
                       options={employees?.map(emp => ({ label: emp.nickname || emp.fullName, value: emp.id })) || []}
                       showSearch
@@ -355,9 +355,9 @@ export function FormUser(props: IPropsFormUser) {
                   <Col span={24}>
                     <UseFormItem
                       name="password"
-                      label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Security Key</span>}
+                      label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Kata Sandi (Password)</span>}
                       {...itemLayouts}
-                      rules={[{ required: true, message: "Password is required" }]}
+                      rules={[{ required: true, message: "Password wajib diisi" }]}
                     >
                       <Input.Password
                         placeholder="••••••••••••"
@@ -378,7 +378,7 @@ export function FormUser(props: IPropsFormUser) {
         label: (
           <div className="flex items-center gap-2 py-2 group">
             <Globe size={18} className="group-hover:scale-110 transition-transform" />
-            <span className="text-[10px] uppercase tracking-[0.2em] font-black">Companies</span>
+            <span className="text-[10px] uppercase tracking-[0.2em] font-black">Akses Perusahaan</span>
           </div>
         ),
         children: (
@@ -387,8 +387,8 @@ export function FormUser(props: IPropsFormUser) {
               data={availableCompanies}
               selectedKeys={selAvailComp}
               onSelectChange={setSelAvailComp}
-              subtitle="GLOBAL POOL"
-              title="Available"
+              subtitle="SEMUA PERUSAHAAN"
+              title="Tersedia"
               colorClass="bg-slate-800"
               icon={Building2}
               type="company"
@@ -419,8 +419,8 @@ export function FormUser(props: IPropsFormUser) {
               data={userCompanies}
               selectedKeys={selAssignComp}
               onSelectChange={setSelAssignComp}
-              subtitle="SECURITY ZONE"
-              title="Authorized"
+              subtitle="ZONA AKSES"
+              title="Terpilih"
               colorClass="bg-emerald-600"
               icon={ShieldCheck}
               type="company"
@@ -433,7 +433,7 @@ export function FormUser(props: IPropsFormUser) {
         label: (
           <div className="flex items-center gap-2 py-2 group">
             <Layers size={18} className="group-hover:scale-110 transition-transform" />
-            <span className="text-[10px] uppercase tracking-[0.2em] font-black">Branches</span>
+            <span className="text-[10px] uppercase tracking-[0.2em] font-black">Akses Cabang</span>
           </div>
         ),
         children: (
@@ -442,8 +442,8 @@ export function FormUser(props: IPropsFormUser) {
               data={availableBranches}
               selectedKeys={selAvailBranch}
               onSelectChange={setSelAvailBranch}
-              subtitle="SITE POOL"
-              title="Available"
+              subtitle="SEMUA CABANG"
+              title="Tersedia"
               colorClass="bg-slate-800"
               icon={MapPin}
               type="branch"
@@ -474,8 +474,8 @@ export function FormUser(props: IPropsFormUser) {
               data={userBranches}
               selectedKeys={selAssignBranch}
               onSelectChange={setSelAssignBranch}
-              subtitle="AUTHORIZED SITES"
-              title="Provisioned"
+              subtitle="CABANG TERPILIH"
+              title="Aktif"
               colorClass="bg-blue-600"
               icon={CheckCircle2}
               type="branch"
@@ -502,7 +502,7 @@ export function FormUser(props: IPropsFormUser) {
       }}
       closable={false}
     >
-      <Spin spinning={loading} description={<span className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-500 mt-4 block">Processing Protocol...</span>}>
+      <Spin spinning={loading} description={<span className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-500 mt-4 block">Memproses Data...</span>}>
         <div className="relative pt-6">
           <Tabs 
             defaultActiveKey="1" 
