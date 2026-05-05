@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { DatePicker, Spin, Empty, Table, Badge, Card, Row, Col, Space, Typography } from 'antd';
+import { DatePicker, Spin, Empty, Table, Badge, Card, Row, Col, Space, Typography, Select } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker';
 import dayjs from 'dayjs';
 import { DynamicChart } from '@afx/components/dynamic/chart-loader';
@@ -31,6 +31,7 @@ export default function Dashboard() {
         dayjs().subtract(7, 'day'),
         dayjs()
     ]);
+    const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('daily');
     const [loading, setLoading] = useState(true);
     
     const [summary, setSummary] = useState<ISummaryRevenue | null>(null);
@@ -45,7 +46,7 @@ export default function Dashboard() {
         const params = {
             startDate: dateRange[0].format('YYYY-MM-DD'),
             endDate: dateRange[1].format('YYYY-MM-DD'),
-            period: 'daily' as const
+            period: period
         };
 
         try {
@@ -67,7 +68,10 @@ export default function Dashboard() {
 
             if (summaryRes.meta.success) setSummary(summaryRes.data);
             if (salesRes.meta.success) setSalesPerf(salesRes.data);
-            if (therapistsRes.meta.success) setTopTherapists(therapistsRes.data);
+            if (therapistsRes.meta.success) {
+                const filtered = therapistsRes.data.filter((t: ITopTherapist) => t.name && t.employeeCode);
+                setTopTherapists(filtered);
+            }
             if (paymentsRes.meta.success) setPaymentMethods(paymentsRes.data);
             if (salesRecentRes.meta.success) setRecentSales(salesRecentRes.data);
             if (sessionsRecentRes.meta.success) setRecentSessions(sessionsRecentRes.data);
@@ -80,7 +84,7 @@ export default function Dashboard() {
 
     useEffect(() => {
         fetchData();
-    }, [dateRange]);
+    }, [dateRange, period]);
 
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('id-ID', {
@@ -233,14 +237,6 @@ export default function Dashboard() {
                     <h1 className="text-3xl font-extrabold text-slate-900 mb-1 tracking-tight">Dashboard</h1>
                     <p className="text-slate-500 text-sm">Selamat datang di The Green Spa Management System</p>
                 </div>
-                <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
-                    <RangePicker 
-                        value={dateRange}
-                        onChange={(dates) => dates && setDateRange([dates[0]!, dates[1]!])}
-                        allowClear={false}
-                        className="border-none shadow-none"
-                    />
-                </div>
             </div>
 
             {/* Stats Grid */}
@@ -270,8 +266,32 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
                 <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-xl font-extrabold text-slate-900 m-0">Performa Penjualan</h3>
-                        <Badge status="processing" text="Real-time" className="font-bold text-xs" />
+                        <div className="flex flex-col">
+                            <h3 className="text-xl font-extrabold text-slate-900 m-0">Performa Penjualan</h3>
+                            <div className="flex items-center gap-2 mt-1">
+                                <Badge status="processing" text="Real-time" className="font-bold text-[10px]" />
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <RangePicker 
+                                value={dateRange}
+                                onChange={(dates) => dates && setDateRange([dates[0]!, dates[1]!])}
+                                allowClear={false}
+                                className="dashboard-range-picker"
+                            />
+                            <Select 
+                                value={period} 
+                                onChange={(val) => setPeriod(val)}
+                                className="period-select"
+                                bordered={false}
+                                options={[
+                                    { value: 'daily', label: 'Daily' },
+                                    { value: 'weekly', label: 'Weekly' },
+                                    { value: 'monthly', label: 'Monthly' },
+                                    { value: 'yearly', label: 'Yearly' }
+                                ]}
+                            />
+                        </div>
                     </div>
                     {loading ? <div className="h-[350px] flex items-center justify-center"><Spin /></div> : (
                         salesPerf && salesPerf.labels.length > 0 ? (
@@ -309,7 +329,7 @@ export default function Dashboard() {
                     </div>
                     <div className="p-0 overflow-x-auto">
                         <Table 
-                            dataSource={recentSales}
+                            dataSource={recentSales.slice(0, 5)}
                             loading={loading}
                             pagination={false}
                             rowKey="id"
@@ -362,21 +382,23 @@ export default function Dashboard() {
                     </div>
                     <div className="p-8 pt-0 flex flex-col gap-6">
                         {loading ? <Spin className="mt-4" /> : (
-                            topTherapists.length > 0 ? topTherapists.map((therapist, idx) => (
-                                <div key={idx} className="flex items-center gap-5 group">
-                                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center font-bold text-lg shrink-0 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300 shadow-sm">
-                                        {therapist.name.split(' ').map(n => n[0]).join('')}
+                            topTherapists.length > 0 ? topTherapists.slice(0, 5).map((therapist, idx) => (
+                                <div key={idx} className="flex items-center gap-5 p-4 rounded-3xl hover:bg-slate-50 transition-all group border border-transparent hover:border-slate-100">
+                                    <div className="w-14 h-14 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-bold text-xl shrink-0 shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
+                                        {therapist.name ? therapist.name.split(' ').map(n => n[0]).join('') : '?'}
                                     </div>
-                                    <div className="flex-1">
-                                        <div className="text-base font-bold text-slate-900 mb-0.5">{therapist.name}</div>
-                                        <div className="text-sm text-slate-500">{therapist.totalSession} Sesi Selesai</div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="flex items-center gap-1 text-amber-500">
-                                            <i className="fa-solid fa-star text-[10px]"></i>
-                                            <span className="text-sm font-black">{therapist.averageRate}</span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-lg font-black text-slate-900 truncate">{therapist.name || 'Unknown Therapist'}</div>
+                                        <div className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-2">{therapist.employeeCode}</div>
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-100">
+                                                <i className="fa-solid fa-star text-[10px]"></i>
+                                                <span className="text-xs font-black">{therapist.averageRate}</span>
+                                            </div>
+                                            <div className="text-xs font-bold text-slate-400">
+                                                <span className="text-slate-900">{therapist.totalSession}</span> Sesi Selesai
+                                            </div>
                                         </div>
-                                        <div className="text-[10px] font-bold text-slate-400 uppercase">{therapist.employeeCode}</div>
                                     </div>
                                 </div>
                             )) : <Empty description="Belum ada data terapis" />
@@ -393,7 +415,7 @@ export default function Dashboard() {
                 </div>
                 <div className="p-0 overflow-x-auto">
                     <Table 
-                        dataSource={recentSessions}
+                        dataSource={recentSessions.slice(0, 10)}
                         loading={loading}
                         pagination={false}
                         rowKey="id"
@@ -467,6 +489,26 @@ export default function Dashboard() {
                 }
                 .dashboard-table .ant-table-tbody > tr:hover > td {
                     background: #f1f5f9/30 !important;
+                }
+                .period-select {
+                    background: #f8fafc;
+                    border-radius: 12px;
+                    padding: 4px 8px;
+                    font-weight: 700;
+                    color: #10b981;
+                }
+                .period-select .ant-select-selection-item {
+                    color: #10b981 !important;
+                }
+                .dashboard-range-picker {
+                    background: #f8fafc;
+                    border: none;
+                    border-radius: 12px;
+                    padding: 6px 12px;
+                }
+                .dashboard-range-picker:hover, .dashboard-range-picker-focused {
+                    background: #f1f5f9;
+                    box-shadow: none;
                 }
             `}</style>
         </div>
