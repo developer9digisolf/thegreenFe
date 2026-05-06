@@ -78,13 +78,13 @@ export function BranchOperatingHoursModal({ branchId, branchName, open, onClose 
 
   const handleInitialize = async () => {
     const days = [
-      { day: 0, name: "Sunday" },
-      { day: 1, name: "Monday" },
-      { day: 2, name: "Tuesday" },
-      { day: 3, name: "Wednesday" },
-      { day: 4, name: "Thursday" },
-      { day: 5, name: "Friday" },
-      { day: 6, name: "Saturday" },
+      { day: 0, name: "Minggu" },
+      { day: 1, name: "Senin" },
+      { day: 2, name: "Selasa" },
+      { day: 3, name: "Rabu" },
+      { day: 4, name: "Kamis" },
+      { day: 5, name: "Jumat" },
+      { day: 6, name: "Sabtu" },
     ];
 
     for (const day of days) {
@@ -118,8 +118,10 @@ export function BranchOperatingHoursModal({ branchId, branchName, open, onClose 
         <Row gutter={[16, 16]} align="middle">
           <Col xs={24} md={4}>
             <div className="flex flex-col">
-              <Text className="text-base font-bold text-slate-800">{item.dayName}</Text>
-              <Text className="text-xs text-slate-400">Day {item.dayOfWeek}</Text>
+              <Text className="text-base font-bold text-slate-800">
+                {["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"][item.dayOfWeek]}
+              </Text>
+              <Text className="text-xs text-slate-400">Hari {item.dayOfWeek}</Text>
             </div>
           </Col>
           

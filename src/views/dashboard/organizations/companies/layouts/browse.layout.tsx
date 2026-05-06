@@ -46,19 +46,17 @@ export function BrowseCompany(props: IPropsCompany & { handleEdit: (id: number) 
       key: 'name',
       width: '35%',
       render: (text: string, record: any) => (
-        <div className="flex items-center gap-4 py-2">
-          <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-black text-slate-800 text-[15px] tracking-tight truncate">{text}</span>
-              <Tag className="m-0 bg-slate-100 text-slate-500 border-none font-black text-[9px] px-1.5 py-0 rounded-md">
-                {record.code}
-              </Tag>
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1">
-                {record.children ? `${record.children.length} Anak Perusahaan` : 'Entitas Mandiri'}
-              </span>
-            </div>
+        <div className="flex flex-col min-w-0 py-2 ml-2">
+          <div className="flex items-center gap-2">
+            <span className="font-black text-slate-800 text-[15px] tracking-tight truncate">{text}</span>
+            <Tag className="m-0 bg-slate-100 text-slate-500 border-none font-black text-[9px] px-1.5 py-0 rounded-md">
+              {record.code}
+            </Tag>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1">
+              {record.children ? `${record.children.length} Anak Perusahaan` : 'Entitas Mandiri'}
+            </span>
           </div>
         </div>
       )
@@ -218,7 +216,7 @@ export function BrowseCompany(props: IPropsCompany & { handleEdit: (id: number) 
           loading={isLoading("getCompanies")}
           rowKey="id"
           expandable={{
-            indentSize: 24,
+            indentSize: 40,
             expandIcon: ({ expanded, onExpand, record }) =>
               record.children && record.children.length > 0 ? (
                 <button
@@ -265,12 +263,68 @@ export function BrowseCompany(props: IPropsCompany & { handleEdit: (id: number) 
           padding: 16px 32px !important;
           border-bottom: 1px solid #f8fafc !important;
         }
+        .premium-tree-table .ant-table-tbody > tr > td:first-child {
+          display: flex !important;
+          align-items: center;
+          white-space: nowrap !important;
+        }
         .premium-tree-table .ant-table-tbody > tr:hover > td {
           background: #fdfdfd !important;
         }
+        
+        /* Tree Lines Implementation */
+        .premium-tree-table .ant-table-row-indent {
+          position: relative;
+          width: 40px !important;
+          min-width: 40px !important;
+          display: inline-block !important;
+        }
+        
+        /* Vertical line */
+        .premium-tree-table tr:not(.ant-table-row-level-0) .ant-table-row-indent:last-of-type::before {
+          content: "";
+          position: absolute;
+          left: 20px;
+          top: -30px;
+          bottom: 50%;
+          width: 1px;
+          background: #cbd5e1;
+        }
+
+        /* Horizontal line */
+        .premium-tree-table tr:not(.ant-table-row-level-0) .ant-table-row-indent:last-of-type::after {
+          content: "";
+          position: absolute;
+          left: 20px;
+          top: 50%;
+          width: 20px;
+          height: 1px;
+          background: #cbd5e1;
+        }
+
+        /* Continuous vertical line for deeper levels */
+        /* If there's another indent before the last one, it should have a vertical line */
+        .premium-tree-table .ant-table-row-indent:not(:last-of-type)::before {
+          content: "";
+          position: absolute;
+          left: 20px;
+          top: -30px;
+          bottom: -30px;
+          width: 1px;
+          background: #cbd5e1;
+        }
+
         .premium-tree-table .ant-table-row-indent + .ant-table-row-expand-icon {
           margin-right: 12px;
+          position: relative;
+          z-index: 2;
+          flex-shrink: 0;
+          background: white;
         }
+        .ant-table-row-expand-icon {
+          flex-shrink: 0;
+        }
+        
         .premium-table-card .ant-card-body {
           padding: 0 !important;
         }

@@ -119,7 +119,7 @@ export default function BranchView() {
       })
       .catch((err: any) => {
         notification.warning({
-          message: "Validation Failed",
+          message: "Validasi Gagal",
           description: err?.errorFields?.[0]?.errors,
           duration: 2,
           key: "FUNC-CREATE-BRANCH",
