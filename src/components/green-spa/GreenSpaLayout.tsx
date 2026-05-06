@@ -104,6 +104,15 @@ const menuConfig: MenuSection[] = [
           { key: "credit-package", label: "Paket Kredit", icon: "fa-solid fa-coins", path: "/dashboard/master/credit-packages" },
         ]
       },
+      { 
+        key: "reports", 
+        label: "Laporan", 
+        icon: "fa-solid fa-chart-line", 
+        roles: ["Owner", "Admin"],
+        subItems: [
+          { key: "commissions", label: "Commissions", icon: "fa-solid fa-money-bill-trend-up", path: "/dashboard/reports/commissions" },
+        ]
+      },
     ]
   }
 ];

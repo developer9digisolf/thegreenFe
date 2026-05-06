@@ -218,5 +218,10 @@ export const rest = {
       update: "master/service-packages/:ID",
       delete: "master/service-packages/:ID",
     },
+    commissions: {
+      byEmployee: "master/commissions/by-employee",
+      sessions: "master/commissions/sessions",
+      export: "export/excel/commissions",
+    },
   },
 };

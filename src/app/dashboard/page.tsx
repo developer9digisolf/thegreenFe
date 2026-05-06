@@ -449,7 +449,7 @@ export default function Dashboard() {
                 <div className="lg:col-span-3 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col">
                     <div className="p-5 sm:p-8 pb-4 sm:pb-6 flex items-center justify-between">
                         <h3 className="text-xl font-extrabold text-slate-900 m-0">Penjualan Terbaru</h3>
-                        <Link href="/dashboard/sales" className="text-emerald-500 text-sm font-bold no-underline hover:underline">Lihat Semua</Link>
+                        {/* <Link href="/dashboard/sales" className="text-emerald-500 text-sm font-bold no-underline hover:underline">Lihat Semua</Link> */}
                     </div>
                     <div className="p-0 overflow-x-auto table-wrapper">
                         <Table 
@@ -537,7 +537,7 @@ export default function Dashboard() {
                 <div className="lg:col-span-3 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col">
                     <div className="p-5 sm:p-8 pb-4 sm:pb-6 flex items-center justify-between">
                         <h3 className="text-xl font-extrabold text-slate-900 m-0">Sesi Terkini</h3>
-                        <Link href="/dashboard/bookings" className="text-emerald-500 text-sm font-bold no-underline hover:underline">Lihat Semua</Link>
+                        {/* <Link href="/dashboard/bookings" className="text-emerald-500 text-sm font-bold no-underline hover:underline">Lihat Semua</Link> */}
                     </div>
                     <div className="p-0 overflow-x-auto table-wrapper">
                         <Table 
