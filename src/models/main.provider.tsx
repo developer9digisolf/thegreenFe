@@ -130,6 +130,6 @@ export function useStore<
     //   message: 'FAILER TO LOAD MODELS',
     //   description: er.message
     // })
-    return { state: {}, actions: {} } as any
+    return { state: {}, isLoading: () => false, useActions: () => {} } as any
   }
 }

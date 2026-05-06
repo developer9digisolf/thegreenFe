@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Green SPA | Experience True Serenity</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3A6B5C',
+                        dark: '#2D4F4F',
+                        darker: '#1A3636',
+                        light: '#4A8B74',
+                        lighter: '#5BA88A',
+                        sand: '#F4F1ED',
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    borderRadius: {
+                        '4xl': '2rem',
+                        '5xl': '3rem',
+                        '6xl': '4.5rem',
+                    },
+                    animation: {
+                        'soft-float': 'float 5s ease-in-out infinite',
+                        'subtle-zoom': 'zoom 20s ease infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        zoom: {
+                            '0%, 100%': { transform: 'scale(1)' },
+                            '50%': { transform: 'scale(1.1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @layer base {
+            body { @apply font-sans text-darker bg-white overflow-x-hidden; }
+            h1, h2, h3 { @apply font-serif; }
+        }
+        .hero-clip {
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 0% 100%);
+        }
+        @media (max-width: 768px) {
+            .hero-clip { clip-path: polygon(0 0, 100% 0, 100% 95%, 0% 100%); }
+        }
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- GAGAH NAVIGATION -->
+    <nav class="fixed top-0 w-full z-[100] py-4 transition-all duration-500" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 md:px-12">
+            <div class="glass-nav rounded-3xl md:rounded-[2.5rem] px-6 md:px-10 py-3 md:py-5 flex justify-between items-center shadow-2xl shadow-darker/5">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 md:w-12 md:h-12 bg-primary rounded-xl md:rounded-2xl flex items-center justify-center text-white shadow-lg">
+                        <i data-lucide="leaf" class="w-5 h-5 md:w-6 md:h-6"></i>
+                    </div>
+                    <span class="text-xl md:text-2xl font-black text-darker tracking-tighter uppercase">The Green <span class="text-primary italic">SPA</span></span>
+                </div>
+                
+                <div class="hidden lg:flex items-center space-x-10">
+                    <a href="#" class="text-sm font-black text-darker/60 hover:text-primary transition-colors">Home</a>
+                    <a href="#services" class="text-sm font-black text-darker/60 hover:text-primary transition-colors">Treatments</a>
+                    <a href="#gallery" class="text-sm font-black text-darker/60 hover:text-primary transition-colors">Sanctuary</a>
+                    <a href="#" class="bg-darker text-white px-8 py-3.5 rounded-full text-sm font-black hover:bg-primary transition-all shadow-xl shadow-darker/20 active:scale-95">
+                        Download App
+                    </a>
+                </div>
+
+                <button class="lg:hidden p-2 text-darker bg-gray-50 rounded-xl" onclick="toggleMobileNav()">
+                    <i data-lucide="menu" id="nav-icon"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Panel -->
+        <div id="mobile-nav" class="hidden lg:hidden absolute top-full left-0 w-full px-4 pt-2">
+            <div class="bg-white rounded-3xl shadow-2xl p-8 space-y-6 border border-gray-100">
+                <a href="#" class="block text-xl font-black text-darker">Home</a>
+                <a href="#services" class="block text-xl font-black text-darker">Treatments</a>
+                <a href="#gallery" class="block text-xl font-black text-darker">Sanctuary</a>
+                <a href="#" class="block w-full bg-primary text-white py-4 rounded-2xl text-center font-black">Download App</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- DRAMATIC HERO SECTION -->
+    <header class="relative min-h-[90vh] md:min-h-screen flex items-center pt-24 pb-32">
+        <div class="absolute inset-0 z-0 hero-clip bg-sand overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r from-sand via-sand/80 to-transparent z-10"></div>
+            <img src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?q=80&w=2070&auto=format&fit=crop" class="absolute inset-0 w-full h-full object-cover animate-subtle-zoom" alt="Hero">
+        </div>
+
+        <div class="max-w-7xl mx-auto px-6 md:px-12 relative z-20">
+            <div class="max-w-3xl">
+                <div class="inline-flex items-center gap-3 px-4 py-2 mb-8 bg-white/50 backdrop-blur-md rounded-full border border-white/50 animate-soft-float">
+                    <span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+                    <span class="text-[10px] font-black tracking-[0.3em] text-primary uppercase">Mobile-First Wellness</span>
+                </div>
+                <h1 class="text-6xl md:text-8xl lg:text-[10rem] font-black text-darker leading-[0.85] tracking-tighter mb-10">
+                    Breathe. <br><span class="italic text-primary font-normal">Connected.</span>
+                </h1>
+                <p class="text-lg md:text-2xl text-dark/60 mb-12 font-medium max-w-xl leading-relaxed">
+                    The Green SPA experience, now in the palm of your hand. Book rituals, manage memberships, and find serenity through our mobile sanctuary.
+                </p>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-6">
+                    <div class="flex flex-wrap gap-4">
+                        <a href="#" class="flex items-center gap-3 bg-darker text-white px-8 py-4 rounded-2xl hover:bg-primary transition-all shadow-xl">
+                            <i data-lucide="apple" class="w-6 h-6"></i>
+                            <div class="text-left">
+                                <p class="text-[10px] font-bold uppercase leading-none opacity-60">Get it on</p>
+                                <p class="text-sm font-black leading-none mt-1">App Store</p>
+                            </div>
+                        </a>
+                        <a href="#" class="flex items-center gap-3 bg-darker text-white px-8 py-4 rounded-2xl hover:bg-primary transition-all shadow-xl">
+                            <i data-lucide="play-circle" class="w-6 h-6"></i>
+                            <div class="text-left">
+                                <p class="text-[10px] font-bold uppercase leading-none opacity-60">Get it on</p>
+                                <p class="text-sm font-black leading-none mt-1">Google Play</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-darker/20">
+            <span class="text-[10px] font-black uppercase tracking-widest">Scroll</span>
+            <div class="w-px h-12 bg-darker/10 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1/2 bg-primary animate-bounce"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- CORE RITUALS SECTION -->
+    <section class="py-32" id="services">
+        <div class="max-w-7xl mx-auto px-6 md:px-12">
+            <div class="flex flex-col lg:flex-row justify-between items-end gap-10 mb-24">
+                <div class="max-w-2xl">
+                    <h2 class="text-5xl md:text-7xl font-black text-darker tracking-tighter leading-[0.9] mb-8">Seamless <br><span class="text-primary italic font-normal">Booking App</span></h2>
+                    <p class="text-xl text-dark/50 font-medium leading-relaxed">Experience a faster, more personal way to manage your wellness journey. One tap away from complete relaxation.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <!-- Card 1 -->
+                <div class="group cursor-pointer">
+                    <div class="h-[500px] rounded-6xl overflow-hidden relative mb-8 shadow-2xl transition-transform duration-700 group-hover:-translate-y-4">
+                        <img src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt="S1">
+                        <div class="absolute inset-0 bg-gradient-to-t from-darker/80 to-transparent"></div>
+                        <div class="absolute bottom-10 left-10 text-white">
+                            <p class="text-[10px] font-black uppercase tracking-[0.3em] mb-2 text-primary">Mineral Care</p>
+                            <h3 class="text-3xl font-black mb-4">Lava Stone Ritual</h3>
+                            <span class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">Book via App <i data-lucide="smartphone" class="w-3 h-3"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 2 -->
+                <div class="group cursor-pointer md:mt-12">
+                    <div class="h-[500px] rounded-6xl overflow-hidden relative mb-8 shadow-2xl transition-transform duration-700 group-hover:-translate-y-4">
+                        <img src="https://images.unsplash.com/photo-1519750783826-e2420f4d687f?w=800" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt="S2">
+                        <div class="absolute inset-0 bg-gradient-to-t from-darker/80 to-transparent"></div>
+                        <div class="absolute bottom-10 left-10 text-white">
+                            <p class="text-[10px] font-black uppercase tracking-[0.3em] mb-2 text-primary">Organic Glow</p>
+                            <h3 class="text-3xl font-black mb-4">Botanical Infusion</h3>
+                            <span class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">Book via App <i data-lucide="smartphone" class="w-3 h-3"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 3 -->
+                <div class="group cursor-pointer md:mt-24">
+                    <div class="h-[500px] rounded-6xl overflow-hidden relative mb-8 shadow-2xl transition-transform duration-700 group-hover:-translate-y-4">
+                        <img src="https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=800" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt="S3">
+                        <div class="absolute inset-0 bg-gradient-to-t from-darker/80 to-transparent"></div>
+                        <div class="absolute bottom-10 left-10 text-white">
+                            <p class="text-[10px] font-black uppercase tracking-[0.3em] mb-2 text-primary">Sound Healing</p>
+                            <h3 class="text-3xl font-black mb-4">Zen Frequency</h3>
+                            <span class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">Book via App <i data-lucide="smartphone" class="w-3 h-3"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- GAGAH FOOTER -->
+    <footer class="bg-darker pt-32 pb-12 px-6 md:px-12 text-white relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-full h-full opacity-10 pointer-events-none">
+            <div class="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] bg-primary rounded-full blur-[200px]"></div>
+        </div>
+
+        <div class="max-w-7xl mx-auto relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-24 mb-32">
+                <div>
+                    <h2 class="text-6xl md:text-8xl font-black tracking-tighter leading-none mb-12">The App for <br><span class="text-primary italic font-normal">Modern Peace.</span></h2>
+                    <div class="flex flex-wrap gap-6">
+                        <a href="#" class="flex items-center gap-3 bg-white text-darker px-8 py-4 rounded-2xl hover:bg-primary hover:text-white transition-all shadow-xl">
+                            <i data-lucide="apple" class="w-6 h-6"></i>
+                            <div class="text-left">
+                                <p class="text-[10px] font-bold uppercase leading-none opacity-60">Download on</p>
+                                <p class="text-sm font-black leading-none mt-1">App Store</p>
+                            </div>
+                        </a>
+                        <a href="#" class="flex items-center gap-3 bg-white text-darker px-8 py-4 rounded-2xl hover:bg-primary hover:text-white transition-all shadow-xl">
+                            <i data-lucide="play-circle" class="w-6 h-6"></i>
+                            <div class="text-left">
+                                <p class="text-[10px] font-bold uppercase leading-none opacity-60">Get it on</p>
+                                <p class="text-sm font-black leading-none mt-1">Google Play</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-12">
+                    <div>
+                        <h4 class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 mb-8">Navigation</h4>
+                        <ul class="space-y-4 font-bold text-gray-300">
+                            <li><a href="#" class="hover:text-primary transition-colors">Experience</a></li>
+                            <li><a href="#" class="hover:text-primary transition-colors">Sanctuary</a></li>
+                            <li><a href="#" class="hover:text-primary transition-colors">Rituals</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 mb-8">Contact</h4>
+                        <p class="text-gray-300 font-bold mb-4">Bali, Indonesia<br>Wellness Blvd 80361</p>
+                        <p class="text-primary font-black">+62 361 555 000</p>
+                    </div>
+                    <div class="col-span-2 md:col-span-1">
+                        <h4 class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 mb-8">Follow Us</h4>
+                        <div class="flex gap-4">
+                            <a href="#" class="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary transition-all"><i data-lucide="instagram" class="w-5 h-5"></i></a>
+                            <a href="#" class="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary transition-all"><i data-lucide="facebook" class="w-5 h-5"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8 text-[10px] font-black uppercase tracking-[0.4em] text-gray-500">
+                <p>&copy; 2026 The Green SPA. Meticulously Crafted.</p>
+                <div class="flex gap-12">
+                    <a href="#" class="hover:text-white transition-colors">Privacy</a>
+                    <a href="#" class="hover:text-white transition-colors">Terms</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        function toggleMobileNav() {
+            const nav = document.getElementById('mobile-nav');
+            const icon = document.getElementById('nav-icon');
+            nav.classList.toggle('hidden');
+            // Toggle icon between menu and x would be better but keeping it simple
+        }
+
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                nav.classList.add('py-2');
+                nav.classList.remove('py-4');
+            } else {
+                nav.classList.add('py-4');
+                nav.classList.remove('py-2');
+            }
+        });
+    </script>
+</body>
+</html>

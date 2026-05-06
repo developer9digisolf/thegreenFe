@@ -85,11 +85,7 @@ const menuConfig: MenuSection[] = [
             key: "employee", 
             label: "Employees", 
             icon: "fa-solid fa-user-doctor", 
-            subItems: [
-              { key: "employee-list", label: "List All", icon: "fa-solid fa-users", path: "/dashboard/organizations/employees" },
-              { key: "one-time-shifts", label: "One Time Shifts", icon: "fa-solid fa-calendar-day", path: "/dashboard/organizations/employees/one-time-shifts" },
-              { key: "recurring-shifts", label: "Recurring Shifts", icon: "fa-solid fa-calendar-week", path: "/dashboard/organizations/employees/recurring-shifts" },
-            ]
+            path: "/dashboard/organizations/employees"
           },
           { key: "position", label: "Position", icon: "fa-solid fa-user-tie", path: "/dashboard/organizations/positions" },
           { key: "department", label: "Department", icon: "fa-solid fa-building-columns", path: "/dashboard/organizations/departments" },

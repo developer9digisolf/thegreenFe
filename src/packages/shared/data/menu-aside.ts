@@ -107,18 +107,6 @@ const asideMenus = [
                 label: "Employees",
                 url: "/dashboard/organizations/employees",
                 Icon: Users,
-                submenu: [
-                    {
-                        id: 3031,
-                        label: "One Time Shifts",
-                        url: "/dashboard/organizations/employees/one-time-shifts",
-                    },
-                    {
-                        id: 3032,
-                        label: "Recurring Shifts",
-                        url: "/dashboard/organizations/employees/recurring-shifts",
-                    },
-                ],
             },
             {
                 id: 304,

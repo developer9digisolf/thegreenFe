@@ -49,7 +49,11 @@ import { IActionEmployee, IStateEmployee } from "@afx/models/dashboard/master/em
 
 const { Title, Text } = Typography;
 
-export default function OneTimeShiftsView() {
+interface OneTimeShiftsViewProps {
+  employeeId?: number;
+}
+
+export default function OneTimeShiftsView({ employeeId }: OneTimeShiftsViewProps) {
   const {
     useActions: useShiftActions,
     state: shiftState,
@@ -63,7 +67,7 @@ export default function OneTimeShiftsView() {
   } = useStore<IStateEmployee, IActionEmployee>("employees");
 
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(null);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(employeeId || null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
@@ -76,10 +80,13 @@ export default function OneTimeShiftsView() {
 
   useEffect(() => {
     useEmployeeActions<"getEmployees">("getEmployees", [{ page: 1, pageSize: 100 }], true);
-    if (employeeIdParam) {
+    
+    if (employeeId) {
+      setSelectedEmployeeId(employeeId);
+    } else if (employeeIdParam) {
       setSelectedEmployeeId(Number(employeeIdParam));
     }
-  }, [employeeIdParam]);
+  }, [employeeId, employeeIdParam]);
 
   useEffect(() => {
     getShifts();
@@ -175,13 +182,13 @@ export default function OneTimeShiftsView() {
 
   const columns = [
     {
-      title: "Date",
+      title: "Tanggal",
       dataIndex: "date",
       key: "date",
       render: (date: string) => <Text className="font-bold">{dayjs(date).format('DD MMM YYYY')}</Text>
     },
     {
-      title: "Employee",
+      title: "Karyawan",
       dataIndex: "employeeId",
       key: "employeeId",
       render: (id: number) => {
@@ -189,13 +196,13 @@ export default function OneTimeShiftsView() {
         return (
           <Space>
             <Avatar size="small" icon={<UserOutlined />} className="bg-emerald-500" />
-            <Text className="font-medium text-slate-700">{emp?.fullName || `Employee #${id}`}</Text>
+            <Text className="font-medium text-slate-700">{emp?.fullName || `Karyawan #${id}`}</Text>
           </Space>
         );
       }
     },
     {
-      title: "Shift Time",
+      title: "Waktu Shift",
       key: "time",
       render: (_: any, record: any) => (
         <Tag className="rounded-xl border-emerald-100 bg-emerald-50 text-emerald-700 font-bold px-3">
@@ -204,13 +211,13 @@ export default function OneTimeShiftsView() {
       )
     },
     {
-      title: "Break",
+      title: "Istirahat",
       dataIndex: "breakMinutes",
       key: "breakMinutes",
-      render: (min: number) => <Text className="text-slate-500 font-medium">{min} mins</Text>
+      render: (min: number) => <Text className="text-slate-500 font-medium">{min} menit</Text>
     },
     {
-      title: "Actions",
+      title: "Aksi",
       key: "actions",
       width: 120,
       align: 'center' as const,
@@ -243,48 +250,54 @@ export default function OneTimeShiftsView() {
     }
   ];
 
+  const filteredColumns = employeeId 
+    ? columns.filter(col => col.key !== 'employeeId') 
+    : columns;
+
   return (
     <div className="p-6 lg:p-8 animate-in slide-in-from-bottom-4 duration-700">
      
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
         <div>
           <Title level={2} className="!m-0 text-slate-800 font-extrabold tracking-tight">
-            One-Time Shifts
+            Shift Sekali
           </Title>
           <Text className="text-slate-400 font-medium italic">
-            Assign specific shifts for individual dates to employees
+            Atur shift khusus untuk tanggal tertentu kepada karyawan
           </Text>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex flex-col">
-            <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Select Employee to Filter</Text>
-            <Select 
-              placeholder="Choose employee..." 
-              allowClear
-              className="w-64 premium-select-header"
-              onChange={setSelectedEmployeeId}
-              value={selectedEmployeeId}
-              loading={isLoadingEmployee("getEmployees")}
-              options={employeeState.employees.map(emp => ({
-                value: emp.id,
-                label: emp.fullName || emp.nickname || `Employee #${emp.id}`
-              }))}
-            />
-          </div>
-          <div className="flex gap-3 pt-5">
+          {!employeeId && (
+            <div className="flex flex-col">
+              <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Pilih Karyawan untuk Memfilter</Text>
+              <Select 
+                placeholder="Pilih karyawan..." 
+                allowClear
+                className="w-64 premium-select-header"
+                onChange={setSelectedEmployeeId}
+                value={selectedEmployeeId}
+                loading={isLoadingEmployee("getEmployees")}
+                options={employeeState.employees.map(emp => ({
+                  value: emp.id,
+                  label: emp.fullName || emp.nickname || `Karyawan #${emp.id}`
+                }))}
+              />
+            </div>
+          )}
+          <div className={`flex gap-3 ${!employeeId ? 'pt-5' : ''}`}>
             <Button 
               icon={<SyncOutlined />} 
               onClick={getShifts}
               className="flex items-center gap-2 h-11 px-5 rounded-xl border-slate-200 hover:border-emerald-400 hover:text-emerald-500 font-semibold"
             >
-              Refresh
+              Perbarui
             </Button>
             <Button 
               icon={<ImportOutlined />} 
               onClick={() => setIsImportModalOpen(true)}
               className="flex items-center gap-2 h-11 px-5 rounded-xl border-slate-200 hover:border-emerald-400 hover:text-emerald-500 font-semibold"
             >
-              Import
+              Impor
             </Button>
             <Button 
               type="primary" 
@@ -296,7 +309,7 @@ export default function OneTimeShiftsView() {
                 setIsModalOpen(true);
               }}
             >
-              Assign Shift
+              Atur Shift
             </Button>
           </div>
         </div>
@@ -308,7 +321,7 @@ export default function OneTimeShiftsView() {
       >
         <Spin spinning={isLoadingShift("getOneTimeShifts")}>
           <Table 
-            columns={columns} 
+            columns={filteredColumns} 
             dataSource={shiftState.oneTimeShifts} 
             pagination={{
               pageSize: 10,
@@ -326,7 +339,7 @@ export default function OneTimeShiftsView() {
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
               <ImportOutlined />
             </div>
-            <span className="font-bold">Import One-Time Shifts</span>
+            <span className="font-bold">Impor Shift Sekali</span>
           </div>
         }
         open={isImportModalOpen}
@@ -350,30 +363,30 @@ export default function OneTimeShiftsView() {
             <div className="w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
               <InboxOutlined className="text-3xl text-slate-300 group-hover:text-emerald-500" />
             </div>
-            <Title level={5} className="mb-1">Click or drag file to this area to upload</Title>
-            <Text className="text-slate-400 text-xs">Support for .xlsx, .xls or .csv files (Max. 5MB)</Text>
+            <Title level={5} className="mb-1">Klik atau seret file ke area ini untuk mengunggah</Title>
+            <Text className="text-slate-400 text-xs">Mendukung file .xlsx, .xls atau .csv (Maks. 5MB)</Text>
           </Upload.Dragger>
 
           <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 mb-6">
             <div className="flex gap-3">
               <InfoCircleOutlined className="text-amber-500 mt-1" />
               <div>
-                <Text className="block font-bold text-amber-800 text-sm">Download Template</Text>
-                <Text className="text-amber-700/70 text-xs">Please use our standard template to ensure data compatibility.</Text>
+                <Text className="block font-bold text-amber-800 text-sm">Unduh Templat</Text>
+                <Text className="text-amber-700/70 text-xs">Gunakan templat standar kami untuk memastikan kompatibilitas data.</Text>
                 <Button 
                   type="link" 
                   icon={<DownloadOutlined />} 
                   className="p-0 h-auto text-amber-600 font-bold text-xs mt-2 hover:text-amber-700"
                 >
-                  Download Template.xlsx
+                  Unduh Templat.xlsx
                 </Button>
               </div>
             </div>
           </div>
 
           <div className="flex justify-end gap-3">
-            <Button size="large" className="rounded-xl px-6 border-slate-200 font-bold h-12" onClick={() => setIsImportModalOpen(false)}>Cancel</Button>
-            <Button size="large" type="primary" className="rounded-xl px-8 bg-emerald-600 border-none font-bold h-12 shadow-lg shadow-emerald-200">Start Import</Button>
+            <Button size="large" className="rounded-xl px-6 border-slate-200 font-bold h-12" onClick={() => setIsImportModalOpen(false)}>Batal</Button>
+            <Button size="large" type="primary" className="rounded-xl px-8 bg-emerald-600 border-none font-bold h-12 shadow-lg shadow-emerald-200">Mulai Impor</Button>
           </div>
         </div>
       </Modal>
@@ -384,7 +397,7 @@ export default function OneTimeShiftsView() {
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
               <PlusOutlined />
             </div>
-            <span className="font-bold">{editingId ? 'Edit One-Time Shift' : 'Assign One-Time Shift'}</span>
+            <span className="font-bold">{editingId ? 'Ubah Shift Sekali' : 'Atur Shift Sekali'}</span>
           </div>
         }
         open={isModalOpen}
@@ -399,46 +412,52 @@ export default function OneTimeShiftsView() {
         className="premium-modal"
       >
         <Form layout="vertical" form={form} onFinish={handleCreate} className="mt-6">
-          <Form.Item name="employeeId" label="Select Employee" required rules={[{ required: true }]}>
-            <Select 
-              placeholder="Search employee..." 
-              showSearch 
-              className="premium-select"
-              loading={isLoadingEmployee("getEmployees")}
-              filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
-              options={employeeState.employees.map(emp => ({
-                value: emp.id,
-                label: emp.fullName || emp.nickname || `Employee #${emp.id}`
-              }))}
-            />
-          </Form.Item>
+          {employeeId ? (
+            <Form.Item name="employeeId" hidden initialValue={employeeId}>
+              <Input />
+            </Form.Item>
+          ) : (
+            <Form.Item name="employeeId" label="Pilih Karyawan" required rules={[{ required: true }]}>
+              <Select 
+                placeholder="Cari karyawan..." 
+                showSearch 
+                className="premium-select"
+                loading={isLoadingEmployee("getEmployees")}
+                filterOption={(input, option) =>
+                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+                options={employeeState.employees.map(emp => ({
+                  value: emp.id,
+                  label: emp.fullName || emp.nickname || `Karyawan #${emp.id}`
+                }))}
+              />
+            </Form.Item>
+          )}
           
-          <Form.Item name="date" label="Select Date" required rules={[{ required: true }]}>
+          <Form.Item name="date" label="Pilih Tanggal" required rules={[{ required: true }]}>
             <DatePicker className="w-full premium-datepicker" format="DD MMMM YYYY" />
           </Form.Item>
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="startTime" label="Start Time" required rules={[{ required: true }]}>
+              <Form.Item name="startTime" label="Waktu Mulai" required rules={[{ required: true }]}>
                 <TimePicker format="HH:mm" className="w-full premium-timepicker" />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="endTime" label="End Time" required rules={[{ required: true }]}>
+              <Form.Item name="endTime" label="Waktu Selesai" required rules={[{ required: true }]}>
                 <TimePicker format="HH:mm" className="w-full premium-timepicker" />
               </Form.Item>
             </Col>
           </Row>
           
-          <Form.Item name="breakMinutes" label="Break Minutes" initialValue={60}>
+          <Form.Item name="breakMinutes" label="Menit Istirahat" initialValue={60}>
             <InputNumber min={0} className="w-full premium-input-number" />
           </Form.Item>
 
           <div className="flex justify-end gap-3 pt-4">
-            <Button size="large" className="rounded-xl px-6 border-slate-200 font-bold h-12" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button size="large" type="primary" htmlType="submit" loading={isLoadingShift("createOneTimeShift")} className="rounded-xl px-8 bg-emerald-600 border-none font-bold h-12 shadow-lg shadow-emerald-200">Assign Shift</Button>
+            <Button size="large" className="rounded-xl px-6 border-slate-200 font-bold h-12" onClick={() => setIsModalOpen(false)}>Batal</Button>
+            <Button size="large" type="primary" htmlType="submit" loading={isLoadingShift("createOneTimeShift")} className="rounded-xl px-8 bg-emerald-600 border-none font-bold h-12 shadow-lg shadow-emerald-200">Atur Shift</Button>
           </div>
         </Form>
       </Modal>
@@ -449,14 +468,14 @@ export default function OneTimeShiftsView() {
             <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-600">
               <InfoCircleOutlined />
             </div>
-            <span className="font-bold text-red-600">Import Issues Detected</span>
+            <span className="font-bold text-red-600">Masalah Impor Terdeteksi</span>
           </div>
         }
         open={isErrorModalOpen}
         onCancel={() => setIsErrorModalOpen(false)}
         footer={[
           <Button key="close" type="primary" className="bg-slate-800 border-none rounded-xl px-8 h-11 font-bold" onClick={() => setIsErrorModalOpen(false)}>
-            Got it
+            Mengerti
           </Button>
         ]}
         width={600}
@@ -467,7 +486,7 @@ export default function OneTimeShiftsView() {
           <div className="bg-red-50 p-4 rounded-2xl border border-red-100 mb-6 flex gap-3">
              <WarningOutlined className="text-red-500 mt-1" />
              <Text className="text-red-800 text-sm font-medium">
-               Some records could not be imported. Please review the errors below and fix them in your file.
+               Beberapa data tidak dapat diimpor. Silakan tinjau kesalahan di bawah ini dan perbaiki file Anda.
              </Text>
           </div>
           
@@ -476,7 +495,7 @@ export default function OneTimeShiftsView() {
               <div key={idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 group hover:border-red-200 transition-all duration-300">
                 <div className="flex items-start justify-between mb-2">
                   <Tag className="bg-slate-200 border-none text-slate-600 font-bold rounded-lg px-2">
-                    Row #{err.rowNumber}
+                    Baris #{err.rowNumber}
                   </Tag>
                   <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{err.employeeCode}</Text>
                 </div>
