@@ -47,7 +47,7 @@ const menuConfig: MenuSection[] = [
   {
     section: "MAIN MENU",
     items: [
-      { key: "dashboard", label: "Dashboard", icon: "fa-solid fa-gauge-high", path: "/dashboard", roles: ["Owner", "Admin", "Office"] },
+      { key: "dashboard", label: "Dashboard", icon: "fa-solid fa-gauge-high", path: "/dashboard", roles: ["Owner", "Admin", "Office", ] },
       { key: "attendance-qr", label: "Attendance QR", icon: "fa-solid fa-qrcode", path: "/dashboard/attendance-qr", roles: ["Owner", "Admin"] },
       { key: "device-pairing", label: "Device Pairing", icon: "fa-solid fa-link", path: "/dashboard/device-pairing", roles: ["Owner", "Admin"] },
       { 

@@ -70,7 +70,14 @@
       ],
       "@doar/shared/*": [
         "./src/packages/shared/*"
-      ]
+      ],
+      "@afx/hooks/*": [
+        "./src/hooks/*"
+      ],
+      "@afx/styles/*": 
+      [
+        "./src/assets/css/*"
+      ],
     },
     "forceConsistentCasingInFileNames": true
   },
