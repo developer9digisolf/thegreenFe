@@ -111,6 +111,7 @@ const menuConfig: MenuSection[] = [
         roles: ["Owner", "Admin"],
         subItems: [
           { key: "commissions", label: "Commissions", icon: "fa-solid fa-money-bill-trend-up", path: "/dashboard/reports/commissions" },
+          { key: "sales-report", label: "Sales", icon: "fa-solid fa-file-invoice-dollar", path: "/dashboard/reports/sales" },
         ]
       },
     ]

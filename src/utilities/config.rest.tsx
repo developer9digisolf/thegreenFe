@@ -123,8 +123,10 @@ export const rest = {
 
   // Sales
   sales: "sales",
+  salesPaid: "sales/paid",
   salesSummary: "sales/summary",
   salesDetail: "sales/:id",
+  salesExport: "export/excel/sales",
 
   master: {
     companies: {

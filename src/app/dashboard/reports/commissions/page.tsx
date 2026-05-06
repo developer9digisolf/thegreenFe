@@ -431,19 +431,20 @@ export default function CommissionsReportPage() {
 
       {/* Table */}
       <Card className="rounded-2xl shadow-sm border-none overflow-hidden p-0">
-        <Table 
-          columns={columns} 
-          dataSource={data} 
-          rowKey="id"
-          loading={loading}
-          pagination={{
-            ...pagination,
-            onChange: (page) => fetchData(page),
-            className: "px-6 pb-4",
-          }}
-          className="premium-table"
-        />
-        {!loading && data.length === 0 && (
+        {data.length > 0 || loading ? (
+          <Table 
+            columns={columns} 
+            dataSource={data} 
+            rowKey="id"
+            loading={loading}
+            pagination={{
+              ...pagination,
+              onChange: (page) => fetchData(page),
+              className: "px-6 pb-4",
+            }}
+            className="premium-table"
+          />
+        ) : (
           <div className="py-20 flex flex-col items-center justify-center bg-white">
             <Empty description="Pilih kriteria filter dan klik Tampilkan Laporan" />
           </div>
