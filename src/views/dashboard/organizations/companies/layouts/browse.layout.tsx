@@ -7,8 +7,8 @@ import {
   Dropdown, MenuProps, Breadcrumb
 } from "antd";
 import { 
-  Search, Plus, MoreVertical, Building2, 
-  Mail, Phone, MapPin, Calendar, Layers,
+  Search, Plus, MoreVertical, 
+  Mail, Phone, MapPin, Calendar,
   ChevronRight, ExternalLink, Trash2, Edit3
 } from "lucide-react";
 import { IPropsCompany } from "@afx/interfaces/master/company.iface";
@@ -41,15 +41,12 @@ export function BrowseCompany(props: IPropsCompany & { handleEdit: (id: number) 
 
   const columns = [
     {
-      title: 'COMPANY IDENTITY',
+      title: 'IDENTITAS PERUSAHAAN',
       dataIndex: 'name',
       key: 'name',
       width: '35%',
       render: (text: string, record: any) => (
         <div className="flex items-center gap-4 py-2">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm flex-shrink-0">
-            <Building2 size={22} />
-          </div>
           <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-black text-slate-800 text-[15px] tracking-tight truncate">{text}</span>
@@ -59,7 +56,7 @@ export function BrowseCompany(props: IPropsCompany & { handleEdit: (id: number) 
             </div>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1">
-                <Layers size={10} /> {record.children ? `${record.children.length} Subsidiaries` : 'Standalone Entity'}
+                {record.children ? `${record.children.length} Anak Perusahaan` : 'Entitas Mandiri'}
               </span>
             </div>
           </div>
@@ -67,7 +64,7 @@ export function BrowseCompany(props: IPropsCompany & { handleEdit: (id: number) 
       )
     },
     {
-      title: 'CONTACT & LOCATION',
+      title: 'KONTAK & LOKASI',
       key: 'contact',
       width: '30%',
       render: (_: any, record: any) => (
@@ -88,7 +85,7 @@ export function BrowseCompany(props: IPropsCompany & { handleEdit: (id: number) 
       )
     },
     {
-      title: 'ESTABLISHED',
+      title: 'DIDIRIKAN',
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: '15%',
@@ -98,12 +95,12 @@ export function BrowseCompany(props: IPropsCompany & { handleEdit: (id: number) 
           <Tag className="m-0 bg-blue-50 text-blue-600 border-blue-100 font-black text-[10px] px-2 rounded-lg py-0.5">
             {value ? dayjs(value).format("MMM YYYY") : "-"}
           </Tag>
-          <span className="text-[9px] text-slate-300 font-black uppercase tracking-tighter">Creation Date</span>
+          <span className="text-[9px] text-slate-300 font-black uppercase tracking-tighter">Tanggal Pembuatan</span>
         </div>
       )
     },
     {
-      title: 'ACTIONS',
+      title: 'AKSI',
       key: 'actions',
       width: '10%',
       align: 'center' as const,
@@ -111,20 +108,20 @@ export function BrowseCompany(props: IPropsCompany & { handleEdit: (id: number) 
         const items: MenuProps["items"] = [
           {
             key: "detail",
-            label: <span className="font-bold text-xs">View Identity</span>,
+            label: <span className="font-bold text-xs">Lihat Identitas</span>,
             icon: <ExternalLink size={14} />,
             onClick: () => props?.handleToDetail(record?.id),
           },
           {
             key: "edit",
-            label: <span className="font-bold text-xs text-emerald-600">Modify Authority</span>,
+            label: <span className="font-bold text-xs text-emerald-600">Ubah Otoritas</span>,
             icon: <Edit3 size={14} className="text-emerald-500" />,
             onClick: () => props?.handleEdit(record?.id),
           },
           { type: "divider" },
           {
             key: "delete",
-            label: <span className="font-bold text-xs">Terminate Entity</span>,
+            label: <span className="font-bold text-xs">Hapus Entitas</span>,
             icon: <Trash2 size={14} />,
             danger: true,
             onClick: () => setDeleteModal({
@@ -162,22 +159,19 @@ export function BrowseCompany(props: IPropsCompany & { handleEdit: (id: number) 
         <div className="flex flex-col gap-2">
           <Breadcrumb 
             items={[
-              { title: <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Master Control</span> },
-              { title: <span className="text-slate-900 font-black text-[10px] uppercase tracking-widest">Organizational Map</span> }
+              { title: <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Kontrol Utama</span> },
+              { title: <span className="text-slate-900 font-black text-[10px] uppercase tracking-widest">Peta Organisasi</span> }
             ]}
           />
           <div className="flex items-center gap-4 mt-2">
-            <div className="w-16 h-16 rounded-[24px] bg-emerald-600 text-white flex items-center justify-center shadow-2xl shadow-emerald-600/20">
-              <Building2 size={32} />
-            </div>
             <div className="flex flex-col">
               <h1 className="text-3xl font-black text-slate-950 tracking-tight m-0 leading-none">
-                Companies
+                Perusahaan
               </h1>
               <div className="flex items-center gap-3 mt-2">
                 <Badge status="processing" color="#10b981" />
                 <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">
-                  {pageInfo?.total || 0} Registered Entities
+                  {pageInfo?.total || 0} Entitas Terdaftar
                 </span>
               </div>
             </div>
@@ -188,7 +182,7 @@ export function BrowseCompany(props: IPropsCompany & { handleEdit: (id: number) 
           <div className="relative group hidden sm:block">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-emerald-500 transition-colors" size={18} />
             <Input
-              placeholder="Locate entity..."
+              placeholder="Cari perusahaan..."
               value={props?.searchText}
               onChange={(e) => props?.setSearchText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && props?.onSearch()}
@@ -201,7 +195,7 @@ export function BrowseCompany(props: IPropsCompany & { handleEdit: (id: number) 
             icon={<Plus size={20} />}
             className="h-14 px-8 rounded-2xl bg-emerald-600 hover:bg-emerald-700 border-none font-black text-sm shadow-xl shadow-emerald-600/20 active:scale-95 flex items-center gap-3"
           >
-            Register Entity
+            Daftarkan Perusahaan
           </Button>
         </div>
       </div>
@@ -241,10 +235,7 @@ export function BrowseCompany(props: IPropsCompany & { handleEdit: (id: number) 
           locale={{
             emptyText: (
               <div className="py-20 flex flex-col items-center">
-                <div className="w-20 h-20 rounded-3xl bg-slate-50 flex items-center justify-center text-slate-200 mb-4">
-                  <Building2 size={40} />
-                </div>
-                <span className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">No entities found in this sector</span>
+                <span className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Tidak ada entitas ditemukan di sektor ini</span>
               </div>
             )
           }}

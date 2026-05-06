@@ -66,18 +66,18 @@ export function FormCompany(props: IPropsFormCompany) {
         <div className="flex flex-col text-left">
           <div className="flex items-center gap-2">
             <Typography className="text-xl font-black text-slate-950 m-0 leading-tight">
-              {props?.formType === "create" ? "New Entity" : (company?.name || "Entity Profile")}
+              {props?.formType === "create" ? "Entitas Baru" : (company?.name || "Profil Entitas")}
             </Typography>
             {props?.formType !== "create" && (
                <Tag className={`rounded-lg px-2 py-0.5 font-black border-none uppercase text-[9px] tracking-widest ${
                  props?.formType === 'detail' ? 'bg-blue-500 text-white' : 'bg-orange-500 text-white'
                }`}>
-                  {props?.formType}
+                  {props?.formType === 'detail' ? 'Detail' : 'Ubah'}
                </Tag>
             )}
           </div>
           <p className="text-[10px] text-slate-400 font-black m-0 mt-1 uppercase tracking-widest opacity-60 flex items-center gap-2">
-            <Globe size={12} /> Master Organizational Map
+            <Globe size={12} /> Peta Organisasi Utama
           </p>
         </div>
       </div>
@@ -90,7 +90,7 @@ export function FormCompany(props: IPropsFormCompany) {
             onClick={() => props?.setFormType("update")}
             className="h-12 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 border-none font-black text-sm shadow-xl shadow-emerald-600/20 active:scale-95 flex items-center gap-2"
           >
-            Modify Structure
+            Ubah Struktur
           </Button>
         )}
         {(props?.formType === "update" || props?.formType === "create") && (
@@ -100,7 +100,7 @@ export function FormCompany(props: IPropsFormCompany) {
               onClick={() => props?.onCancle()}
               className="h-12 px-5 rounded-xl bg-slate-50 text-slate-400 border-none font-bold text-sm hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2"
             >
-              Discard
+              Batalkan
             </Button>
             <Button
               type="primary"
@@ -109,7 +109,7 @@ export function FormCompany(props: IPropsFormCompany) {
               loading={loading}
               className="h-12 px-8 rounded-xl bg-emerald-600 hover:bg-emerald-700 border-none font-black text-sm shadow-xl shadow-emerald-600/20 active:scale-95 flex items-center gap-2"
             >
-              {props?.formType === 'create' ? 'Register Company' : 'Commit Changes'}
+              {props?.formType === 'create' ? 'Daftarkan Perusahaan' : 'Simpan Perubahan'}
             </Button>
           </div>
         )}
@@ -133,7 +133,7 @@ export function FormCompany(props: IPropsFormCompany) {
       }}
       closable={false}
     >
-      <Spin spinning={loading} description={<span className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-500 mt-4 block">Building Hierarchy...</span>}>
+      <Spin spinning={loading} description={<span className="font-black text-[10px] uppercase tracking-[0.3em] text-emerald-500 mt-4 block">Membangun Hierarki...</span>}>
         <UseForm form={props?.forms} onFinish={props.handleSubmit}>
           <div className="flex flex-col gap-8">
             {/* Identity Card */}
@@ -142,12 +142,12 @@ export function FormCompany(props: IPropsFormCompany) {
                 <Col span={8}>
                   <UseFormItem
                     name="code"
-                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4 text-center">Entity Code</span>}
+                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4 text-center">Kode Entitas</span>}
                     {...itemLayouts}
-                    rules={[{ required: true, message: "Code is required" }]}
+                    rules={[{ required: true, message: "Kode wajib diisi" }]}
                   >
                     <Input
-                      placeholder="e.g. TGS-HQ"
+                      placeholder="misal: TGS-HQ"
                       disabled={props?.formType === "detail"}
                       className="rounded-2xl h-16 px-6 border-slate-100 bg-white font-black text-slate-800 text-lg uppercase text-center"
                     />
@@ -156,12 +156,12 @@ export function FormCompany(props: IPropsFormCompany) {
                 <Col span={16}>
                   <UseFormItem
                     name="name"
-                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Corporate Name</span>}
+                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Nama Perusahaan</span>}
                     {...itemLayouts}
-                    rules={[{ required: true, message: "Name is required" }]}
+                    rules={[{ required: true, message: "Nama wajib diisi" }]}
                   >
                     <Input
-                      placeholder="e.g. The Green Spa Indonesia"
+                      placeholder="misal: The Green Spa Indonesia"
                       disabled={props?.formType === "detail"}
                       className="rounded-2xl h-16 px-6 border-slate-100 bg-white font-black text-slate-800 text-lg"
                     />
@@ -170,13 +170,13 @@ export function FormCompany(props: IPropsFormCompany) {
                 <Col span={24}>
                   <UseFormItem
                     name="parentId"
-                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Parent Organization</span>}
+                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Organisasi Induk</span>}
                     {...itemLayouts}
                   >
                     <TreeSelect
                       showSearch
                       treeData={treeData}
-                      placeholder="Select parent company (optional)"
+                      placeholder="Pilih perusahaan induk (opsional)"
                       allowClear
                       treeDefaultExpandAll
                       disabled={props?.formType === "detail"}
@@ -194,7 +194,7 @@ export function FormCompany(props: IPropsFormCompany) {
                 <div className="flex flex-col gap-6">
                   <UseFormItem
                     name="email"
-                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Official Email</span>}
+                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Email Resmi</span>}
                     {...itemLayouts}
                     rules={[{ required: true, type: 'email' }]}
                   >
@@ -207,7 +207,7 @@ export function FormCompany(props: IPropsFormCompany) {
                   </UseFormItem>
                   <UseFormItem
                     name="phone"
-                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Phone Line</span>}
+                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Jalur Telepon</span>}
                     {...itemLayouts}
                     rules={[{ required: true }]}
                   >
@@ -223,13 +223,13 @@ export function FormCompany(props: IPropsFormCompany) {
               <Col span={12}>
                 <UseFormItem
                   name="address"
-                  label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Physical Address</span>}
+                  label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Alamat Fisik</span>}
                   {...itemLayouts}
                   rules={[{ required: true }]}
                 >
                   <Input.TextArea
                     rows={5}
-                    placeholder="Provide full corporate address..."
+                    placeholder="Berikan alamat perusahaan lengkap..."
                     disabled={props?.formType === "detail"}
                     className="rounded-2xl px-4 py-4 border-slate-100 bg-white font-bold"
                   />
@@ -238,12 +238,12 @@ export function FormCompany(props: IPropsFormCompany) {
               <Col span={24}>
                  <UseFormItem
                     name="description"
-                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Corporate Description</span>}
+                    label={<span className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-4">Deskripsi Perusahaan</span>}
                     {...itemLayouts}
                   >
                     <Input.TextArea
                       rows={3}
-                      placeholder="Additional organizational details..."
+                      placeholder="Detail organisasi tambahan..."
                       disabled={props?.formType === "detail"}
                       className="rounded-2xl px-4 py-4 border-slate-100 bg-white font-bold"
                     />
