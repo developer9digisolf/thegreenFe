@@ -113,7 +113,10 @@ export const rest = {
   // Dashboard
   dashboardSummaryRevenue: "dashboard/summary-revenue",
   dashboardSalesPerformance: "dashboard/sales-performance",
+  dashboardPeakHours: "dashboard/peak-hour",
+  dashboardCustomerSegmentation: "dashboard/customer-segmentation",
   dashboardTopTherapists: "dashboard/top-therapists",
+  dashboardTopMembers: "dashboard/top-loyal-members",
   dashboardPaymentMethodTotals: "dashboard/payment-method-totals",
   dashboardRecentSales: "dashboard/recent-sales",
   dashboardRecentSessions: "dashboard/recent-sessions",
