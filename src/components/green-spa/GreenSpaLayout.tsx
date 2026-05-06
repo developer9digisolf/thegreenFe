@@ -71,6 +71,7 @@ const menuConfig: MenuSection[] = [
           { key: "payment-method", label: "Payment Method", icon: "fa-solid fa-credit-card", path: "/dashboard/master/payment-methods" },
           { key: "member", label: "Member", icon: "fa-solid fa-users", path: "/dashboard/master/members" },
           { key: "room", label: "Ruangan", icon: "fa-solid fa-door-open", path: "/dashboard/master/rooms" },
+          { key: "service-package", label: "Paket Voucher", icon: "fa-solid fa-box-archive", path: "/dashboard/master/service-packages" },
         ]
       },
       { 

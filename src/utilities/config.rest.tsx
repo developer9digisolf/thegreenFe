@@ -208,5 +208,12 @@ export const rest = {
       update: "master/branch-service-variants/:ID",
       delete: "master/branch-service-variants/:ID",
     },
+    servicePackages: {
+      index: "master/service-packages",
+      show: "master/service-packages/:ID",
+      create: "master/service-packages",
+      update: "master/service-packages/:ID",
+      delete: "master/service-packages/:ID",
+    },
   },
 };
