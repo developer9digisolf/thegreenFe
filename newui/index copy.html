@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Green SPA | Sanctuary of Wellness</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3A6B5C',
+                        sand: '#F4F1ED',
+                        dark: '#2D4F4F',
+                        darker: '#1A3636',
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    animation: {
+                        'subtle-zoom': 'subtle-zoom 20s infinite alternate',
+                        'soft-float': 'soft-float 3s ease-in-out infinite',
+                        'fade-in': 'fade-in 0.8s ease-out forwards',
+                    },
+                    keyframes: {
+                        'subtle-zoom': {
+                            '0%': { transform: 'scale(1)' },
+                            '100%': { transform: 'scale(1.1)' },
+                        },
+                        'soft-float': {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        'fade-in': {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .hero-clip {
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 0% 100%);
+        }
+
+        @media (max-width: 768px) {
+            .hero-clip {
+                clip-path: polygon(0 0, 100% 0, 100% 95%, 0% 100%);
+            }
+        }
+
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .cursor-grab {
+            cursor: grab;
+        }
+
+        .cursor-grabbing {
+            cursor: grabbing;
+        }
+    </style>
+</head>
+
+<body class="bg-white font-sans text-darker">
+
+    <!-- FULL WIDTH NAVIGATION -->
+    <nav class="fixed top-0 w-full z-[100] transition-all duration-500 glass-nav border-b border-darker/5" id="navbar">
+        <div class="max-w-[1600px] mx-auto px-6 md:px-12 py-4 md:py-6 flex justify-between items-center transition-all duration-500" id="nav-content">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 md:w-12 md:h-12 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <i data-lucide="leaf" class="w-5 h-5 md:w-6 md:h-6"></i>
+                </div>
+                <span class="text-xl md:text-2xl font-black text-darker tracking-tighter uppercase">The Green <span class="text-primary italic font-normal lowercase">spa</span></span>
+            </div>
+            
+            <!-- Desktop Links -->
+            <div class="hidden lg:flex items-center gap-12 text-[10px] font-black uppercase tracking-[0.3em] text-darker/60">
+                <a href="#" class="hover:text-primary transition-colors">Home</a>
+                <a href="#about" class="hover:text-primary transition-colors">Experience</a>
+                <a href="#services" class="hover:text-primary transition-colors">Rituals</a>
+                <a href="#gallery" class="hover:text-primary transition-colors">Sanctuary</a>
+                <a href="#" class="bg-darker text-white px-8 py-3 rounded-full hover:bg-primary transition-all shadow-xl shadow-darker/10">Download App</a>
+            </div>
+
+            <!-- Mobile Toggle -->
+            <button onclick="toggleMobileNav()" class="lg:hidden w-12 h-12 bg-sand rounded-2xl flex items-center justify-center text-darker">
+                <i id="nav-icon" data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-nav" class="hidden lg:hidden fixed inset-x-0 top-[80px] bg-white/95 backdrop-blur-3xl border-b border-darker/5 p-8 animate-fade-in shadow-2xl">
+            <div class="flex flex-col gap-8 text-center text-sm font-black uppercase tracking-[0.4em] text-darker">
+                <a href="#" onclick="toggleMobileNav()" class="py-2 border-b border-darker/5">Home</a>
+                <a href="#about" onclick="toggleMobileNav()" class="py-2 border-b border-darker/5">Experience</a>
+                <a href="#services" onclick="toggleMobileNav()" class="py-2 border-b border-darker/5">Rituals</a>
+                <a href="#gallery" onclick="toggleMobileNav()" class="py-2 border-b border-darker/5">Sanctuary</a>
+                <a href="#" class="bg-darker text-white py-5 rounded-2xl mt-4">Download App</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- DRAMATIC HERO SECTION -->
+    <header class="relative min-h-screen flex items-center pt-32 md:pt-24 pb-32">
+        <div class="absolute inset-0 z-0 hero-clip bg-sand overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r from-sand via-sand/70 to-transparent z-10"></div>
+            <img src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?q=80&w=2070&auto=format&fit=crop"
+                class="absolute inset-0 w-full h-full object-cover animate-subtle-zoom opacity-90" alt="Hero">
+        </div>
+
+        <div class="max-w-7xl mx-auto px-6 md:px-12 relative z-20">
+            <div class="max-w-4xl">
+                <div
+                    class="inline-flex items-center gap-3 px-4 py-2 mb-6 md:mb-8 bg-white/70 backdrop-blur-md rounded-full border border-white/50 animate-soft-float">
+                    <span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+                    <span class="text-[10px] font-black tracking-[0.3em] text-primary uppercase">Elite Wellness
+                        Experience</span>
+                </div>
+                <h1
+                    class="text-5xl sm:text-6xl md:text-9xl lg:text-[11rem] font-black text-darker leading-[0.8] tracking-tighter mb-8 md:mb-10">
+                    Breathe. <br><span class="italic text-primary font-normal">Reborn.</span>
+                </h1>
+                <p class="text-base md:text-2xl text-dark/70 mb-8 md:mb-12 font-medium max-w-2xl leading-relaxed">
+                    Step into a world where time slows down. The Green SPA combines ancient healing rituals with modern
+                    digital ease. Experience serenity, redefined.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-6 md:gap-8">
+                    <a href="#services"
+                        class="bg-darker text-white px-10 py-5 rounded-full font-black uppercase tracking-widest text-xs hover:bg-primary transition-all shadow-2xl shadow-darker/20 text-center">
+                        Explore Treatments
+                    </a>
+                    <div class="flex items-center gap-6">
+                        <div class="flex -space-x-4">
+                            <img src="https://i.pravatar.cc/100?u=1" class="w-12 h-12 rounded-full border-4 border-sand"
+                                alt="U1">
+                            <img src="https://i.pravatar.cc/100?u=2" class="w-12 h-12 rounded-full border-4 border-sand"
+                                alt="U2">
+                            <img src="https://i.pravatar.cc/100?u=3" class="w-12 h-12 rounded-full border-4 border-sand"
+                                alt="U3">
+                        </div>
+                        <div class="text-xs font-black uppercase tracking-widest text-dark/40">
+                            <span class="text-darker">50k+</span> Happy Guests
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-12 left-6 md:left-12 flex flex-col items-center gap-6">
+            <span class="text-[10px] font-black uppercase tracking-[0.4em] [writing-mode:vertical-lr] text-dark/30">Scroll
+                Experience</span>
+            <div class="w-[1px] h-20 bg-gradient-to-b from-dark/30 to-transparent"></div>
+        </div>
+
+        <!-- Social Icons -->
+        <div class="absolute right-6 md:right-12 bottom-12 hidden md:block">
+            <div class="flex flex-col gap-6">
+                <a href="#"
+                    class="w-12 h-12 flex items-center justify-center rounded-full border border-darker/10 hover:bg-primary hover:border-primary hover:text-white transition-all"><i
+                        data-lucide="instagram" class="w-5 h-5"></i></a>
+                <a href="#"
+                    class="w-12 h-12 flex items-center justify-center rounded-full border border-darker/10 hover:bg-primary hover:border-primary hover:text-white transition-all"><i
+                        data-lucide="facebook" class="w-5 h-5"></i></a>
+                <a href="#"
+                    class="w-12 h-12 flex items-center justify-center rounded-full border border-darker/10 hover:bg-primary hover:border-primary hover:text-white transition-all"><i
+                        data-lucide="youtube" class="w-5 h-5"></i></a>
+            </div>
+        </div>
+    </header>
+
+    <!-- TRUST BAR -->
+    <section class="py-12 bg-darker text-white">
+        <div class="max-w-7xl mx-auto px-6 md:px-12">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+                <div class="text-center md:text-left">
+                    <p class="text-4xl md:text-5xl font-black text-primary mb-2">25+</p>
+                    <p class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Years of Heritage</p>
+                </div>
+                <div class="text-center md:text-left">
+                    <p class="text-4xl md:text-5xl font-black text-primary mb-2">60+</p>
+                    <p class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Asia Sanctuaries</p>
+                </div>
+                <div class="text-center md:text-left">
+                    <p class="text-4xl md:text-5xl font-black text-primary mb-2">100%</p>
+                    <p class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Organic Botanicals</p>
+                </div>
+                <div class="text-center md:text-left">
+                    <p class="text-4xl md:text-5xl font-black text-primary mb-2">4.9</p>
+                    <p class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Guest Experience</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- THE FIVE SIGNATURES (ABOUT) -->
+    <section class="py-16 md:py-32 bg-white overflow-hidden" id="about">
+        <div class="max-w-7xl mx-auto px-6 md:px-12">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-24 items-center">
+                <div class="relative">
+                    <div
+                        class="absolute -top-10 md:-top-20 -left-10 md:-left-20 w-32 md:w-64 h-32 md:h-64 bg-sand rounded-full -z-10 opacity-50">
+                    </div>
+                    <div class="rounded-[2.5rem] md:rounded-[4rem] overflow-hidden shadow-2xl">
+                        <img src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=2070&auto=format&fit=crop"
+                            class="w-full aspect-square md:aspect-[4/5] object-cover" alt="Philosophy">
+                    </div>
+                    <div
+                        class="absolute -bottom-6 md:-bottom-10 -right-6 md:-right-10 bg-primary p-6 md:p-12 rounded-3xl md:rounded-[3rem] text-white hidden sm:block shadow-2xl max-w-xs md:max-w-none">
+                        <i data-lucide="quote" class="w-8 h-8 md:w-12 md:h-12 mb-4 md:mb-6 opacity-50"></i>
+                        <p class="text-lg md:text-2xl font-serif italic leading-relaxed">"True wellness is the harmony of
+                            body, mind, and the digital world."</p>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="text-4xl md:text-7xl font-black text-darker tracking-tighter leading-[0.9] mb-8 md:mb-12">
+                        The Five <br><span class="text-primary italic font-normal">Signatures.</span>
+                    </h2>
+                    <div class="space-y-8 md:space-y-10">
+                        <div class="flex gap-4 md:gap-6 group">
+                            <div
+                                class="w-12 h-12 md:w-14 md:h-14 shrink-0 bg-sand rounded-xl md:rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                                <i data-lucide="award" class="w-5 h-5 md:w-6 md:h-6"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg md:text-xl font-black text-darker mb-1 md:mb-2 uppercase tracking-tighter">
+                                    Master Therapists</h4>
+                                <p class="text-sm md:text-base text-dark/60 leading-relaxed font-medium">Certified through
+                                    rigorous training to ensure world-class touch.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 md:gap-6 group">
+                            <div
+                                class="w-12 h-12 md:w-14 md:h-14 shrink-0 bg-sand rounded-xl md:rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                                <i data-lucide="palette" class="w-5 h-5 md:w-6 md:h-6"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg md:text-xl font-black text-darker mb-1 md:mb-2 uppercase tracking-tighter">
+                                    Boutique Design</h4>
+                                <p class="text-sm md:text-base text-dark/60 leading-relaxed font-medium">Unique
+                                    architectural masterpieces reflecting local heritage.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 md:gap-6 group">
+                            <div
+                                class="w-12 h-12 md:w-14 md:h-14 shrink-0 bg-sand rounded-xl md:rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                                <i data-lucide="leaf" class="w-5 h-5 md:w-6 md:h-6"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg md:text-xl font-black text-darker mb-1 md:mb-2 uppercase tracking-tighter">
+                                    Nature's Alchemy</h4>
+                                <p class="text-sm md:text-base text-dark/60 leading-relaxed font-medium">100% natural,
+                                    ethically sourced ingredients in every ritual.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CORE RITUALS SECTION -->
+    <section class="py-16 md:py-32 bg-sand/50" id="services">
+        <div class="max-w-7xl mx-auto px-6 md:px-12">
+            <div
+                class="flex flex-col lg:flex-row justify-between items-start md:items-end gap-8 md:gap-10 mb-12 md:mb-24">
+                <div class="max-w-2xl">
+                    <h2 class="text-4xl md:text-7xl font-black text-darker tracking-tighter leading-[0.9] mb-6 md:mb-8">
+                        Our Signature <br><span class="text-primary italic font-normal">Rituals</span></h2>
+                    <p class="text-lg md:text-xl text-dark/50 font-medium leading-relaxed">Meticulously curated
+                        treatments designed to restore balance.</p>
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="scrollSlider('rituals-slider', -400)"
+                        class="w-12 h-12 md:w-14 md:h-14 rounded-full border border-darker/10 flex items-center justify-center hover:bg-darker hover:text-white transition-all"><i
+                            data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i></button>
+                    <button onclick="scrollSlider('rituals-slider', 400)"
+                        class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-darker text-white flex items-center justify-center hover:bg-primary transition-all"><i
+                            data-lucide="arrow-right" class="w-5 h-5 md:w-6 md:h-6"></i></button>
+                </div>
+            </div>
+
+            <div id="rituals-slider"
+                class="grid grid-flow-col md:grid-flow-row auto-cols-[85vw] md:auto-cols-auto md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide pb-8 -mx-6 px-6 md:mx-auto md:px-0 touch-pan-x scroll-smooth cursor-grab md:cursor-default">
+                <!-- Card 1 -->
+                <div class="snap-center group cursor-pointer">
+                    <div
+                        class="h-[450px] md:h-[600px] rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden relative mb-6 md:mb-8 shadow-2xl transition-all duration-700 md:group-hover:-translate-y-4">
+                        <img src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800"
+                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                            alt="S1">
+                        <div class="absolute inset-0 bg-gradient-to-t from-darker/90 via-darker/20 to-transparent"></div>
+                        <div class="absolute bottom-8 left-8 right-8 md:bottom-10 md:left-10 md:right-10 text-white">
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-[0.3em] mb-2 text-primary">
+                                        Mineral Care</p>
+                                    <h3
+                                        class="text-2xl md:text-3xl font-black mb-2 md:mb-4 uppercase tracking-tighter leading-none">
+                                        Lava Stone <br>Ritual</h3>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[10px] md:text-sm font-black text-primary mb-1">90 MINS</p>
+                                    <p class="text-lg md:text-xl font-black">$85</p>
+                                </div>
+                            </div>
+                            <div
+                                class="mt-4 md:mt-6 pt-4 md:pt-6 border-t border-white/10 flex justify-between items-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-500 md:translate-y-4 md:group-hover:translate-y-0">
+                                <span class="text-[10px] font-black uppercase tracking-widest">Book via App</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 md:w-5 md:h-5"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 2 -->
+                <div class="snap-center group cursor-pointer md:mt-12">
+                    <div
+                        class="h-[450px] md:h-[600px] rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden relative mb-6 md:mb-8 shadow-2xl transition-all duration-700 md:group-hover:-translate-y-4">
+                        <img src="https://images.unsplash.com/photo-1519750783826-e2420f4d687f?w=800"
+                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                            alt="S2">
+                        <div class="absolute inset-0 bg-gradient-to-t from-darker/90 via-darker/20 to-transparent"></div>
+                        <div class="absolute bottom-8 left-8 right-8 md:bottom-10 md:left-10 md:right-10 text-white">
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-[0.3em] mb-2 text-primary">
+                                        Organic Glow</p>
+                                    <h3
+                                        class="text-2xl md:text-3xl font-black mb-2 md:mb-4 uppercase tracking-tighter leading-none">
+                                        Botanical <br>Infusion</h3>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[10px] font-black text-primary mb-1">120 MINS</p>
+                                    <p class="text-lg md:text-xl font-black">$110</p>
+                                </div>
+                            </div>
+                            <div
+                                class="mt-4 md:mt-6 pt-4 md:pt-6 border-t border-white/10 flex justify-between items-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-500 md:translate-y-4 md:group-hover:translate-y-0">
+                                <span class="text-[10px] font-black uppercase tracking-widest">Book via App</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 md:w-5 md:h-5"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 3 -->
+                <div class="snap-center group cursor-pointer lg:mt-24">
+                    <div
+                        class="h-[450px] md:h-[600px] rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden relative mb-6 md:mb-8 shadow-2xl transition-all duration-700 md:group-hover:-translate-y-4">
+                        <img src="https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=800"
+                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                            alt="S3">
+                        <div class="absolute inset-0 bg-gradient-to-t from-darker/90 via-darker/20 to-transparent"></div>
+                        <div class="absolute bottom-8 left-8 right-8 md:bottom-10 md:left-10 md:right-10 text-white">
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-[0.3em] mb-2 text-primary">
+                                        Sound Healing</p>
+                                    <h3
+                                        class="text-2xl md:text-3xl font-black mb-2 md:mb-4 uppercase tracking-tighter leading-none">
+                                        Zen <br>Frequency</h3>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[10px] font-black text-primary mb-1">60 MINS</p>
+                                    <p class="text-lg md:text-xl font-black">$65</p>
+                                </div>
+                            </div>
+                            <div
+                                class="mt-4 md:mt-6 pt-4 md:pt-6 border-t border-white/10 flex justify-between items-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-500 md:translate-y-4 md:group-hover:translate-y-0">
+                                <span class="text-[10px] font-black uppercase tracking-widest">Book via App</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 md:w-5 md:h-5"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-20 text-center">
+                <a href="#"
+                    class="inline-flex items-center gap-4 text-darker font-black uppercase tracking-widest group">
+                    View Full Menu <span
+                        class="w-12 h-12 rounded-full border border-darker/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all"><i
+                            data-lucide="arrow-right" class="w-5 h-5"></i></span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CURATED PACKAGES -->
+    <section class="py-16 md:py-32 bg-darker text-white overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6 md:px-12">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 md:gap-24 items-center">
+                <div class="order-2 lg:order-1">
+                    <h2 class="text-4xl md:text-8xl font-black tracking-tighter leading-[0.85] mb-8 md:mb-12 uppercase">
+                        Curated <br><span class="text-primary italic font-normal">Escape.</span>
+                    </h2>
+                    <p class="text-lg md:text-xl text-gray-400 mb-8 md:mb-12 font-medium leading-relaxed">Our signature
+                        packages are designed for those who seek a comprehensive wellness journey.</p>
+
+                    <div class="space-y-4 md:space-y-6">
+                        <div
+                            class="p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] bg-white/5 border border-white/10 hover:bg-white/10 transition-all cursor-pointer group">
+                            <div class="flex justify-between items-start mb-2 md:mb-4">
+                                <h4 class="text-xl md:text-2xl font-black uppercase tracking-tighter">Dream Journey</h4>
+                                <p class="text-primary font-black">$145</p>
+                            </div>
+                            <p class="text-sm md:text-base text-gray-500 mb-4 md:mb-6 font-medium">Floral Foot Fit +
+                                Aromatherapy Massage + Herbal Compress + Body Scrub.</p>
+                            <div
+                                class="flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+                                <span>180 Mins</span>
+                                <span class="w-1 h-1 bg-gray-700 rounded-full"></span>
+                                <span>Most Popular</span>
+                            </div>
+                        </div>
+                        <div
+                            class="p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] bg-white/5 border border-white/10 hover:bg-white/10 transition-all cursor-pointer group">
+                            <div class="flex justify-between items-start mb-2 md:mb-4">
+                                <h4 class="text-xl md:text-2xl font-black uppercase tracking-tighter">Heaven & Earth
+                                </h4>
+                                <p class="text-primary font-black">$120</p>
+                            </div>
+                            <p class="text-sm md:text-base text-gray-500 mb-4 md:mb-6 font-medium">Body Scrub +
+                                Aromatherapy Oil Massage + Facial Ritual.</p>
+                            <div
+                                class="flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+                                <span>150 Mins</span>
+                                <span class="w-1 h-1 bg-gray-700 rounded-full"></span>
+                                <span>Rejuvenating</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative order-1 lg:order-2">
+                    <div
+                        class="aspect-square rounded-[3rem] md:rounded-[5rem] overflow-hidden rotate-2 lg:rotate-3 shadow-2xl border-4 md:border-8 border-white/5">
+                        <img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=2070&auto=format&fit=crop"
+                            class="w-full h-full object-cover" alt="Package">
+                    </div>
+                    <div
+                        class="absolute -top-6 -right-6 md:-top-10 md:-right-10 w-32 md:w-48 h-32 md:h-48 bg-primary rounded-full flex items-center justify-center text-center p-4 md:p-6 -rotate-12 shadow-2xl animate-soft-float">
+                        <p class="text-[10px] md:text-xs font-black uppercase tracking-widest leading-tight">Save 20% on
+                            App Bookings</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- OUR SANCTUARY (GALLERY) -->
+    <section class="py-16 md:py-32 bg-white" id="gallery">
+        <div
+            class="max-w-7xl mx-auto px-6 md:px-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-12 md:mb-24 text-center md:text-left">
+            <div class="max-w-2xl">
+                <h2 class="text-4xl md:text-7xl font-black text-darker tracking-tighter leading-none mb-6 md:mb-8">
+                    Atmosphere of <span class="text-primary italic font-normal">Zen.</span></h2>
+                <p class="text-lg md:text-xl text-dark/50 font-medium mx-auto md:mx-0">Every detail is crafted for your
+                    peace.</p>
+            </div>
+            <div class="flex gap-4 mx-auto md:mx-0">
+                <button onclick="scrollSlider('gallery-slider', -400)"
+                    class="w-12 h-12 md:w-14 md:h-14 rounded-full border border-darker/10 flex items-center justify-center hover:bg-darker hover:text-white transition-all"><i
+                        data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i></button>
+                <button onclick="scrollSlider('gallery-slider', 400)"
+                    class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-darker text-white flex items-center justify-center hover:bg-primary transition-all"><i
+                        data-lucide="arrow-right" class="w-5 h-5 md:w-6 md:h-6"></i></button>
+            </div>
+        </div>
+
+        <div class="px-6 md:px-12">
+            <div id="gallery-slider" class="grid grid-flow-col md:grid-flow-row auto-cols-[75vw] md:auto-cols-auto md:grid-cols-4 gap-6 md:gap-8 max-w-[1600px] mx-auto overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide pb-8 -mx-6 px-6 md:mx-auto md:px-0 touch-pan-x scroll-smooth cursor-grab md:cursor-default">
+                <div class="snap-center space-y-4 md:space-y-8">
+                    <div class="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-80">
+                        <img src="https://images.unsplash.com/photo-1591343395902-1adcb454c2e4?w=800"
+                            class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
+                            alt="G1">
+                    </div>
+                    <div class="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[450px]">
+                        <img src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800"
+                            class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
+                            alt="G2">
+                    </div>
+                </div>
+                <div class="snap-center space-y-4 md:space-y-8 md:pt-24">
+                    <div class="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[500px] bg-sand">
+                        <img src="https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=800"
+                            class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
+                            alt="G3">
+                    </div>
+                    <div class="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-48 md:h-64 bg-sand">
+                        <img src="https://images.unsplash.com/photo-1519750783826-e2420f4d687f?w=800"
+                            class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
+                            alt="G4">
+                    </div>
+                </div>
+                <div class="snap-center space-y-4 md:space-y-8">
+                    <div class="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[400px] bg-sand">
+                        <img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=800"
+                            class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
+                            alt="G5">
+                    </div>
+                    <div class="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[350px] bg-sand">
+                        <img src="https://images.unsplash.com/photo-1554439905-6c7387459744?w=800"
+                            class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
+                            alt="G6">
+                    </div>
+                </div>
+                <div class="snap-center space-y-4 md:space-y-8 md:pt-12">
+                    <div class="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-48 md:h-72 bg-sand">
+                        <img src="https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=800"
+                            class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
+                            alt="G7">
+                    </div>
+                    <div class="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[520px] bg-sand">
+                        <img src="https://images.unsplash.com/photo-1516233758813-a38d024919c5?w=800"
+                            class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
+                            alt="G8">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- OUR LOCATIONS -->
+    <section class="py-16 md:py-32 bg-sand">
+        <div class="max-w-7xl mx-auto px-6 md:px-12">
+            <div
+                class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 md:gap-12 mb-12 md:mb-20">
+                <h2 class="text-4xl md:text-7xl font-black text-darker tracking-tighter leading-none">Find Your <br><span
+                        class="text-primary italic font-normal">Sanctuary.</span></h2>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-6">
+                    <span class="text-[10px] font-black uppercase tracking-[0.3em] text-darker/40">Select Region</span>
+                    <div class="flex gap-2">
+                        <button
+                            class="px-5 py-2.5 md:px-6 md:py-3 bg-white rounded-full text-[10px] font-black uppercase tracking-widest text-darker shadow-sm border border-gray-100">Bali</button>
+                        <button
+                            class="px-5 py-2.5 md:px-6 md:py-3 bg-darker rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-xl">Jakarta</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+                <div
+                    class="bg-white rounded-[2.5rem] md:rounded-[3rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all group">
+                    <div class="h-48 md:h-64 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1590073242678-70ee3fc28e8e?w=800"
+                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                            alt="L1">
+                    </div>
+                    <div class="p-8 md:p-10">
+                        <h4 class="text-xl md:text-2xl font-black uppercase tracking-tighter mb-2 md:mb-4">The Green -
+                            Seminyak</h4>
+                        <p class="text-sm md:text-base text-dark/50 mb-6 md:mb-8 font-medium">Jalan Kayu Aya No. 12, Bali
+                            80361</p>
+                        <a href="#"
+                            class="inline-flex items-center gap-3 text-primary font-black uppercase tracking-widest text-[10px]">View
+                            Details <i data-lucide="external-link" class="w-3 h-3"></i></a>
+                    </div>
+                </div>
+                <div
+                    class="bg-white rounded-[2.5rem] md:rounded-[3rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all group">
+                    <div class="h-48 md:h-64 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1602002418082-a4443e081dd1?w=800"
+                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                            alt="L2">
+                    </div>
+                    <div class="p-8 md:p-10">
+                        <h4 class="text-xl md:text-2xl font-black uppercase tracking-tighter mb-2 md:mb-4">The Green -
+                            Ubud</h4>
+                        <p class="text-sm md:text-base text-dark/50 mb-6 md:mb-8 font-medium">Jalan Monkey Forest, Bali
+                            80571</p>
+                        <a href="#"
+                            class="inline-flex items-center gap-3 text-primary font-black uppercase tracking-widest text-[10px]">View
+                            Details <i data-lucide="external-link" class="w-3 h-3"></i></a>
+                    </div>
+                </div>
+                <div
+                    class="bg-white rounded-[2.5rem] md:rounded-[3rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all group">
+                    <div class="h-48 md:h-64 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800"
+                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                            alt="L3">
+                    </div>
+                    <div class="p-8 md:p-10">
+                        <h4 class="text-xl md:text-2xl font-black uppercase tracking-tighter mb-2 md:mb-4">The Green -
+                            Jimbaran</h4>
+                        <p class="text-sm md:text-base text-dark/50 mb-6 md:mb-8 font-medium">Jalan Bukit Permai, Bali
+                            80361</p>
+                        <a href="#"
+                            class="inline-flex items-center gap-3 text-primary font-black uppercase tracking-widest text-[10px]">View
+                            Details <i data-lucide="external-link" class="w-3 h-3"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="py-16 md:py-32 bg-white overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6 md:px-12">
+            <div class="text-center mb-12 md:mb-24">
+                <h2 class="text-4xl md:text-7xl font-black text-darker tracking-tighter leading-none mb-6 md:mb-8">Guest
+                    <span class="text-primary italic font-normal">Stories.</span></h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                <div class="p-8 md:p-12 bg-sand rounded-[2.5rem] md:rounded-[4rem] relative">
+                    <i data-lucide="quote" class="absolute top-10 right-10 w-12 h-12 text-primary opacity-20"></i>
+                    <p class="text-xl md:text-3xl font-serif italic leading-relaxed text-darker mb-8 md:mb-12">"The most
+                        authentic healing experience I've had in Bali. The digital booking was seamless, but the treatment
+                        was pure ancient magic."</p>
+                    <div class="flex items-center gap-6">
+                        <img src="https://i.pravatar.cc/100?u=4" class="w-16 h-16 rounded-full" alt="A1">
+                        <div>
+                            <h4 class="text-lg font-black uppercase tracking-widest">Sarah Jenkins</h4>
+                            <p class="text-xs text-primary font-black uppercase tracking-widest">Travel Blogger</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-8 md:p-12 bg-darker text-white rounded-[2.5rem] md:rounded-[4rem] relative">
+                    <i data-lucide="quote" class="absolute top-10 right-10 w-12 h-12 text-primary opacity-20"></i>
+                    <p class="text-xl md:text-3xl font-serif italic leading-relaxed mb-8 md:mb-12">"A sanctuary for the
+                        modern soul. Every detail, from the scent to the touch, is meticulously curated for peace."</p>
+                    <div class="flex items-center gap-6">
+                        <img src="https://i.pravatar.cc/100?u=5" class="w-16 h-16 rounded-full" alt="A2">
+                        <div>
+                            <h4 class="text-lg font-black uppercase tracking-widest">Michael Chen</h4>
+                            <p class="text-xs text-primary font-black uppercase tracking-widest">Wellness Expert</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NEWSLETTER / CTA -->
+    <section class="py-16 md:py-32 bg-primary">
+        <div class="max-w-7xl mx-auto px-6 md:px-12 text-center text-white">
+            <h2 class="text-4xl md:text-8xl font-black tracking-tighter leading-none mb-8 md:mb-12 uppercase">Begin Your
+                <br>Journey.</h2>
+            <p class="text-lg md:text-2xl text-white/70 mb-12 md:mb-20 font-medium max-w-3xl mx-auto">Join our inner
+                circle for exclusive wellness rituals and sanctuary updates.</p>
+
+            <form class="max-w-2xl mx-auto flex flex-col md:flex-row gap-4">
+                <input type="email" placeholder="YOUR EMAIL ADDRESS"
+                    class="flex-1 bg-white/10 border border-white/20 rounded-full px-8 py-5 text-xs font-black uppercase tracking-widest placeholder:text-white/40 focus:outline-none focus:bg-white/20 transition-all">
+                <button
+                    class="bg-white text-primary px-10 py-5 rounded-full font-black uppercase tracking-widest text-xs hover:bg-darker hover:text-white transition-all">Subscribe</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="py-16 md:py-24 bg-white border-t border-gray-100">
+        <div class="max-w-7xl mx-auto px-6 md:px-12">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-16 mb-16 md:mb-24">
+                <div class="lg:col-span-1">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div
+                            class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg">
+                            <i data-lucide="leaf" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-xl font-black text-darker tracking-tighter uppercase">The Green <span
+                                class="text-primary italic">SPA</span></span>
+                    </div>
+                    <p class="text-sm text-dark/50 font-medium leading-relaxed mb-8">Redefining modern wellness through
+                        ancient wisdom and digital seamlessness.</p>
+                    <div class="flex gap-4">
+                        <a href="#" class="text-dark/30 hover:text-primary transition-colors"><i
+                                data-lucide="instagram" class="w-5 h-5"></i></a>
+                        <a href="#" class="text-dark/30 hover:text-primary transition-colors"><i data-lucide="facebook"
+                                class="w-5 h-5"></i></a>
+                        <a href="#" class="text-dark/30 hover:text-primary transition-colors"><i data-lucide="twitter"
+                                class="w-5 h-5"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-xs font-black uppercase tracking-[0.3em] text-darker mb-8">Sanctuaries</h4>
+                    <ul class="space-y-4 text-sm text-dark/50 font-medium">
+                        <li><a href="#" class="hover:text-primary transition-colors">Seminyak, Bali</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Ubud, Bali</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Jimbaran, Bali</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Jakarta Central</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-xs font-black uppercase tracking-[0.3em] text-darker mb-8">Rituals</h4>
+                    <ul class="space-y-4 text-sm text-dark/50 font-medium">
+                        <li><a href="#" class="hover:text-primary transition-colors">Massage Therapy</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Body Treatments</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Facial Rituals</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Signature Packages</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-xs font-black uppercase tracking-[0.3em] text-darker mb-8">Contact</h4>
+                    <ul class="space-y-4 text-sm text-dark/50 font-medium">
+                        <li>hello@thegreenspa.com</li>
+                        <li>+62 361 123 4567</li>
+                        <li>App Support 24/7</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div
+                class="pt-12 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] font-black uppercase tracking-[0.3em] text-dark/30">
+                <p>© 2024 The Green SPA. All Rights Reserved.</p>
+                <div class="flex gap-8">
+                    <a href="#" class="hover:text-darker transition-colors">Privacy Policy</a>
+                    <a href="#" class="hover:text-darker transition-colors">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function toggleMobileNav() {
+            const nav = document.getElementById('mobile-nav');
+            const icon = document.getElementById('nav-icon');
+            const isHidden = nav.classList.contains('hidden');
+
+            if (isHidden) {
+                nav.classList.remove('hidden');
+                icon.setAttribute('data-lucide', 'x');
+            } else {
+                nav.classList.add('hidden');
+                icon.setAttribute('data-lucide', 'menu');
+            }
+            lucide.createIcons();
+        }
+
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            const navContent = document.getElementById('nav-content');
+            if (window.scrollY > 50) {
+                navContent.classList.add('py-2');
+                navContent.classList.remove('py-4', 'md:py-6');
+                nav.classList.add('bg-white/95');
+                nav.classList.remove('bg-white/80');
+            } else {
+                navContent.classList.add('py-4', 'md:py-6');
+                navContent.classList.remove('py-2');
+                nav.classList.add('bg-white/80');
+                nav.classList.remove('bg-white/95');
+            }
+        });
+
+        // Slider Navigation
+        function scrollSlider(id, amount) {
+            const slider = document.getElementById(id);
+            slider.scrollBy({ left: amount, behavior: 'smooth' });
+        }
+
+        // Drag to Scroll for Mouse
+        function initDragToScroll(id) {
+            const slider = document.getElementById(id);
+            let isDown = false;
+            let startDate;
+            let startX;
+            let scrollLeft;
+
+            slider.addEventListener('mousedown', (e) => {
+                isDown = true;
+                slider.classList.add('active');
+                startX = e.pageX - slider.offsetLeft;
+                scrollLeft = slider.scrollLeft;
+                startDate = new Date();
+                slider.style.scrollSnapType = 'none'; // Disable snap while dragging
+                slider.style.cursor = 'grabbing';
+            });
+
+            slider.addEventListener('mouseleave', () => {
+                isDown = false;
+                slider.style.cursor = 'grab';
+                slider.style.scrollSnapType = 'x mandatory';
+            });
+
+            slider.addEventListener('mouseup', () => {
+                isDown = false;
+                slider.style.cursor = 'grab';
+                slider.style.scrollSnapType = 'x mandatory';
+            });
+
+            slider.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - slider.offsetLeft;
+                const walk = (x - startX) * 2; // Scroll speed
+                slider.scrollLeft = scrollLeft - walk;
+            });
+        }
+
+        // Initialize Sliders
+        initDragToScroll('rituals-slider');
+        initDragToScroll('gallery-slider');
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>

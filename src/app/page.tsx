@@ -2,14 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { 
-  Leaf, 
   Menu, 
   X, 
-  Instagram, 
-  Facebook, 
-  Youtube, 
   Award, 
   Palette, 
+  Leaf,
   ArrowLeft, 
   ArrowRight, 
   ChevronRight, 
@@ -97,6 +94,27 @@ export default function LandingPage() {
     }
   }, [])
 
+  const socialIcons = [
+    {
+      name: 'Instagram',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+      )
+    },
+    {
+      name: 'Facebook',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+      )
+    },
+    {
+      name: 'Youtube',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
+      )
+    }
+  ]
+
   return (
     <div className="bg-white font-sans text-darker selection:bg-primary selection:text-white">
       
@@ -113,13 +131,12 @@ export default function LandingPage() {
             scrolled ? 'py-2 md:py-4' : 'py-4 md:py-6'
           }`}
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg">
-              <Leaf className="w-5 h-5 md:w-6 md:h-6" />
+          <div className="flex items-center gap-4">
+            <img src="/assets/logo.jpeg" alt="The Green SPA Logo" className="w-12 h-12 md:w-16 md:h-16 object-contain rounded-lg" />
+            <div className="flex flex-col">
+                <span className="text-xl md:text-2xl font-black text-dark tracking-tighter uppercase leading-none">The Green</span>
+                <span className="text-xs md:text-sm font-bold text-secondary uppercase tracking-[0.2em]">Salon, Spa & Massage</span>
             </div>
-            <span className="text-xl md:text-2xl font-black text-darker tracking-tighter uppercase">
-              The Green <span className="text-primary italic font-normal lowercase">spa</span>
-            </span>
           </div>
           
           {/* Desktop Links */}
@@ -162,26 +179,26 @@ export default function LandingPage() {
       </nav>
 
       {/* HERO SECTION */}
-      <header className="relative min-h-screen flex items-center pt-32 md:pt-24 pb-32">
-        <div className="absolute inset-0 z-0 bg-sand overflow-hidden" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 85%, 0% 100%)' }}>
-          <div className="absolute inset-0 bg-gradient-to-r from-sand via-sand/70 to-transparent z-10"></div>
+      <header className="relative min-h-screen flex items-center pt-48 md:pt-40 pb-32">
+        <div className="absolute inset-0 z-0 bg-darker overflow-hidden" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 85%, 0% 100%)' }}>
           <img 
-            src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?q=80&w=2070&auto=format&fit=crop"
-            className="absolute inset-0 w-full h-full object-cover animate-subtle-zoom opacity-90" 
+            src="/assets/LT.1 RUANG LOBBY(1).jpg"
+            className="absolute inset-0 w-full h-full object-cover animate-subtle-zoom" 
             alt="Hero"
           />
+          <div className="absolute inset-0 bg-black/40 z-0"></div>
         </div>
 
         <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-20">
           <div className="max-w-4xl">
-            <div className="inline-flex items-center gap-3 px-4 py-2 mb-6 md:mb-8 bg-white/70 backdrop-blur-md rounded-full border border-white/50 animate-soft-float">
+            <div className="inline-flex items-center gap-3 px-5 py-2.5 mb-8 md:mb-10 bg-dark text-white rounded-full border border-dark/20 animate-soft-float shadow-xl">
               <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
-              <span className="text-[10px] font-black tracking-[0.3em] text-primary uppercase">Elite Wellness Experience</span>
+              <span className="text-[10px] font-black tracking-[0.3em] uppercase">Elite Wellness Experience</span>
             </div>
-            <h1 className="text-5xl sm:text-6xl md:text-9xl lg:text-[11rem] font-black text-darker leading-[0.8] tracking-tighter mb-8 md:mb-10">
+            <h1 className="text-5xl sm:text-6xl md:text-9xl lg:text-[11rem] font-black text-white leading-[0.8] tracking-tighter mb-8 md:mb-10 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
               Breathe. <br/><span className="italic text-primary font-normal">Reborn.</span>
             </h1>
-            <p className="text-base md:text-2xl text-dark/70 mb-8 md:mb-12 font-medium max-w-2xl leading-relaxed">
+            <p className="text-base md:text-2xl text-white mb-8 md:mb-12 font-medium max-w-2xl leading-relaxed drop-shadow-md">
               Step into a world where time slows down. The Green SPA combines ancient healing rituals with modern
               digital ease. Experience serenity, redefined.
             </p>
@@ -204,8 +221,8 @@ export default function LandingPage() {
                     />
                   ))}
                 </div>
-                <div className="text-xs font-black uppercase tracking-widest text-dark/40">
-                  <span className="text-darker">50k+</span> Happy Guests
+                <div className="text-xs font-black uppercase tracking-widest text-white/50">
+                  <span className="text-primary">50k+</span> Happy Guests
                 </div>
               </div>
             </div>
@@ -213,21 +230,24 @@ export default function LandingPage() {
         </div>
 
         {/* Scroll Indicator */}
-        <div className="hidden md:flex absolute bottom-12 left-6 md:left-12 flex-col items-center gap-6">
-          <span className="text-[10px] font-black uppercase tracking-[0.4em] [writing-mode:vertical-lr] text-dark/30">Scroll Experience</span>
-          <div className="w-[1px] h-20 bg-gradient-to-b from-dark/30 to-transparent"></div>
+        <div className="hidden md:flex absolute bottom-24 left-6 md:left-12 flex-col items-center gap-6 z-30">
+          <span className="text-[10px] font-black uppercase tracking-[0.4em] [writing-mode:vertical-lr] text-white/70">Scroll Experience</span>
+          <div className="w-[1px] h-20 bg-gradient-to-b from-white/70 to-transparent"></div>
         </div>
 
         {/* Social Icons */}
-        <div className="absolute right-6 md:right-12 bottom-12 hidden md:block">
+        <div className="absolute right-6 md:right-12 top-1/2 -translate-y-1/2 z-30 hidden md:block">
           <div className="flex flex-col gap-6">
-            {[Instagram, Facebook, Youtube].map((Icon, idx) => (
+            {socialIcons.map((item, idx) => (
               <a 
                 key={idx}
                 href="#"
-                className="w-12 h-12 flex items-center justify-center rounded-full border border-darker/10 hover:bg-primary hover:border-primary hover:text-white transition-all"
+                className="w-14 h-14 flex items-center justify-center rounded-full border border-white/30 text-white hover:bg-primary hover:border-primary hover:text-darker transition-all shadow-2xl bg-white/10 backdrop-blur-md group"
+                aria-label={item.name}
               >
-                <Icon className="w-5 h-5" />
+                <span className="group-hover:scale-110 transition-transform">
+                  {item.icon}
+                </span>
               </a>
             ))}
           </div>
@@ -261,9 +281,9 @@ export default function LandingPage() {
               <div className="absolute -top-10 md:-top-20 -left-10 md:-left-20 w-32 md:w-64 h-32 md:h-64 bg-sand rounded-full -z-10 opacity-50"></div>
               <div className="rounded-[2.5rem] md:rounded-[4rem] overflow-hidden shadow-2xl">
                 <img 
-                  src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=2070&auto=format&fit=crop"
+                  src="/assets/Green_Spa.jpeg"
                   className="w-full aspect-square md:aspect-[4/5] object-cover" 
-                  alt="Philosophy"
+                  alt="Brand Identity"
                 />
               </div>
               <div className="absolute -bottom-6 md:-bottom-10 -right-6 md:-right-10 bg-primary p-6 md:p-12 rounded-3xl md:rounded-[3rem] text-white hidden sm:block shadow-2xl max-w-xs md:max-w-none">
@@ -332,9 +352,9 @@ export default function LandingPage() {
             className="grid grid-flow-col md:grid-flow-row auto-cols-[85vw] md:auto-cols-auto md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide pb-8 -mx-6 px-6 md:mx-auto md:px-0 touch-pan-x scroll-smooth cursor-grab md:cursor-default"
           >
             {[
-              { title: 'Lava Stone Ritual', category: 'Mineral Care', time: '90 MINS', price: '$85', img: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800' },
-              { title: 'Botanical Infusion', category: 'Organic Glow', time: '120 MINS', price: '$110', img: 'https://images.unsplash.com/photo-1519750783826-e2420f4d687f?w=800', offset: true },
-              { title: 'Zen Frequency', category: 'Sound Healing', time: '60 MINS', price: '$65', img: 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=800', offsetLg: true },
+              { title: 'Lava Stone Ritual', category: 'Mineral Care', time: '90 MINS', price: '$85', img: '/assets/KAMAR PIJAT VIP(2).jpg' },
+              { title: 'Botanical Infusion', category: 'Organic Glow', time: '120 MINS', price: '$110', img: '/assets/LT.1 RUANG CUCI KAKI(1).jpg', offset: true },
+              { title: 'Zen Frequency', category: 'Sound Healing', time: '60 MINS', price: '$65', img: '/assets/LT.1 RESEPSIONIS(1).jpg', offsetLg: true },
             ].map((ritual, idx) => (
               <div 
                 key={idx} 
@@ -410,7 +430,7 @@ export default function LandingPage() {
             <div className="relative order-1 lg:order-2">
               <div className="aspect-square rounded-[3rem] md:rounded-[5rem] overflow-hidden rotate-2 lg:rotate-3 shadow-2xl border-4 md:border-8 border-white/5">
                 <img 
-                  src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=2070&auto=format&fit=crop" 
+                  src="/assets/LT.1 RUANG BUFFET(1).jpg" 
                   className="w-full h-full object-cover" 
                   alt="Package" 
                 />
@@ -453,41 +473,41 @@ export default function LandingPage() {
             ref={galleryRef}
             className="grid grid-flow-col md:grid-flow-row auto-cols-[75vw] md:auto-cols-auto md:grid-cols-4 gap-6 md:gap-8 max-w-[1600px] mx-auto overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide pb-8 -mx-6 px-6 md:mx-auto md:px-0 touch-pan-x scroll-smooth cursor-grab md:cursor-default"
           >
-            {/* Gallery Column 1 */}
+            {/* Column 1 */}
             <div className="snap-center space-y-4 md:space-y-8">
-              <div className="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-80">
-                <img src="https://images.unsplash.com/photo-1591343395902-1adcb454c2e4?w=800" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" alt="G1" />
-              </div>
-              <div className="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[450px]">
-                <img src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" alt="G2" />
-              </div>
+                <div className="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-80">
+                    <img src="/assets/LT.1 RUANG LOBBY(1).jpg" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" alt="G1" />
+                </div>
+                <div className="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[450px]">
+                    <img src="/assets/LT.2 KORIDOR(1).jpg" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" alt="G2" />
+                </div>
             </div>
-            {/* Gallery Column 2 */}
+            {/* Column 2 */}
             <div className="snap-center space-y-4 md:space-y-8 md:pt-24">
-              <div className="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[500px] bg-sand">
-                <img src="https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=800" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" alt="G3" />
-              </div>
-              <div className="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-48 md:h-64 bg-sand">
-                <img src="https://images.unsplash.com/photo-1519750783826-e2420f4d687f?w=800" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" alt="G4" />
-              </div>
+                <div className="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[500px] bg-sand">
+                    <img src="/assets/LT.1 RESEPSIONIS(2).jpg" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" alt="G3" />
+                </div>
+                <div className="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-48 md:h-64 bg-sand">
+                    <img src="/assets/LT.1 RUANG BUFFET(2).jpg" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" alt="G4" />
+                </div>
             </div>
-            {/* Gallery Column 3 */}
+            {/* Column 3 */}
             <div className="snap-center space-y-4 md:space-y-8">
-              <div className="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[400px] bg-sand">
-                <img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=800" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" alt="G5" />
-              </div>
-              <div className="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[350px] bg-sand">
-                <img src="https://images.unsplash.com/photo-1554439905-6c7387459744?w=800" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" alt="G6" />
-              </div>
+                <div className="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[400px] bg-sand">
+                    <img src="/assets/LT.1 TOILET UMUM PRIA(1).jpg" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" alt="G5" />
+                </div>
+                <div className="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[350px] bg-sand">
+                    <img src="/assets/EXTERIOR DEPAN(2).png" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" alt="G6" />
+                </div>
             </div>
-            {/* Gallery Column 4 */}
+            {/* Column 4 */}
             <div className="snap-center space-y-4 md:space-y-8 md:pt-12">
-              <div className="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-48 md:h-72 bg-sand">
-                <img src="https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=800" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" alt="G7" />
-              </div>
-              <div className="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[520px] bg-sand">
-                <img src="https://images.unsplash.com/photo-1516233758813-a38d024919c5?w=800" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" alt="G8" />
-              </div>
+                <div className="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-48 md:h-72 bg-sand">
+                    <img src="/assets/KAMAR PIJAT VIP(3).jpg" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" alt="G7" />
+                </div>
+                <div className="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[520px] bg-sand">
+                    <img src="/assets/LT.1 FOYER KORIDOR(1).jpg" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" alt="G8" />
+                </div>
             </div>
           </div>
         </div>
@@ -511,9 +531,9 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {[
-              { name: 'The Green - Seminyak', addr: 'Jalan Kayu Aya No. 12, Bali 80361', img: 'https://images.unsplash.com/photo-1590073242678-70ee3fc28e8e?w=800' },
-              { name: 'The Green - Ubud', addr: 'Jalan Monkey Forest, Bali 80571', img: 'https://images.unsplash.com/photo-1602002418082-a4443e081dd1?w=800' },
-              { name: 'The Green - Jimbaran', addr: 'Jalan Bukit Permai, Bali 80361', img: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800' },
+              { name: 'The Green - Pekanbaru', addr: 'Jl. Riau No. 123, Pekanbaru', img: '/assets/EXTERIOR DEPAN(4).png' },
+              { name: 'The Green - Ubud', addr: 'Jalan Monkey Forest, Bali 80571', img: '/assets/EXTERIOR DEPAN(2).png' },
+              { name: 'The Green - Jimbaran', addr: 'Jalan Bukit Permai, Bali 80361', img: '/assets/EXTERIOR DEPAN(3).png' },
             ].map((loc, idx) => (
               <div key={idx} className="bg-white rounded-[2.5rem] md:rounded-[3rem] overflow-hidden shadow-xl hover:shadow-2xl transition-all group">
                 <div className="h-48 md:h-64 overflow-hidden">
@@ -532,21 +552,43 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* NEWSLETTER / CTA */}
+      <section className="py-16 md:py-32 bg-dark text-white relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+            <img src="/assets/EXTERIOR DEPAN(3).png" className="w-full h-full object-cover" alt="Background" />
+        </div>
+        <div className="max-w-7xl mx-auto px-6 md:px-12 text-center relative z-10">
+            <h2 className="text-4xl md:text-8xl font-black tracking-tighter leading-none mb-8 md:mb-12 uppercase">Begin Your <br/><span className="text-primary italic">Journey.</span></h2>
+            <p className="text-lg md:text-2xl text-white/70 mb-12 md:mb-20 font-medium max-w-3xl mx-auto">Join our inner
+                circle for exclusive wellness rituals and sanctuary updates.</p>
+
+            <form className="max-w-2xl mx-auto flex flex-col md:flex-row gap-4">
+                <input type="email" placeholder="YOUR EMAIL ADDRESS"
+                    className="flex-1 bg-white/5 border border-white/10 rounded-full px-8 py-5 text-xs font-black uppercase tracking-widest placeholder:text-white/40 focus:outline-none focus:bg-white/10 transition-all" />
+                <button
+                    className="bg-primary text-darker px-10 py-5 rounded-full font-black uppercase tracking-widest text-xs hover:bg-white hover:text-dark transition-all">Subscribe</button>
+            </form>
+        </div>
+      </section>
+
       {/* FOOTER */}
       <footer className="py-16 md:py-24 bg-white border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-16 mb-16 md:mb-24">
             <div className="lg:col-span-1">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg">
-                  <Leaf className="w-5 h-5" />
+              <div className="flex items-center gap-4 mb-8">
+                <img src="/assets/logo.jpeg" alt="Logo" className="w-10 h-10 object-contain rounded-lg" />
+                <div className="flex flex-col">
+                    <span className="text-xl font-black text-darker tracking-tighter uppercase leading-none">The Green</span>
+                    <span className="text-[10px] font-bold text-secondary uppercase tracking-[0.1em]">Salon, Spa & Massage</span>
                 </div>
-                <span className="text-xl font-black text-darker tracking-tighter uppercase">The Green <span className="text-primary italic">SPA</span></span>
               </div>
               <p className="text-sm text-dark/50 font-medium leading-relaxed mb-8">Redefining modern wellness through ancient wisdom and digital seamlessness.</p>
               <div className="flex gap-4">
-                {[Instagram, Facebook, Youtube].map((Icon, idx) => (
-                  <a key={idx} href="#" className="text-dark/30 hover:text-primary transition-colors"><Icon className="w-5 h-5" /></a>
+                {socialIcons.map((item, idx) => (
+                  <a key={idx} href="#" className="text-dark/30 hover:text-primary transition-colors" aria-label={item.name}>
+                    <span className="w-5 h-5">{item.icon}</span>
+                  </a>
                 ))}
               </div>
             </div>

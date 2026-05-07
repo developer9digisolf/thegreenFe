@@ -14,10 +14,11 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#3A6B5C',
+                        primary: '#DBAC34', // Gold from logo figure
+                        secondary: '#76A13D', // Leaf green from logo
+                        dark: '#2B4448', // Dark teal background from logo
+                        darker: '#1E3236', // Darker teal
                         sand: '#F4F1ED',
-                        dark: '#2D4F4F',
-                        darker: '#1A3636',
                     },
                     fontFamily: {
                         sans: ['Outfit', 'sans-serif'],
@@ -86,11 +87,12 @@
     <!-- FULL WIDTH NAVIGATION -->
     <nav class="fixed top-0 w-full z-[100] transition-all duration-500 glass-nav border-b border-darker/5" id="navbar">
         <div class="max-w-[1600px] mx-auto px-6 md:px-12 py-4 md:py-6 flex justify-between items-center transition-all duration-500" id="nav-content">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 md:w-12 md:h-12 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg">
-                    <i data-lucide="leaf" class="w-5 h-5 md:w-6 md:h-6"></i>
+            <div class="flex items-center gap-4">
+                <img src="assets/logo.jpeg" alt="The Green SPA Logo" class="w-12 h-12 md:w-16 md:h-16 object-contain rounded-lg">
+                <div class="flex flex-col">
+                    <span class="text-xl md:text-2xl font-black text-dark tracking-tighter uppercase leading-none">The Green</span>
+                    <span class="text-xs md:text-sm font-bold text-secondary uppercase tracking-[0.2em]">Salon, Spa & Massage</span>
                 </div>
-                <span class="text-xl md:text-2xl font-black text-darker tracking-tighter uppercase">The Green <span class="text-primary italic font-normal lowercase">spa</span></span>
             </div>
             
             <!-- Desktop Links -->
@@ -121,26 +123,25 @@
     </nav>
 
     <!-- DRAMATIC HERO SECTION -->
-    <header class="relative min-h-screen flex items-center pt-32 md:pt-24 pb-32">
-        <div class="absolute inset-0 z-0 hero-clip bg-sand overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-r from-sand via-sand/70 to-transparent z-10"></div>
-            <img src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?q=80&w=2070&auto=format&fit=crop"
-                class="absolute inset-0 w-full h-full object-cover animate-subtle-zoom opacity-90" alt="Hero">
+    <header class="relative min-h-screen flex items-center pt-48 md:pt-40 pb-32">
+        <div class="absolute inset-0 z-0 hero-clip bg-darker overflow-hidden">
+            <img src="assets/LT.1 RUANG LOBBY(1).jpg"
+                class="absolute inset-0 w-full h-full object-cover animate-subtle-zoom" alt="Hero">
+            <div class="absolute inset-0 bg-black/40 z-0"></div>
         </div>
 
         <div class="max-w-7xl mx-auto px-6 md:px-12 relative z-20">
             <div class="max-w-4xl">
                 <div
-                    class="inline-flex items-center gap-3 px-4 py-2 mb-6 md:mb-8 bg-white/70 backdrop-blur-md rounded-full border border-white/50 animate-soft-float">
+                    class="inline-flex items-center gap-3 px-5 py-2.5 mb-8 md:mb-10 bg-dark text-white rounded-full border border-dark/20 animate-soft-float shadow-xl">
                     <span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
-                    <span class="text-[10px] font-black tracking-[0.3em] text-primary uppercase">Elite Wellness
-                        Experience</span>
+                    <span class="text-[10px] font-black tracking-[0.3em] uppercase">Elite Wellness Experience</span>
                 </div>
                 <h1
-                    class="text-5xl sm:text-6xl md:text-9xl lg:text-[11rem] font-black text-darker leading-[0.8] tracking-tighter mb-8 md:mb-10">
+                    class="text-5xl sm:text-6xl md:text-9xl lg:text-[11rem] font-black text-white leading-[0.8] tracking-tighter mb-8 md:mb-10 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
                     Breathe. <br><span class="italic text-primary font-normal">Reborn.</span>
                 </h1>
-                <p class="text-base md:text-2xl text-dark/70 mb-8 md:mb-12 font-medium max-w-2xl leading-relaxed">
+                <p class="text-base md:text-2xl text-white mb-8 md:mb-12 font-medium max-w-2xl leading-relaxed drop-shadow-md">
                     Step into a world where time slows down. The Green SPA combines ancient healing rituals with modern
                     digital ease. Experience serenity, redefined.
                 </p>
@@ -159,8 +160,8 @@
                             <img src="https://i.pravatar.cc/100?u=3" class="w-12 h-12 rounded-full border-4 border-sand"
                                 alt="U3">
                         </div>
-                        <div class="text-xs font-black uppercase tracking-widest text-dark/40">
-                            <span class="text-darker">50k+</span> Happy Guests
+                        <div class="text-xs font-black uppercase tracking-widest text-white/50">
+                            <span class="text-primary">50k+</span> Happy Guests
                         </div>
                     </div>
                 </div>
@@ -168,24 +169,27 @@
         </div>
 
         <!-- Scroll Indicator -->
-        <div class="absolute bottom-12 left-6 md:left-12 flex flex-col items-center gap-6">
-            <span class="text-[10px] font-black uppercase tracking-[0.4em] [writing-mode:vertical-lr] text-dark/30">Scroll
+        <div class="absolute bottom-24 left-6 md:left-12 flex flex-col items-center gap-6 z-30">
+            <span class="text-[10px] font-black uppercase tracking-[0.4em] [writing-mode:vertical-lr] text-white/70">Scroll
                 Experience</span>
-            <div class="w-[1px] h-20 bg-gradient-to-b from-dark/30 to-transparent"></div>
+            <div class="w-[1px] h-20 bg-gradient-to-b from-white/70 to-transparent"></div>
         </div>
 
         <!-- Social Icons -->
-        <div class="absolute right-6 md:right-12 bottom-12 hidden md:block">
+        <div class="absolute right-6 md:right-12 top-1/2 -translate-y-1/2 z-30 hidden md:block">
             <div class="flex flex-col gap-6">
                 <a href="#"
-                    class="w-12 h-12 flex items-center justify-center rounded-full border border-darker/10 hover:bg-primary hover:border-primary hover:text-white transition-all"><i
-                        data-lucide="instagram" class="w-5 h-5"></i></a>
+                    class="w-14 h-14 flex items-center justify-center rounded-full border border-white/30 text-white hover:bg-primary hover:border-primary hover:text-darker transition-all shadow-2xl bg-white/10 backdrop-blur-md group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:scale-110 transition-transform"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+                </a>
                 <a href="#"
-                    class="w-12 h-12 flex items-center justify-center rounded-full border border-darker/10 hover:bg-primary hover:border-primary hover:text-white transition-all"><i
-                        data-lucide="facebook" class="w-5 h-5"></i></a>
+                    class="w-14 h-14 flex items-center justify-center rounded-full border border-white/30 text-white hover:bg-primary hover:border-primary hover:text-darker transition-all shadow-2xl bg-white/10 backdrop-blur-md group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:scale-110 transition-transform"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                </a>
                 <a href="#"
-                    class="w-12 h-12 flex items-center justify-center rounded-full border border-darker/10 hover:bg-primary hover:border-primary hover:text-white transition-all"><i
-                        data-lucide="youtube" class="w-5 h-5"></i></a>
+                    class="w-14 h-14 flex items-center justify-center rounded-full border border-white/30 text-white hover:bg-primary hover:border-primary hover:text-darker transition-all shadow-2xl bg-white/10 backdrop-blur-md group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:scale-110 transition-transform"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
+                </a>
             </div>
         </div>
     </header>
@@ -223,8 +227,8 @@
                         class="absolute -top-10 md:-top-20 -left-10 md:-left-20 w-32 md:w-64 h-32 md:h-64 bg-sand rounded-full -z-10 opacity-50">
                     </div>
                     <div class="rounded-[2.5rem] md:rounded-[4rem] overflow-hidden shadow-2xl">
-                        <img src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=2070&auto=format&fit=crop"
-                            class="w-full aspect-square md:aspect-[4/5] object-cover" alt="Philosophy">
+                        <img src="assets/Green_Spa.jpeg"
+                            class="w-full aspect-square md:aspect-[4/5] object-cover" alt="Brand Identity">
                     </div>
                     <div
                         class="absolute -bottom-6 md:-bottom-10 -right-6 md:-right-10 bg-primary p-6 md:p-12 rounded-3xl md:rounded-[3rem] text-white hidden sm:block shadow-2xl max-w-xs md:max-w-none">
@@ -307,7 +311,7 @@
                 <div class="snap-center group cursor-pointer">
                     <div
                         class="h-[450px] md:h-[600px] rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden relative mb-6 md:mb-8 shadow-2xl transition-all duration-700 md:group-hover:-translate-y-4">
-                        <img src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800"
+                        <img src="assets/KAMAR PIJAT VIP(2).jpg"
                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                             alt="S1">
                         <div class="absolute inset-0 bg-gradient-to-t from-darker/90 via-darker/20 to-transparent"></div>
@@ -337,7 +341,7 @@
                 <div class="snap-center group cursor-pointer md:mt-12">
                     <div
                         class="h-[450px] md:h-[600px] rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden relative mb-6 md:mb-8 shadow-2xl transition-all duration-700 md:group-hover:-translate-y-4">
-                        <img src="https://images.unsplash.com/photo-1519750783826-e2420f4d687f?w=800"
+                        <img src="assets/LT.1 RUANG CUCI KAKI(1).jpg"
                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                             alt="S2">
                         <div class="absolute inset-0 bg-gradient-to-t from-darker/90 via-darker/20 to-transparent"></div>
@@ -367,7 +371,7 @@
                 <div class="snap-center group cursor-pointer lg:mt-24">
                     <div
                         class="h-[450px] md:h-[600px] rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden relative mb-6 md:mb-8 shadow-2xl transition-all duration-700 md:group-hover:-translate-y-4">
-                        <img src="https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=800"
+                        <img src="assets/LT.1 RESEPSIONIS(1).jpg"
                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                             alt="S3">
                         <div class="absolute inset-0 bg-gradient-to-t from-darker/90 via-darker/20 to-transparent"></div>
@@ -454,7 +458,7 @@
                 <div class="relative order-1 lg:order-2">
                     <div
                         class="aspect-square rounded-[3rem] md:rounded-[5rem] overflow-hidden rotate-2 lg:rotate-3 shadow-2xl border-4 md:border-8 border-white/5">
-                        <img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=2070&auto=format&fit=crop"
+                        <img src="assets/LT.1 RUANG BUFFET(1).jpg"
                             class="w-full h-full object-cover" alt="Package">
                     </div>
                     <div
@@ -491,48 +495,48 @@
             <div id="gallery-slider" class="grid grid-flow-col md:grid-flow-row auto-cols-[75vw] md:auto-cols-auto md:grid-cols-4 gap-6 md:gap-8 max-w-[1600px] mx-auto overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide pb-8 -mx-6 px-6 md:mx-auto md:px-0 touch-pan-x scroll-smooth cursor-grab md:cursor-default">
                 <div class="snap-center space-y-4 md:space-y-8">
                     <div class="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-80">
-                        <img src="https://images.unsplash.com/photo-1591343395902-1adcb454c2e4?w=800"
+                        <img src="assets/LT.1 RUANG LOBBY(1).jpg"
                             class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
                             alt="G1">
                     </div>
                     <div class="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[450px]">
-                        <img src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800"
+                        <img src="assets/LT.2 KORIDOR(1).jpg"
                             class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
                             alt="G2">
                     </div>
                 </div>
                 <div class="snap-center space-y-4 md:space-y-8 md:pt-24">
                     <div class="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[500px] bg-sand">
-                        <img src="https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=800"
+                        <img src="assets/LT.1 RESEPSIONIS(2).jpg"
                             class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
                             alt="G3">
                     </div>
                     <div class="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-48 md:h-64 bg-sand">
-                        <img src="https://images.unsplash.com/photo-1519750783826-e2420f4d687f?w=800"
+                        <img src="assets/LT.1 RUANG BUFFET(2).jpg"
                             class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
                             alt="G4">
                     </div>
                 </div>
                 <div class="snap-center space-y-4 md:space-y-8">
                     <div class="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[400px] bg-sand">
-                        <img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=800"
+                        <img src="assets/LT.1 TOILET UMUM PRIA(1).jpg"
                             class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
                             alt="G5">
                     </div>
                     <div class="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[350px] bg-sand">
-                        <img src="https://images.unsplash.com/photo-1554439905-6c7387459744?w=800"
+                        <img src="assets/EXTERIOR DEPAN(2).png"
                             class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
                             alt="G6">
                     </div>
                 </div>
                 <div class="snap-center space-y-4 md:space-y-8 md:pt-12">
                     <div class="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-48 md:h-72 bg-sand">
-                        <img src="https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=800"
+                        <img src="assets/KAMAR PIJAT VIP(3).jpg"
                             class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
                             alt="G7">
                     </div>
                     <div class="rounded-3xl md:rounded-[3rem] overflow-hidden shadow-xl h-64 md:h-[520px] bg-sand">
-                        <img src="https://images.unsplash.com/photo-1516233758813-a38d024919c5?w=800"
+                        <img src="assets/LT.1 FOYER KORIDOR(1).jpg"
                             class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
                             alt="G8">
                     </div>
@@ -568,10 +572,8 @@
                             alt="L1">
                     </div>
                     <div class="p-8 md:p-10">
-                        <h4 class="text-xl md:text-2xl font-black uppercase tracking-tighter mb-2 md:mb-4">The Green -
-                            Seminyak</h4>
-                        <p class="text-sm md:text-base text-dark/50 mb-6 md:mb-8 font-medium">Jalan Kayu Aya No. 12, Bali
-                            80361</p>
+                        <h4 class="text-xl md:text-2xl font-black uppercase tracking-tighter mb-2 md:mb-4">The Green - Pekanbaru</h4>
+                        <p class="text-sm md:text-base text-dark/50 mb-6 md:mb-8 font-medium">Jl. Riau No. 123, Pekanbaru</p>
                         <a href="#"
                             class="inline-flex items-center gap-3 text-primary font-black uppercase tracking-widest text-[10px]">View
                             Details <i data-lucide="external-link" class="w-3 h-3"></i></a>
@@ -654,18 +656,20 @@
     </section>
 
     <!-- NEWSLETTER / CTA -->
-    <section class="py-16 md:py-32 bg-primary">
-        <div class="max-w-7xl mx-auto px-6 md:px-12 text-center text-white">
-            <h2 class="text-4xl md:text-8xl font-black tracking-tighter leading-none mb-8 md:mb-12 uppercase">Begin Your
-                <br>Journey.</h2>
+    <section class="py-16 md:py-32 bg-dark text-white relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10">
+            <img src="assets/EXTERIOR DEPAN(3).png" class="w-full h-full object-cover" alt="Background">
+        </div>
+        <div class="max-w-7xl mx-auto px-6 md:px-12 text-center relative z-10">
+            <h2 class="text-4xl md:text-8xl font-black tracking-tighter leading-none mb-8 md:mb-12 uppercase">Begin Your <br><span class="text-primary italic">Journey.</span></h2>
             <p class="text-lg md:text-2xl text-white/70 mb-12 md:mb-20 font-medium max-w-3xl mx-auto">Join our inner
                 circle for exclusive wellness rituals and sanctuary updates.</p>
 
             <form class="max-w-2xl mx-auto flex flex-col md:flex-row gap-4">
                 <input type="email" placeholder="YOUR EMAIL ADDRESS"
-                    class="flex-1 bg-white/10 border border-white/20 rounded-full px-8 py-5 text-xs font-black uppercase tracking-widest placeholder:text-white/40 focus:outline-none focus:bg-white/20 transition-all">
+                    class="flex-1 bg-white/5 border border-white/10 rounded-full px-8 py-5 text-xs font-black uppercase tracking-widest placeholder:text-white/40 focus:outline-none focus:bg-white/10 transition-all">
                 <button
-                    class="bg-white text-primary px-10 py-5 rounded-full font-black uppercase tracking-widest text-xs hover:bg-darker hover:text-white transition-all">Subscribe</button>
+                    class="bg-primary text-darker px-10 py-5 rounded-full font-black uppercase tracking-widest text-xs hover:bg-white hover:text-dark transition-all">Subscribe</button>
             </form>
         </div>
     </section>
@@ -675,13 +679,12 @@
         <div class="max-w-7xl mx-auto px-6 md:px-12">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-16 mb-16 md:mb-24">
                 <div class="lg:col-span-1">
-                    <div class="flex items-center gap-3 mb-8">
-                        <div
-                            class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg">
-                            <i data-lucide="leaf" class="w-5 h-5"></i>
+                    <div class="flex items-center gap-4 mb-8">
+                        <img src="assets/logo.jpeg" alt="Logo" class="w-10 h-10 object-contain rounded-lg">
+                        <div class="flex flex-col">
+                            <span class="text-xl font-black text-darker tracking-tighter uppercase leading-none">The Green</span>
+                            <span class="text-[10px] font-bold text-secondary uppercase tracking-[0.1em]">Salon, Spa & Massage</span>
                         </div>
-                        <span class="text-xl font-black text-darker tracking-tighter uppercase">The Green <span
-                                class="text-primary italic">SPA</span></span>
                     </div>
                     <p class="text-sm text-dark/50 font-medium leading-relaxed mb-8">Redefining modern wellness through
                         ancient wisdom and digital seamlessness.</p>
@@ -814,7 +817,12 @@
         initDragToScroll('rituals-slider');
         initDragToScroll('gallery-slider');
 
-        // Initialize Lucide icons
+        // Initialize Lucide icons on load and after any dynamic changes
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+        
+        // Immediate fallback
         lucide.createIcons();
     </script>
 </body>

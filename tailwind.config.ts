@@ -10,10 +10,11 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: '#3A6B5C',
+        primary: '#DBAC34', // Gold from logo figure
+        secondary: '#76A13D', // Leaf green from logo
+        dark: '#2B4448', // Dark teal background from logo
+        darker: '#1E3236', // Darker teal
         sand: '#F4F1ED',
-        dark: '#2D4F4F',
-        darker: '#1A3636',
       },
       animation: {
         'subtle-zoom': 'subtle-zoom 20s infinite alternate',
