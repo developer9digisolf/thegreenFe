@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { useApi } from "@afx/utils/useApi";
 import { rest } from "@afx/utils/config.rest";
-import type { Order, PaymentEntry, PaymentMethod } from "@afx/interfaces/pos.iface";
+import type {
+    CartItem,
+    PaymentEntry,
+    PaymentMethod,
+    SalePayload,
+} from "@afx/interfaces/pos.iface";
 
 interface UsePaymentReturn {
     showPaymentModal: boolean;
@@ -20,12 +25,22 @@ interface UsePaymentReturn {
     addPaymentEntry: () => void;
     removePaymentEntry: (index: number) => void;
 
-    processPayment: (
-        order: Order,
-        therapistId: number | null,
-        onSuccess: () => void
-    ) => Promise<void>;
+    /**
+     * Kirim POST /pos/sales dengan semua data keranjang + pembayaran.
+     * Dipanggil saat tombol "Proses" di ModalPayment diklik.
+     */
+    processSale: (params: {
+        cartItems: CartItem[];
+        grandTotal: number;
+        branchId: number;
+        memberId?: number | null;
+        therapistId?: number | null;
+        saleType?: number;
+        notes?: string | null;
+        onSuccess: () => void;
+    }) => Promise<void>;
 
+    // ── Close session ───────────────────────────
     showCloseSessionModal: boolean;
     sessionDetail: any;
     loadingSessionDetail: boolean;
@@ -44,11 +59,10 @@ export function usePayment(
     const { get, post } = useApi();
     const [isProcessing, setIsProcessing] = useState(false);
 
-    // ── Payment modal state ─────────────────────
+    // ── Payment modal state ────────────────────────────────────────────────────
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [payments, setPayments] = useState<PaymentEntry[]>([]);
-    const [selectedPaymentMethod, setSelectedPaymentMethod] =
-        useState<PaymentMethod | null>(null);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
     const [paymentAmount, setPaymentAmount] = useState("");
     const [paymentReference, setPaymentReference] = useState("");
 
@@ -90,37 +104,78 @@ export function usePayment(
     const removePaymentEntry = (index: number) =>
         setPayments((prev) => prev.filter((_, i) => i !== index));
 
-    const processPayment = async (
-        order: Order,
-        therapistId: number | null,
-        onSuccess: () => void
-    ) => {
-        if (payments.length === 0) return;
+    // ── POST /pos/sales ────────────────────────────────────────────────────────
+    const processSale = async ({
+        cartItems,
+        grandTotal,
+        branchId,
+        memberId,
+        therapistId,
+        saleType = 0,
+        notes = null,
+        onSuccess,
+    }: {
+        cartItems: CartItem[];
+        grandTotal: number;
+        branchId: number;
+        memberId?: number | null;
+        therapistId?: number | null;
+        saleType?: number;
+        notes?: string | null;
+        onSuccess: () => void;
+    }) => {
+        if (cartItems.length === 0) {
+            showToast("Keranjang kosong", "error");
+            return;
+        }
+
+        if (payments.length === 0) {
+            showToast("Pilih metode pembayaran terlebih dahulu", "error");
+            return;
+        }
+
         const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
-        if (totalPaid < order.grandTotal) {
+        if (totalPaid < grandTotal) {
             showToast("Total pembayaran kurang dari tagihan", "error");
             return;
         }
 
+        // Saat ini hanya support 1 payment method (ambil yang pertama).
+        // Jika BE sudah support split payment, bisa diextend di sini.
+        const primaryPayment = payments[0];
+
+        const payload: SalePayload = {
+            SaleType: saleType,
+            BranchId: branchId,
+            MemberId: memberId ?? null,
+            TherapistId: therapistId ?? null,
+            PaymentMethodId: primaryPayment.paymentMethodId,
+            notes: notes,
+            amountPaid: totalPaid,
+            Items: cartItems.flatMap((item) =>
+                // Expand quantity → N items (sesuai struktur BE yang menerima array items)
+                Array.from({ length: item.quantity }, () => ({
+                    ItemType: item.itemType,
+                    BranchServiceVariantId: item.branchServiceVariantId,
+                    ServicePackageId: item.servicePackageId,
+                    CreditPackageId: item.creditPackageId,
+                    Notes: item.notes ?? null,
+                    AppointmentDate: item.appointmentDate ?? null,
+                    StartTime: item.startTime ?? null,
+                    AppointmentNotes: item.appointmentNotes ?? null,
+                }))
+            ),
+        };
+
         setIsProcessing(true);
         try {
-            const response = await post(
-                rest.posOrderPay.replace(":id", order.id.toString()),
-                {
-                    payments: payments.map((p) => ({
-                        paymentMethodId: p.paymentMethodId,
-                        amount: p.amount,
-                        referenceNumber: p.referenceNumber || null,
-                    })),
-                    amountReceived: totalPaid,
-                    therapistId: therapistId || null,
-                }
-            );
+            const response = await post("pos/sales", payload);
+
             if (response.success) {
                 setShowPaymentModal(false);
                 setPayments([]);
-                onSuccess();
                 showToast("Pembayaran berhasil!");
+                onSuccess();
             } else {
                 showToast(response.message || "Gagal memproses pembayaran", "error");
             }
@@ -131,7 +186,7 @@ export function usePayment(
         }
     };
 
-    // ── Close session modal state ───────────────
+    // ── Close session modal ────────────────────────────────────────────────────
     const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
     const [sessionDetail, setSessionDetail] = useState<any>(null);
     const [loadingSessionDetail, setLoadingSessionDetail] = useState(false);
@@ -160,10 +215,7 @@ export function usePayment(
         setClosingCash("");
     };
 
-    const handleCloseSession = async (
-        sessionId: number,
-        onSuccess: () => void
-    ) => {
+    const handleCloseSession = async (sessionId: number, onSuccess: () => void) => {
         if (!closingCash || parseFloat(closingCash) < 0) {
             showToast("Masukkan jumlah kas akhir yang valid", "error");
             return;
@@ -201,7 +253,7 @@ export function usePayment(
         setPaymentReference,
         addPaymentEntry,
         removePaymentEntry,
-        processPayment,
+        processSale,
 
         showCloseSessionModal,
         sessionDetail,

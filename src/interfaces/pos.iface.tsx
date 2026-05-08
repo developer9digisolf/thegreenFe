@@ -10,7 +10,7 @@ export interface Branch {
 }
 
 export interface ServiceVariant {
-    id: number;
+    id: number;              // branchServiceVariantId (dipakai saat POST /pos/sales)
     serviceId: number;
     serviceName: string;
     variantName: string;
@@ -19,6 +19,7 @@ export interface ServiceVariant {
     price: number;
     icon?: string;
     categoryColor?: string;
+    categoryId?: number | null;
 }
 
 export interface Category {
@@ -91,6 +92,55 @@ export interface CashierSession {
     statusName: string;
 }
 
+// ── Cart (client-side only, tidak dikirim ke BE sampai tombol Bayar) ──────────
+export interface CartItem {
+    /** key unik untuk React list rendering */
+    cartKey: string;
+
+    /** 0 = service, 1 = package/voucher, 2 = credit package */
+    itemType: 0 | 1 | 2;
+
+    // Referensi ID sesuai itemType
+    branchServiceVariantId: number | null;   // itemType 0
+    servicePackageId: number | null;         // itemType 1
+    creditPackageId: number | null;          // itemType 2
+
+    // Display info
+    displayName: string;
+    duration: number;
+    unitPrice: number;
+    quantity: number;
+
+    notes?: string | null;
+    appointmentDate?: string | null;
+    startTime?: string | null;
+    appointmentNotes?: string | null;
+}
+
+// ── Payload POST /pos/sales ────────────────────────────────────────────────────
+export interface SaleItemPayload {
+    ItemType: number;
+    BranchServiceVariantId: number | null;
+    ServicePackageId: number | null;
+    CreditPackageId: number | null;
+    Notes: string | null;
+    AppointmentDate: string | null;
+    StartTime: string | null;
+    AppointmentNotes: string | null;
+}
+
+export interface SalePayload {
+    SaleType: number;
+    BranchId: number;
+    MemberId?: number | null;
+    TherapistId?: number | null;
+    PaymentMethodId: number;
+    notes: string | null;
+    amountPaid: number;
+    Items: SaleItemPayload[];
+}
+
+// ── Legacy Order types (dipertahankan untuk kompatibilitas ModalPayment) ───────
 export interface OrderItem {
     id: number;
     itemType: number;
@@ -184,4 +234,35 @@ export type ToastType = "success" | "error" | "info";
 export interface Toast {
     message: string;
     type: ToastType;
+}
+
+export interface RoomData {
+    id: number;
+    name: string;
+    capacity: number;
+    description: string;
+    status: string;
+    statusDisplay: string;
+    isActive: boolean;
+}
+
+export interface TherapistData {
+    id: number;
+    branchId: number;
+    branchName: string;
+    employeeName: string;
+    position: string;
+    dateTime: string;
+    status?: string; 
+}
+
+export interface ServiceCategory {
+    id: number;
+    name: string;
+    description?: string;
+    icon?: string;
+    color?: string;
+    sortOrder?: number;
+    isActive?: boolean;
+    serviceCount?: number;
 }

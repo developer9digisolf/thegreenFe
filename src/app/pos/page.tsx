@@ -1,21 +1,24 @@
 "use client";
 
+import { useState, useCallback, useMemo } from "react";
+import Link from "next/link";
+import { useApi } from "@afx/utils/useApi";
+import { formatCurrency } from "@afx/utils/format";
+import type { Toast } from "@afx/interfaces/pos.iface";
+
 import { usePosSession } from "@afx/hooks/pos/usePosSession";
-import { usePosData } from "@afx/hooks/pos/usePosData";
+import { usePosData, CartItem } from "@afx/hooks/pos/usePosData";
 import { usePayment } from "@afx/hooks/pos/usePayment";
 import GatekeeperScreen from "@afx/components/pos/GatekeeperScreen";
+import SaleHistoryTab from "@afx/components/pos/SaleHistoryTab";
 import ModalPayment from "@afx/components/pos/ModalPayment";
-import { formatCurrency } from "@afx/utils/format";  
-import type { Toast } from "@afx/interfaces/pos.iface";      
-import Link from "next/link";
-import { useState, useCallback } from "react";
+import { CloseCashierSessionService } from "@afx/services/pos.service";
 
 
-// ============================================
-// POS Page — Orchestrator
-// ============================================
 export default function POSPage() {
-    // ── Toast ──────────────────────────────────
+    const { post } = useApi();
+
+    // ── Toast ──────────────────────────────────────────────────────────────
     const [toast, setToast] = useState<Toast | null>(null);
     const showToast = useCallback(
         (message: string, type: "success" | "error" | "info" = "success") => {
@@ -25,37 +28,151 @@ export default function POSPage() {
         []
     );
 
-    const handleBack = () => {
-        // Jika user punya lebih dari 1 cabang, balikkan ke menu pilih cabang
-        if (session.branches.length > 1) {
-            session.setGateState("SELECT_BRANCH");
-        } else {
-            // Jika hanya 1 cabang, arahkan keluar ke dashboard
-            window.location.href = "/dashboard";
-        }
-    };
-    // ── Hooks ──────────────────────────────────
+    // ── Core hooks ─────────────────────────────────────────────────────────
     const session = usePosSession(showToast);
-    const pos = usePosData(showToast);
+    const pos     = usePosData(showToast);
     const payment = usePayment(showToast);
 
-    // ── Local UI state ─────────────────────────
-    const [mode, setMode] = useState<"session" | "voucher" | "redeem">("session");
-    const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-    const [serviceSearch, setServiceSearch] = useState("");
-    const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
-    const [showMobileCart, setShowMobileCart] = useState(false);
-
+    // ── Local UI state ─────────────────────────────────────────────────────
+    const [mode, setMode] = useState<"session" | "voucher" | "credit" | "redeem" | "sale">("session");
+    const [selectedCategory, setSelectedCategory]   = useState<number | null>(null);
+    const [serviceSearch, setServiceSearch]         = useState("");
+    const [selectedPackage, setSelectedPackage]     = useState<number | null>(null);
+    const [showMobileCart, setShowMobileCart]       = useState(false);
     const [showDiscountModal, setShowDiscountModal] = useState(false);
-    const [discountType, setDiscountType] = useState<"fixed" | "percent">("fixed");
-    const [discountValue, setDiscountValue] = useState("");
+    const [discountType, setDiscountType]           = useState<"fixed" | "percent">("fixed");
+    const [discountValue, setDiscountValue]         = useState("");
 
-    const [showCashMovementModal, setShowCashMovementModal] = useState(false);
-    const [cashMovementType, setCashMovementType] = useState<"in" | "out">("in");
-    const [cashMovementAmount, setCashMovementAmount] = useState("");
-    const [cashMovementReason, setCashMovementReason] = useState("");
+    const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
+    const [actualClosingCash, setActualClosingCash]         = useState("");
+    const [isClosingSession, setIsClosingSession]           = useState(false);
+    const [isCheckoutProcessing, setIsCheckoutProcessing]   = useState(false);
 
-    // ── Gatekeeper guard ───────────────────────
+    // ── Computed Variables ─────────────────────────────────────────────────
+    const activeBranchId = useMemo<number | null>(
+        () => session.activeSession?.branchId ?? session.selectedBranch?.branchId ?? null,
+        [session.activeSession, session.selectedBranch]
+    );
+
+    const currentActiveSession =
+        pos.initData?.currentSession ||
+        session.activeSession ||
+        (session.selectedBranch
+            ? session.activeSessionsMap[session.selectedBranch.branchId] ||
+              session.activeSessionsMap[(session.selectedBranch as any).id]
+            : null) ||
+        Object.values(session.activeSessionsMap).find((s) => s != null) ||
+        null;
+
+    const hasOpenSession = !!currentActiveSession;
+    const filteredServices = pos.getFilteredServices(null, serviceSearch);
+    const hasCartItems = pos.cartItems && pos.cartItems.length > 0;
+
+    // ── Handlers ───────────────────────────────────────────────────────────
+    const handleContinueSession = useCallback(() => {
+        const entry = Object.entries(session.activeSessionsMap).find(([, s]) => s != null);
+        const branchId = entry ? parseInt(entry[0]) : (session.selectedBranch?.branchId ?? null);
+        if (!branchId) { showToast("Branch tidak ditemukan, hubungi admin", "error"); return; }
+        session.setGateState("READY");
+        pos.loadInitData(branchId);
+    }, [session, pos, showToast]);
+
+    const handleBack = useCallback(() => {
+        if (session.branches.length > 1) session.setGateState("SELECT_BRANCH");
+        else window.location.href = "/dashboard";
+    }, [session]);
+
+    const handleApplyDiscount = useCallback(() => {
+        const val = parseFloat(discountValue);
+        if (!val || val <= 0) return;
+        if (discountType === "fixed") pos.setCartDiscount(val);
+        else pos.setCartDiscount(Math.round((pos.cartSubtotal * val) / 100));
+        setShowDiscountModal(false);
+        setDiscountValue("");
+        showToast("Diskon diterapkan");
+    }, [discountType, discountValue, pos, showToast]);
+
+    const handleCloseSession = async () => {
+        // --- Log untuk debugging ---
+        console.log("currentActiveSession:", currentActiveSession);
+        console.log("Session ID yang akan ditutup:", currentActiveSession?.id);
+        console.log("Source:", {
+            fromInitData: pos.initData?.currentSession?.id,
+            fromActiveSession: session.activeSession?.id,
+            fromMap: session.activeSessionsMap,
+        });
+        // ---------------------------
+
+        if (!actualClosingCash || parseFloat(actualClosingCash) < 0) {
+            showToast("Masukkan kas yang valid", "error");
+            return;
+        }
+        if (!currentActiveSession) {
+            showToast("Data sesi tidak ditemukan", "error");
+            return;
+        }
+
+        setIsClosingSession(true);
+        try {
+            const response = await CloseCashierSessionService(
+                currentActiveSession.id,
+                parseFloat(actualClosingCash)
+            );
+            if (response.success) {
+                setShowCloseSessionModal(false);
+                setActualClosingCash("");
+                pos.clearCart();
+                showToast("Sesi ditutup, memuat ulang sistem...", "success");
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast(response.message ?? "Gagal menutup sesi", "error");
+            }
+        } catch {
+            showToast("Gagal menutup sesi", "error");
+        } finally {
+            setIsClosingSession(false);
+        }
+    };
+
+    const handleProcessPayment = async () => {
+        if (!hasCartItems) return;
+        setIsCheckoutProcessing(true);
+
+        const payload = {
+            SaleType: mode === "voucher" ? 1 : mode === "credit" ? 2 : 0,
+            BranchId: session.selectedBranch?.branchId ?? activeBranchId,
+            PaymentMethodId: payment.payments[0]?.paymentMethodId ?? null,
+            notes: payment.paymentReference ?? "Paid in full",
+            amountPaid: pos.cartGrandTotal,
+            Items: pos.cartItems.map((item: CartItem) => ({
+                ItemType: item.itemType,
+                BranchServiceVariantId: item.serviceVariantId,
+                ServicePackageId: item.packageId,
+                CreditPackageId: item.creditPackageId,
+                Notes: null,
+                AppointmentDate: null,
+                StartTime: null,
+                AppointmentNotes: null,
+            })),
+        };
+
+        try {
+            const response = await post("/pos/sales", payload);
+            if (response.success) {
+                showToast("Pembayaran Berhasil Disimpan!", "success");
+                pos.clearCart();
+                payment.closePaymentModal();
+            } else {
+                showToast(response.message ?? "Gagal menyimpan transaksi", "error");
+            }
+        } catch {
+            showToast("Terjadi kesalahan jaringan", "error");
+        } finally {
+            setIsCheckoutProcessing(false);
+        }
+    };
+
+    // ── Gatekeeper guard ───────────────────────────────────────────────────
     if (session.gateState !== "READY") {
         return (
             <GatekeeperScreen
@@ -63,6 +180,8 @@ export default function POSPage() {
                 branches={session.branches}
                 selectedBranch={session.selectedBranch}
                 activeSession={session.activeSession}
+                activeSessionsMap={session.activeSessionsMap}
+                activeBranchId={activeBranchId}
                 openingCash={session.openingCash}
                 setOpeningCash={session.setOpeningCash}
                 closingCash={session.closingCash}
@@ -71,26 +190,49 @@ export default function POSPage() {
                 setCashMovementReason={session.setCashMovementReason}
                 isProcessing={session.isProcessing}
                 onSelectBranch={session.handleSelectBranch}
-                onForceClose={session.handleForceCloseSession}
-                onOpenSession={() => session.handleOpenSession(pos.loadInitData)}
+                onForceClose={async () => {
+                    // [FIX] Cek return value — handleForceCloseSession sekarang
+                    // mengembalikan boolean: true = berhasil, false = gagal.
+                    const success = await session.handleForceCloseSession();
+                
+                    if (success) {
+                        // Hanya tampilkan toast dan reload JIKA API benar-benar berhasil
+                        showToast("Sesi berhasil ditutup. Memuat ulang sistem...", "success");
+                        setTimeout(() => window.location.reload(), 1200);
+                    }
+                    // Jika gagal: hook sudah tampilkan error toast → tidak perlu reload
+                }}
+                onOpenSession={async () => {
+                    const alreadyHasSession = Object.values(session.activeSessionsMap).some(
+                        (s) => s != null
+                    );
+                    await session.handleOpenSession((branchId: number) =>
+                        pos.loadInitData(branchId)
+                    );
+                    showToast(
+                        alreadyHasSession
+                            ? "Masih ada Sesi aktif ditemukan. Silahkan lanjutkan atau Tutup Sesi terlebih dahulu."
+                            : "Sesi baru berhasil dibuka. Menyiapkan kasir...",
+                        alreadyHasSession ? "error" : "success"
+                    );
+                    setTimeout(() => window.location.reload(), 1000);
+                }}
+                onContinueSession={async (branch: any) => {
+                    const bId = branch.branchId ?? branch.id;
+                    session.setGateState("READY");
+                    await pos.loadInitData(bId);
+                    showToast("Sesi aktif ditemukan. Mengembalikan data kasir...", "info");
+                }}
                 toast={toast}
                 onBack={handleBack}
             />
         );
     }
 
-    
-
-    // ── Computed ───────────────────────────────
-    const filteredServices = pos.getFilteredServices(selectedCategory, serviceSearch);
-    const totalDuration = pos.currentOrder?.items.reduce(
-        (sum, item) => sum + item.duration * item.quantity,
-        0
-    ) ?? 0;
-
-    // ── Render: main POS ───────────────────────
+    // ── Render: main POS ───────────────────────────────────────────────────
     return (
         <div className="pos-container">
+
             {/* Toast */}
             {toast && (
                 <div className={`pos-toast pos-toast-${toast.type}`}>
@@ -102,154 +244,95 @@ export default function POSPage() {
                                 ? "fa-exclamation-circle"
                                 : "fa-info-circle"
                         }`}
-                    ></i>
+                    />
                     <span>{toast.message}</span>
                 </div>
             )}
 
             <div className="pos-main">
-                {/* ── HEADER ── */}
+
+                {/* ── HEADER ────────────────────────────────────────────────── */}
                 <header className="pos-header">
                     <Link href="/dashboard" className="pos-logo">
-                        <div className="pos-logo-icon">
-                            <i className="fa-solid fa-spa"></i>
-                        </div>
-                        <div className="pos-logo-text">
-                            The <span>Green</span> Spa
-                        </div>
+                        <div className="pos-logo-icon"><i className="fa-solid fa-spa" /></div>
+                        <div className="pos-logo-text">The <span>Green</span> Spa</div>
                     </Link>
 
-                    <div
-                        className="pos-header-center"
-                        style={{ display: "flex", alignItems: "center", gap: "16px" }}
-                    >
-                        {session.selectedBranch && (
-                            <div
-                                style={{
-                                    background: "var(--bg-main)",
-                                    padding: "6px 12px",
-                                    borderRadius: "8px",
-                                    fontSize: "13px",
-                                    fontWeight: 600,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "6px",
-                                    color: "var(--text-primary)",
-                                    border: "1px solid var(--border-color)",
-                                }}
-                            >
-                                <i
-                                    className="fa-solid fa-location-dot"
-                                    style={{ color: "var(--spa-green)" }}
-                                ></i>
-                                {session.selectedBranch.branchName}
+                    <div className="pos-header-center">
+                        {hasOpenSession && currentActiveSession && (
+                            <div style={{ display: "flex", alignItems: "center", gap: "20px", fontSize: "13px" }}>
+                                <div
+                                    style={{
+                                        display: "flex", alignItems: "center", gap: "8px",
+                                        background: "rgba(16,185,129,0.1)", padding: "6px 14px",
+                                        borderRadius: "20px", color: "var(--spa-green)", fontWeight: 600,
+                                    }}
+                                >
+                                    <i className="fa-solid fa-store" />
+                                    <span>
+                                        {session.selectedBranch?.branchName ||
+                                            (session.selectedBranch as any)?.name ||
+                                            currentActiveSession.branchName ||
+                                            "Cabang Aktif"}
+                                    </span>
+                                    <span style={{ opacity: 0.4 }}>|</span>
+                                    <span style={{ fontSize: "12px", fontFamily: "monospace" }}>
+                                        {currentActiveSession.sessionCode}
+                                    </span>
+                                </div>
+
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500 }}>
+                                    <i className="fa-solid fa-user-circle" style={{ color: "var(--text-muted)", fontSize: "16px" }} />
+                                    <span>{currentActiveSession.userName ?? "Kasir"}</span>
+                                </div>
+
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 700 }}>
+                                    <i className="fa-solid fa-wallet" style={{ color: "var(--text-muted)" }} />
+                                    <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: "12px" }}>Kas:</span>
+                                    <span>
+                                        {formatCurrency(
+                                            currentActiveSession.expectedClosingCash ??
+                                            currentActiveSession.openingCash ??
+                                            0
+                                        )}
+                                    </span>
+                                </div>
                             </div>
                         )}
-                        <div className="pos-tabs">
-                            <button
-                                className={`pos-tab ${mode === "session" ? "active" : ""}`}
-                                onClick={() => setMode("session")}
-                            >
-                                <i className="fa-solid fa-spa"></i> Sesi Baru
-                            </button>
-                            <button
-                                className={`pos-tab ${mode === "voucher" ? "active" : ""}`}
-                                onClick={() => setMode("voucher")}
-                            >
-                                <i className="fa-solid fa-ticket"></i> Jual Voucher
-                            </button>
-                            <button
-                                className={`pos-tab ${mode === "redeem" ? "active" : ""}`}
-                                onClick={() => setMode("redeem")}
-                            >
-                                <i className="fa-solid fa-gift"></i> Redeem
-                            </button>
-                        </div>
                     </div>
 
                     <div className="pos-header-actions">
-                        {pos.initData?.hasOpenSession && pos.initData.currentSession && (
-                            <div className="session-info-badge">
-                                <span style={{ color: "var(--spa-green)", fontWeight: 600 }}>
-                                    <i
-                                        className="fa-solid fa-circle"
-                                        style={{ fontSize: "6px", marginRight: "4px" }}
-                                    ></i>
-                                    {pos.initData.currentSession.sessionCode}
-                                </span>
-                                <span style={{ color: "var(--text-muted)" }}>
-                                    {pos.initData.currentSession.userName}
-                                </span>
-                            </div>
-                        )}
-                        <Link href="/dashboard" className="header-btn back" title="Kembali ke Backend">
-                            <i className="fa-solid fa-arrow-left"></i> Backend
+                        <Link href="/dashboard" className="header-btn back">
+                            <i className="fa-solid fa-arrow-left" /> Backend
                         </Link>
-                        <Link
-                            href="/dashboard/sales"
-                            className="header-btn"
-                            title="Riwayat Penjualan"
-                        >
-                            <i className="fa-solid fa-clock-rotate-left"></i>
+                        <Link href="/dashboard/sales" className="header-btn">
+                            <i className="fa-solid fa-clock-rotate-left" />
                         </Link>
-
-                        {pos.initData?.hasOpenSession && (
-                            <>
-                                <button
-                                    className="header-btn"
-                                    title="Kas Masuk"
-                                    onClick={() => {
-                                        setCashMovementType("in");
-                                        setShowCashMovementModal(true);
-                                    }}
-                                    style={{ color: "#059669", gap: "4px" }}
-                                >
-                                    <i className="fa-solid fa-arrow-down"></i>
-                                    <span style={{ fontSize: "11px", fontWeight: 600 }}>Kas+</span>
-                                </button>
-                                <button
-                                    className="header-btn"
-                                    title="Kas Keluar"
-                                    onClick={() => {
-                                        setCashMovementType("out");
-                                        setShowCashMovementModal(true);
-                                    }}
-                                    style={{ color: "#ef4444", gap: "4px" }}
-                                >
-                                    <i className="fa-solid fa-arrow-up"></i>
-                                    <span style={{ fontSize: "11px", fontWeight: 600 }}>Kas-</span>
-                                </button>
-                                <button
-                                    className="header-btn"
-                                    title="Tutup Sesi Kasir"
-                                    onClick={() =>
-                                        payment.openCloseSessionModal(
-                                            pos.initData!.currentSession!.id
-                                        )
-                                    }
-                                    style={{ color: "#ef4444", gap: "6px" }}
-                                >
-                                    <i className="fa-solid fa-power-off"></i>
-                                    <span style={{ fontSize: "12px", fontWeight: 600 }}>
-                                        Tutup Sesi
-                                    </span>
-                                </button>
-                            </>
+                        {hasOpenSession && (
+                            <button
+                                className="header-btn"
+                                title="Tutup Sesi"
+                                onClick={() => setShowCloseSessionModal(true)}
+                                style={{ color: "var(--accent-red)" }}
+                            >
+                                <i className="fa-solid fa-power-off" />
+                            </button>
                         )}
                         <button className="header-btn scan">
-                            <i className="fa-solid fa-qrcode"></i> Scan
+                            <i className="fa-solid fa-qrcode" /> Scan
                         </button>
                     </div>
                 </header>
 
-                {/* ── CONTENT ── */}
+                {/* ── CONTENT ───────────────────────────────────────────────── */}
                 <div className="pos-content">
+
                     {/* LEFT: Member panel */}
                     <aside className="member-panel">
                         <div className="member-search" style={{ position: "relative" }}>
                             <div className="member-search-row">
                                 <div className="search-input-wrapper">
-                                    <i className="fa-solid fa-magnifying-glass"></i>
+                                    <i className="fa-solid fa-magnifying-glass" />
                                     <input
                                         type="text"
                                         className="search-input"
@@ -259,39 +342,35 @@ export default function POSPage() {
                                         onFocus={() => pos.setShowMemberDropdown(true)}
                                     />
                                 </div>
-                                <button className="btn-add-member" title="Tambah Member Baru">
-                                    <i className="fa-solid fa-plus"></i>
+                                <button className="btn-add-member">
+                                    <i className="fa-solid fa-plus" />
                                 </button>
                             </div>
+
                             {pos.showMemberDropdown && pos.memberResults.length > 0 && (
                                 <div
                                     style={{
-                                        position: "absolute",
-                                        top: "100%",
-                                        left: 16,
-                                        right: 16,
-                                        background: "var(--bg-card)",
-                                        border: "1px solid var(--border-color)",
-                                        borderRadius: "12px",
-                                        boxShadow: "var(--shadow-lg)",
-                                        zIndex: 100,
-                                        maxHeight: "250px",
-                                        overflowY: "auto",
+                                        position: "absolute", top: "100%", left: 16, right: 16,
+                                        background: "var(--bg-card)", border: "1px solid var(--border-color)",
+                                        borderRadius: "12px", boxShadow: "var(--shadow-lg)",
+                                        zIndex: 100, maxHeight: "250px", overflowY: "auto",
                                     }}
                                 >
                                     {pos.memberResults.map((member) => (
                                         <div
                                             key={member.id}
-                                            onClick={() => pos.setOrderMember(member)}
-                                            style={{
-                                                padding: "12px 16px",
-                                                cursor: "pointer",
-                                                borderBottom: "1px solid var(--border-color)",
+                                            onClick={() => {
+                                                pos.setSelectedMember(member);
+                                                pos.setShowMemberDropdown(false);
+                                                pos.setMemberSearch("");
                                             }}
+                                            style={{ padding: "12px 16px", cursor: "pointer", borderBottom: "1px solid var(--border-color)" }}
+                                            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-main)")}
+                                            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                                         >
                                             <div style={{ fontWeight: 600 }}>{member.name}</div>
                                             <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                                                {member.phone}
+                                                {member.phone} • Saldo: {formatCurrency(member.creditBalance?.totalBalance ?? 0)}
                                             </div>
                                         </div>
                                     ))}
@@ -300,425 +379,285 @@ export default function POSPage() {
                         </div>
 
                         <div className="member-info">
-                            {pos.selectedMember || pos.currentOrder?.memberId ? (
-                                <>
-                                    <div className="member-card">
-                                        <div className="member-header">
-                                            <div className="member-avatar">
-                                                {(
-                                                    pos.selectedMember?.name ||
-                                                    pos.currentOrder?.memberName ||
-                                                    "G"
-                                                ).charAt(0)}
-                                            </div>
-                                            <div className="member-details">
-                                                <h4>
-                                                    {pos.selectedMember?.name ||
-                                                        pos.currentOrder?.memberName}
-                                                </h4>
-                                                <p>
-                                                    <i className="fa-solid fa-phone"></i>{" "}
-                                                    {pos.selectedMember?.phone ||
-                                                        pos.currentOrder?.memberPhone}
-                                                </p>
-                                            </div>
+                            {pos.selectedMember ? (
+                                <div className="member-card">
+                                    <div className="member-header">
+                                        <div className="member-avatar">{pos.selectedMember.name.charAt(0)}</div>
+                                        <div className="member-details">
+                                            <h4>{pos.selectedMember.name}</h4>
+                                            <p><i className="fa-solid fa-phone" /> {pos.selectedMember.phone}</p>
                                         </div>
-                                        <div className="member-stats">
-                                            <div className="member-stat">
-                                                <div className="member-stat-value">
-                                                    {pos.selectedMember?.creditBalance?.totalBalance ||
-                                                        pos.currentOrder?.memberCreditBalance ||
-                                                        0}
-                                                </div>
-                                                <div className="member-stat-label">Saldo</div>
+                                        <button
+                                            onClick={() => pos.setSelectedMember(null)}
+                                            style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: "8px", padding: "8px", cursor: "pointer", color: "white" }}
+                                        >
+                                            <i className="fa-solid fa-xmark" />
+                                        </button>
+                                    </div>
+                                    <div className="member-stats">
+                                        <div className="member-stat">
+                                            <div className="member-stat-value">
+                                                {formatCurrency(pos.selectedMember.creditBalance?.totalBalance ?? 0)}
                                             </div>
-                                            <div className="member-stat">
-                                                <div className="member-stat-value">
-                                                    {pos.selectedMember?.totalVisits || 0}
-                                                </div>
-                                                <div className="member-stat-label">Kunjungan</div>
-                                            </div>
+                                            <div className="member-stat-label">Saldo Kredit</div>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => pos.setOrderMember(null)}
-                                        style={{
-                                            width: "100%",
-                                            padding: "10px",
-                                            background: "var(--accent-red-light)",
-                                            border: "none",
-                                            borderRadius: "10px",
-                                            color: "var(--accent-red)",
-                                            fontWeight: 600,
-                                            cursor: "pointer",
-                                            marginBottom: "16px",
-                                            fontSize: "13px",
-                                        }}
-                                    >
-                                        <i
-                                            className="fa-solid fa-xmark"
-                                            style={{ marginRight: "6px" }}
-                                        ></i>
-                                        Hapus Member
-                                    </button>
-                                </>
+                                </div>
                             ) : (
-                                <div
-                                    style={{
-                                        padding: "32px 20px",
-                                        textAlign: "center",
-                                        color: "var(--text-muted)",
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            width: "72px",
-                                            height: "72px",
-                                            background: "var(--spa-green-bg)",
-                                            borderRadius: "50%",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            margin: "0 auto 16px",
-                                            border: "2px dashed var(--spa-green-border)",
-                                        }}
-                                    >
-                                        <i
-                                            className="fa-solid fa-user-plus"
-                                            style={{ fontSize: "24px", color: "var(--spa-green)" }}
-                                        ></i>
-                                    </div>
-                                    <p
-                                        style={{
-                                            fontSize: "14px",
-                                            fontWeight: 600,
-                                            color: "var(--text-secondary)",
-                                            marginBottom: "6px",
-                                        }}
-                                    >
-                                        Belum ada member
-                                    </p>
-                                    <p style={{ fontSize: "12px", lineHeight: 1.5 }}>
-                                        Cari nama atau nomor HP, atau lanjutkan sebagai guest
-                                    </p>
+                                <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--text-muted)" }}>
+                                    <i className="fa-solid fa-user-plus" style={{ fontSize: "48px", marginBottom: "16px", opacity: 0.5 }} />
+                                    <p style={{ fontSize: "12px", lineHeight: 1.5 }}>Cari member atau lanjutkan sebagai guest</p>
                                 </div>
                             )}
                         </div>
                     </aside>
 
-                    {/* CENTER: Service / Package area */}
-                    {mode === "session" && (
-                        <div className="service-area">
-                            <div className="service-toolbar">
-                                <div className="service-search-wrapper">
-                                    <i className="fa-solid fa-magnifying-glass"></i>
-                                    <input
-                                        type="text"
-                                        className="service-search-input"
-                                        placeholder="Cari layanan..."
-                                        value={serviceSearch}
-                                        onChange={(e) => setServiceSearch(e.target.value)}
-                                    />
-                                    {serviceSearch && (
-                                        <button
-                                            className="service-search-clear"
-                                            onClick={() => setServiceSearch("")}
-                                        >
-                                            <i className="fa-solid fa-xmark"></i>
-                                        </button>
-                                    )}
-                                </div>
+                    {/* CENTER: Service / Voucher / Credit / Redeem / Sale */}
+                    <div className="service-area">
+                        <div className="service-categories" style={{ gap: "8px" }}>
+                            {(["session", "voucher", "credit", "redeem", "sale"] as const).map((m) => {
+                                const labels: Record<string, { icon: string; label: string }> = {
+                                    session: { icon: "fa-spa",              label: "Layanan"       },
+                                    voucher: { icon: "fa-ticket",           label: "Paket Voucher" },
+                                    credit:  { icon: "fa-wallet",           label: "Top Up Kredit" },
+                                    redeem:  { icon: "fa-qrcode",           label: "Redeem"        },
+                                    sale:    { icon: "fa-tag",              label: "Sale"          },
+                                };
+                                const { icon, label } = labels[m];
+                                return (
+                                    <button
+                                        key={m}
+                                        className={`pos-tab ${mode === m ? "active" : ""}`}
+                                        onClick={() => setMode(m)}
+                                        style={{ padding: "10px 20px" }}
+                                    >
+                                        <i className={`fa-solid ${icon}`} /> {label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Layanan */}
+                        {mode === "session" && (
+                            <>
                                 <div className="service-categories">
+                                    {/* Chip Semua */}
                                     <button
                                         className={`category-chip ${selectedCategory === null ? "active" : ""}`}
-                                        onClick={() => setSelectedCategory(null)}
+                                        onClick={() => {
+                                            const bId = activeBranchId ?? currentActiveSession?.branchId ?? null;
+                                            if (!bId) return;
+                                            setSelectedCategory(null);
+                                            pos.loadServicesByCategory(bId, null);
+                                        }}
                                     >
                                         Semua
                                     </button>
-                                    {pos.initData?.categories.map((cat) => (
-                                        <button
-                                            key={cat.id}
-                                            className={`category-chip ${
-                                                selectedCategory === cat.id ? "active" : ""
-                                            }`}
-                                            onClick={() => setSelectedCategory(cat.id)}
-                                        >
-                                            {cat.name}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="service-grid-wrapper">
-                                {pos.loading && filteredServices.length === 0 ? (
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            justifyContent: "center",
-                                            padding: "40px",
-                                        }}
-                                    >
-                                        <i
-                                            className="fa-solid fa-spinner fa-spin"
-                                            style={{ fontSize: 24, color: "var(--spa-green)" }}
-                                        ></i>
-                                    </div>
-                                ) : (
-                                    <div className="service-grid">
-                                        {filteredServices.map((variant) => {
-                                            const isInCart = pos.currentOrder?.items.some(
-                                                (i) => i.serviceVariantId === variant.id
-                                            );
-                                            return (
-                                                <div
-                                                    key={variant.id}
-                                                    className={`service-item ${isInCart ? "selected" : ""}`}
-                                                    onClick={() => pos.addServiceToCart(variant)}
-                                                >
-                                                    <div className="service-icon">
-                                                        <i
-                                                            className={`fa-solid ${
-                                                                variant.icon || "fa-spa"
-                                                            }`}
-                                                        ></i>
-                                                    </div>
-                                                    <div className="service-name">
-                                                        {variant.displayName}
-                                                    </div>
-                                                    <div className="service-meta">
-                                                        <span>
-                                                            <i className="fa-regular fa-clock"></i>{" "}
-                                                            {variant.duration} min
-                                                        </span>
-                                                    </div>
-                                                    <div className="service-price">
-                                                        {formatCurrency(variant.price)}
-                                                    </div>
-                                                    <button
-                                                        className="service-add-btn"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            pos.addServiceToCart(variant);
-                                                        }}
-                                                    >
-                                                        <i className="fa-solid fa-plus"></i>
-                                                    </button>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
 
-                    {mode === "voucher" && (
-                        <div className="service-area">
+                                    {pos.categoriesLoading ? (
+                                        <span style={{ fontSize: "12px", color: "var(--text-muted)", padding: "6px 10px" }}>
+                                            <i className="fa-solid fa-spinner fa-spin" /> Memuat...
+                                        </span>
+                                    ) : (
+                                        pos.categories.map((cat) => (
+                                            <button
+                                                key={cat.id}
+                                                className={`category-chip ${selectedCategory === cat.id ? "active" : ""}`}
+                                                onClick={() => {
+                                                    const bId = activeBranchId ?? currentActiveSession?.branchId ?? null;
+                                                    if (!bId) return;
+                                                    setSelectedCategory(cat.id);
+                                                    pos.loadServicesByCategory(bId, cat.id);
+                                                }}
+                                            >
+                                                {cat.icon && (
+                                                    <i className={`fa-solid ${cat.icon}`} style={{ marginRight: "6px" }} />
+                                                )}
+                                                {cat.name}
+                                            </button>
+                                        ))
+                                    )}
+                                </div>
+
+                                <div className="service-grid-wrapper">
+                                    {pos.loading ? (
+                                        <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
+                                            <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: 24, color: "var(--spa-green)" }} />
+                                        </div>
+                                    ) : filteredServices.length === 0 ? (
+                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", color: "var(--text-muted)", gap: "12px" }}>
+                                            <i className="fa-solid fa-spa" style={{ fontSize: "48px", opacity: 0.3 }} />
+                                            <p style={{ fontSize: "14px" }}>Tidak ada layanan tersedia</p>
+                                        </div>
+                                    ) : (
+                                        <div className="service-grid">
+                                            {filteredServices.map((variant) => {
+                                                const cartItem = pos.cartItems.find(
+                                                    (i: CartItem) => i.cartKey === `service-${variant.id}`
+                                                );
+                                                return (
+                                                    <div
+                                                        key={variant.id}
+                                                        className={`service-item ${cartItem ? "selected" : ""}`}
+                                                        style={{ "--accent-color": variant.categoryColor ?? "var(--spa-green)" } as React.CSSProperties}
+                                                    >
+                                                        <div
+                                                            className="service-icon"
+                                                            style={{
+                                                                background: `${variant.categoryColor ?? "var(--spa-green)"}20`,
+                                                                color: variant.categoryColor ?? "var(--spa-green)",
+                                                            }}
+                                                        >
+                                                            <i className={`fa-solid ${variant.icon ?? "fa-spa"}`} />
+                                                        </div>
+                                                        <div className="service-name">{variant.displayName}</div>
+                                                        <div className="service-meta">
+                                                            <span><i className="fa-regular fa-clock" /> {variant.duration} min</span>
+                                                        </div>
+                                                        <div className="service-price">{formatCurrency(variant.price)}</div>
+                                                        {cartItem ? (
+                                                            <div
+                                                                className="service-qty-control"
+                                                                style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "8px" }}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
+                                                                <button className="qty-btn" onClick={() => pos.updateCartItemQuantity(`service-${variant.id}`, -1)}>
+                                                                    <i className="fa-solid fa-minus" />
+                                                                </button>
+                                                                <span className="qty-value">{cartItem.quantity}</span>
+                                                                <button className="qty-btn" onClick={() => pos.updateCartItemQuantity(`service-${variant.id}`, 1)}>
+                                                                    <i className="fa-solid fa-plus" />
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <button
+                                                                className="service-add-btn"
+                                                                onClick={(e) => { e.stopPropagation(); pos.addServiceToCart(variant); }}
+                                                            >
+                                                                <i className="fa-solid fa-plus" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
+
+                        {/* Paket Voucher */}
+                        {mode === "voucher" && (
                             <div className="service-grid-wrapper">
                                 <div className="package-grid">
                                     {pos.initData?.packages.map((pkg, idx) => (
                                         <div
                                             key={pkg.id}
-                                            className={`package-card ${idx === 0 ? "hemat" : "premium"} ${
-                                                selectedPackage === pkg.id ? "selected" : ""
-                                            }`}
-                                            onClick={() => {
-                                                setSelectedPackage(pkg.id);
-                                                pos.addPackageToCart(pkg);
-                                            }}
+                                            className={`package-card ${idx === 0 ? "hemat" : "premium"} ${selectedPackage === pkg.id ? "selected" : ""}`}
+                                            onClick={() => { setSelectedPackage(pkg.id); pos.addPackageToCart(pkg); }}
                                         >
                                             {pkg.savings && pkg.savings > 0 && (
-                                                <div className="package-badge">
-                                                    Hemat{" "}
-                                                    {Math.round(
-                                                        (pkg.savings / (pkg.price + pkg.savings)) * 100
-                                                    )}
-                                                    %
-                                                </div>
+                                                <div className="package-badge">Hemat {formatCurrency(pkg.savings)}</div>
                                             )}
                                             <div className="package-name">{pkg.name}</div>
-                                            <div className="package-desc">
-                                                {pkg.serviceVariantName || pkg.description}
-                                            </div>
-                                            <div className="package-price">
-                                                {formatCurrency(pkg.price)}
-                                            </div>
+                                            <div className="package-desc">{pkg.serviceVariantName ?? pkg.description}</div>
+                                            <div className="package-price">{formatCurrency(pkg.price)}</div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    {mode === "redeem" && (
-                        <div className="service-area">
+                        {/* Top Up Kredit */}
+                        {mode === "credit" && (
+                            <div className="service-grid-wrapper">
+                                <div className="package-grid">
+                                    {pos.initData?.creditPackages.map((cp) => (
+                                        <div key={cp.id} className="package-card premium" onClick={() => pos.addCreditPackageToCart(cp)}>
+                                            <div className="package-badge">Bonus {cp.bonusPercentage?.toFixed(0) ?? 0}%</div>
+                                            <div className="package-name">{cp.name}</div>
+                                            <div className="package-desc">{cp.description}</div>
+                                            <div className="package-price">{formatCurrency(cp.payAmount)}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Redeem */}
+                        {mode === "redeem" && (
                             <div
                                 className="service-grid-wrapper"
-                                style={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    gap: "24px",
-                                    maxWidth: "600px",
-                                    margin: "0 auto",
-                                    paddingTop: "40px",
-                                    textAlign: "center",
-                                }}
+                                style={{ display: "flex", flexDirection: "column", gap: "24px", maxWidth: "600px", margin: "0 auto", paddingTop: "40px", textAlign: "center" }}
                             >
                                 <h2>Redeem Voucher</h2>
-                                <p style={{ color: "var(--text-muted)" }}>
-                                    Scan atau masukkan kode voucher member
-                                </p>
-                                <div
-                                    style={{
-                                        width: "220px",
-                                        height: "220px",
-                                        margin: "0 auto",
-                                        background: "var(--bg-main)",
-                                        borderRadius: "24px",
-                                        border: "3px dashed var(--border-color)",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                    }}
-                                >
-                                    <i
-                                        className="fa-solid fa-qrcode"
-                                        style={{ fontSize: "70px", color: "var(--text-muted)" }}
-                                    ></i>
+                                <p style={{ color: "var(--text-muted)" }}>Scan atau masukkan kode voucher member</p>
+                                <div style={{ width: "220px", height: "220px", margin: "0 auto", background: "var(--bg-main)", borderRadius: "24px", border: "3px dashed var(--border-color)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                    <i className="fa-solid fa-qrcode" style={{ fontSize: "70px", color: "var(--text-muted)" }} />
                                 </div>
                             </div>
-                        </div>
-                    )}
-                </div>
+                        )}
 
-                {/* BOTTOM BAR: Pending orders */}
-                {pos.pendingOrders.length > 0 && (
-                    <div
-                        style={{
-                            padding: "12px 24px",
-                            background: "var(--bg-card)",
-                            borderTop: "1px solid var(--border-color)",
-                            display: "flex",
-                            gap: "12px",
-                            alignItems: "center",
-                            overflowX: "auto",
-                        }}
-                    >
-                        <span
-                            style={{
-                                fontSize: "12px",
-                                color: "var(--text-muted)",
-                                fontWeight: 600,
-                            }}
-                        >
-                            <i className="fa-solid fa-clock" style={{ marginRight: "6px" }}></i>
-                            Pending:
-                        </span>
-                        {pos.pendingOrders.map((order) => (
-                            <div
-                                key={order.id}
-                                onClick={() => pos.selectOrder(order.id)}
-                                style={{
-                                    padding: "10px 16px",
-                                    background:
-                                        pos.currentOrder?.id === order.id
-                                            ? "var(--spa-green-bg)"
-                                            : "var(--bg-main)",
-                                    border:
-                                        pos.currentOrder?.id === order.id
-                                            ? "2px solid var(--spa-green)"
-                                            : "1px solid var(--border-color)",
-                                    borderRadius: "12px",
-                                    cursor: "pointer",
-                                    minWidth: "130px",
-                                }}
-                            >
-                                <div style={{ fontWeight: 700, fontSize: "13px" }}>
-                                    #{order.saleCode.split("-").pop()}
-                                </div>
-                                <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                                    {order.memberName || "Guest"} • {order.totalItems} item
-                                </div>
+                        {/* Riwayat Penjualan (SaleHistoryTab) */}
+                        {mode === "sale" && (
+                            <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+                                <SaleHistoryTab 
+                                    branchId={
+                                        activeBranchId ??
+                                        session.selectedBranch?.branchId ??
+                                        currentActiveSession?.branchId ??
+                                        null
+                                    } 
+                                    onToast={showToast} 
+                                />
                             </div>
-                        ))}
-                        <button
-                            onClick={() => {
-                                pos.setCurrentOrder(null);
-                                pos.setOrderMember(null);
-                            }}
-                            style={{
-                                padding: "10px 20px",
-                                background: "var(--spa-green-bg)",
-                                border: "2px dashed var(--spa-green)",
-                                borderRadius: "12px",
-                                cursor: "pointer",
-                                color: "var(--spa-green)",
-                                fontWeight: 600,
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px",
-                            }}
-                        >
-                            <i className="fa-solid fa-plus"></i> Baru
-                        </button>
+                        )}
+
                     </div>
-                )}
+                </div>
             </div>
 
-            {/* RIGHT: Cart sidebar */}
-            <aside className={`pos-sidebar ${showMobileCart ? "open" : ""}`}>
-                <div className="cart-header">
-                    <div className="cart-title">
-                        {pos.currentOrder
-                            ? `Order #${pos.currentOrder.saleCode.split("-").pop()}`
-                            : "Keranjang"}
-                    </div>
+            {/* ── RIGHT: Cart sidebar ────────────────────────────────────────── */}
+            <aside
+                className={`pos-sidebar ${showMobileCart ? "open" : ""}`}
+                style={{ display: "flex", flexDirection: "column", height: "100vh" }}
+            >
+                <div className="cart-header" style={{ flexShrink: 0 }}>
+                    <div className="cart-title">Keranjang</div>
                     <div className="cart-subtitle">
-                        {pos.currentOrder?.items.length || 0} item • {totalDuration} menit
+                        {pos.cartItems?.length ?? 0} item • {pos.cartTotalDuration ?? 0} menit
                     </div>
                 </div>
 
-                <div className="cart-items">
-                    {!pos.currentOrder || pos.currentOrder.items.length === 0 ? (
+                <div className="cart-items" style={{ flex: 1, overflowY: "auto", minHeight: 0, paddingRight: "8px" }}>
+                    {!hasCartItems ? (
                         <div className="cart-empty">
-                            <i className="fa-solid fa-cart-shopping"></i>
+                            <i className="fa-solid fa-cart-shopping" />
                             <h4>Keranjang Kosong</h4>
                             <p>Pilih layanan untuk memulai</p>
                         </div>
                     ) : (
-                        pos.currentOrder.items.map((item) => (
-                            <div key={item.id} className="cart-item">
+                        pos.cartItems.map((item: CartItem) => (
+                            <div key={item.cartKey} className="cart-item">
                                 <div className="cart-item-header">
-                                    <span className="cart-item-name">{item.itemName}</span>
-                                    <button
-                                        className="cart-item-remove"
-                                        onClick={() => pos.removeItem(item.id)}
-                                    >
-                                        <i className="fa-solid fa-xmark"></i>
+                                    <span className="cart-item-name">{item.displayName}</span>
+                                    <button className="cart-item-remove" onClick={() => pos.removeCartItem(item.cartKey)}>
+                                        <i className="fa-solid fa-xmark" />
                                     </button>
                                 </div>
                                 <div className="cart-item-details">
-                                    <span className="cart-item-meta">
-                                        {item.duration > 0
-                                            ? `${item.duration} menit`
-                                            : item.itemDescription}
-                                    </span>
+                                    <span className="cart-item-meta">{item.duration > 0 ? `${item.duration} menit` : ""}</span>
                                     <div className="cart-item-qty">
-                                        <button
-                                            className="qty-btn"
-                                            onClick={() => pos.updateItemQuantity(item.id, -1)}
-                                        >
-                                            <i className="fa-solid fa-minus"></i>
+                                        <button className="qty-btn" onClick={() => pos.updateCartItemQuantity(item.cartKey, -1)}>
+                                            <i className="fa-solid fa-minus" />
                                         </button>
                                         <span className="qty-value">{item.quantity}</span>
-                                        <button
-                                            className="qty-btn"
-                                            onClick={() => pos.updateItemQuantity(item.id, 1)}
-                                        >
-                                            <i className="fa-solid fa-plus"></i>
+                                        <button className="qty-btn" onClick={() => pos.updateCartItemQuantity(item.cartKey, 1)}>
+                                            <i className="fa-solid fa-plus" />
                                         </button>
                                     </div>
                                     <span className="cart-item-price">
-                                        {formatCurrency(item.subtotal)}
+                                        {formatCurrency(item.unitPrice * item.quantity)}
                                     </span>
                                 </div>
                             </div>
@@ -726,147 +665,186 @@ export default function POSPage() {
                     )}
                 </div>
 
-                {/* Therapist selector */}
-                {mode === "session" &&
-                    pos.currentOrder &&
-                    pos.currentOrder.items.length > 0 &&
-                    pos.initData?.therapists &&
-                    pos.initData.therapists.length > 0 && (
-                        <div className="therapist-section">
-                            <div className="therapist-section-title">Pilih Therapist</div>
-                            <div className="therapist-carousel">
-                                {pos.initData.therapists.map((th) => {
-                                    const isBusy =
-                                        th.status === "Busy" || th.status === "InSession";
-                                    return (
-                                        <div
-                                            key={th.id}
-                                            className={`therapist-chip ${isBusy ? "busy" : ""} ${
-                                                pos.selectedTherapist === th.id ? "selected" : ""
-                                            }`}
-                                            onClick={() =>
-                                                !isBusy && pos.setSelectedTherapist(th.id)
-                                            }
-                                        >
-                                            <div className="therapist-chip-avatar">
-                                                {th.name.charAt(0)}
-                                            </div>
-                                            <div className="therapist-chip-info">
-                                                <div className="therapist-chip-name">{th.name}</div>
-                                                <div
-                                                    className={`therapist-chip-status ${
-                                                        isBusy ? "busy" : "available"
-                                                    }`}
-                                                >
-                                                    <span
-                                                        className={`status-dot ${
-                                                            isBusy ? "busy" : "available"
-                                                        }`}
-                                                    ></span>
-                                                    {isBusy ? "Sibuk" : "Tersedia"}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-
-                {/* Cart summary */}
-                <div className="cart-summary">
+                <div className="cart-summary" style={{ flexShrink: 0 }}>
                     <div className="summary-row">
                         <span className="summary-label">Subtotal</span>
-                        <span className="summary-value">
-                            {formatCurrency(pos.currentOrder?.subtotal || 0)}
-                        </span>
+                        <span className="summary-value">{formatCurrency(pos.cartSubtotal ?? 0)}</span>
                     </div>
-                    {((pos.currentOrder?.discountAmount || 0) > 0 ||
-                        (pos.currentOrder && pos.currentOrder.items.length > 0)) && (
-                        <div
-                            className="summary-row"
-                            style={{ cursor: pos.currentOrder ? "pointer" : "default" }}
-                            onClick={() =>
-                                pos.currentOrder &&
-                                pos.currentOrder.items.length > 0 &&
-                                setShowDiscountModal(true)
-                            }
-                        >
-                            <span
-                                className="summary-label"
-                                style={{ display: "flex", alignItems: "center", gap: "6px" }}
-                            >
-                                Diskon{" "}
-                                {pos.currentOrder && pos.currentOrder.items.length > 0 && (
-                                    <i
-                                        className="fa-solid fa-pen-to-square"
-                                        style={{ fontSize: "10px", color: "var(--text-muted)" }}
-                                    ></i>
-                                )}
+                    {hasCartItems && (
+                        <div className="summary-row" style={{ cursor: "pointer" }} onClick={() => setShowDiscountModal(true)}>
+                            <span className="summary-label" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                Diskon <i className="fa-solid fa-pen-to-square" style={{ fontSize: "10px", color: "var(--text-muted)" }} />
                             </span>
-                            <span
-                                className="summary-value"
-                                style={{
-                                    color:
-                                        (pos.currentOrder?.discountAmount || 0) > 0
-                                            ? "var(--accent-red)"
-                                            : "var(--text-muted)",
-                                }}
-                            >
-                                {(pos.currentOrder?.discountAmount || 0) > 0
-                                    ? `- ${formatCurrency(pos.currentOrder!.discountAmount)}`
-                                    : "Tambah"}
+                            <span className="summary-value" style={{ color: pos.cartDiscount > 0 ? "var(--accent-red)" : "var(--text-muted)" }}>
+                                {pos.cartDiscount > 0 ? `- ${formatCurrency(pos.cartDiscount)}` : "Tambah"}
                             </span>
                         </div>
                     )}
                     <div className="summary-row total">
                         <span className="summary-label">Total</span>
-                        <span className="summary-value">
-                            {formatCurrency(pos.currentOrder?.grandTotal || 0)}
-                        </span>
+                        <span className="summary-value">{formatCurrency(pos.cartGrandTotal ?? 0)}</span>
                     </div>
                 </div>
 
-                <div className="cart-actions">
-                    {pos.currentOrder && pos.currentOrder.items.length > 0 && (
-                        <button
-                            className="action-btn secondary"
-                            onClick={pos.holdOrder}
-                            disabled={pos.isProcessing}
-                        >
-                            {pos.isProcessing ? (
-                                <i className="fa-solid fa-spinner fa-spin"></i>
-                            ) : (
-                                <>
-                                    <i className="fa-solid fa-pause"></i> Hold
-                                </>
-                            )}
+                <div className="cart-actions" style={{ flexShrink: 0 }}>
+                    {hasCartItems && (
+                        <button className="action-btn secondary" onClick={pos.clearCart}>
+                            <i className="fa-solid fa-trash" /> Bersihkan
                         </button>
                     )}
                     <button
                         className="action-btn primary"
                         onClick={() => {
-                            if (!pos.currentOrder || pos.currentOrder.items.length === 0) return;
-                            payment.setPaymentAmount(pos.currentOrder.grandTotal.toString());
+                            payment.setPaymentAmount(pos.cartGrandTotal.toString());
                             payment.openPaymentModal();
                         }}
-                        disabled={!pos.currentOrder || pos.currentOrder.items.length === 0}
-                        style={{
-                            opacity:
-                                !pos.currentOrder || pos.currentOrder.items.length === 0
-                                    ? 0.5
-                                    : 1,
-                        }}
+                        disabled={!hasCartItems}
+                        style={{ opacity: !hasCartItems ? 0.5 : 1 }}
                     >
-                        <i className="fa-solid fa-credit-card"></i> Bayar
+                        <i className="fa-solid fa-credit-card" /> Bayar
                     </button>
                 </div>
             </aside>
 
-            {/* ── MODAL: Payment ── */}
-            {payment.showPaymentModal && pos.currentOrder && pos.initData && (
+            {/* ── MODAL: Tutup Sesi ──────────────────────────────────────────── */}
+            {showCloseSessionModal && currentActiveSession && (
+                <div
+                    className="modal-overlay"
+                    onClick={() => setShowCloseSessionModal(false)}
+                    style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 9999 }}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ maxWidth: "400px", width: "90%", background: "var(--bg-card)", borderRadius: "16px", padding: "24px", boxShadow: "0 10px 25px rgba(0,0,0,0.2)", display: "flex", flexDirection: "column", gap: "16px" }}
+                    >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-color)", paddingBottom: "12px" }}>
+                            <h3 style={{ margin: 0, fontSize: "18px" }}>Tutup Sesi Kasir</h3>
+                            <button onClick={() => setShowCloseSessionModal(false)} style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer", color: "var(--text-muted)" }}>
+                                <i className="fa-solid fa-xmark" />
+                            </button>
+                        </div>
+
+                        <p style={{ color: "var(--text-muted)", fontSize: "14px", margin: 0 }}>
+                            Hitung dan masukkan jumlah kas aktual fisik di laci saat ini.
+                        </p>
+
+                        <div style={{ background: "var(--bg-main)", padding: "16px", borderRadius: "12px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "14px" }}>
+                                <span>Kas Awal</span>
+                                <span>{formatCurrency(currentActiveSession.openingCash ?? 0)}</span>
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: "15px" }}>
+                                <span>Kas Sistem</span>
+                                <span style={{ color: "var(--spa-green)" }}>
+                                    {formatCurrency(currentActiveSession.expectedClosingCash ?? currentActiveSession.openingCash ?? 0)}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style={{ display: "block", marginBottom: "8px", fontWeight: 600, fontSize: "13px" }}>
+                                Kas Aktual Fisik (Rp)
+                            </label>
+                            <input
+                                type="number"
+                                className="search-input"
+                                placeholder="Total uang di laci"
+                                value={actualClosingCash}
+                                onChange={(e) => setActualClosingCash(e.target.value)}
+                                style={{ width: "100%", padding: "14px", fontSize: "18px", textAlign: "right", fontWeight: 700 }}
+                                autoFocus
+                            />
+                        </div>
+
+                        <div style={{ display: "flex", gap: "12px" }}>
+                            <button className="action-btn secondary" onClick={() => setShowCloseSessionModal(false)} style={{ flex: 1 }}>
+                                Batal
+                            </button>
+                            <button
+                                className="action-btn primary"
+                                onClick={handleCloseSession}
+                                disabled={isClosingSession || !actualClosingCash}
+                                style={{ flex: 1, background: "var(--accent-red)", borderColor: "var(--accent-red)", opacity: (isClosingSession || !actualClosingCash) ? 0.6 : 1 }}
+                            >
+                                {isClosingSession ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-power-off" />}{" "}
+                                Tutup Sesi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── MODAL: Diskon ─────────────────────────────────────────────── */}
+            {showDiscountModal && (
+                <div
+                    className="modal-overlay"
+                    onClick={() => setShowDiscountModal(false)}
+                    style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 9999 }}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ maxWidth: "380px", width: "90%", background: "var(--bg-card)", borderRadius: "16px", padding: "24px", boxShadow: "0 10px 25px rgba(0,0,0,0.2)", display: "flex", flexDirection: "column", gap: "16px" }}
+                    >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-color)", paddingBottom: "12px" }}>
+                            <h3 style={{ margin: 0, fontSize: "18px" }}>Tambah Diskon</h3>
+                            <button onClick={() => setShowDiscountModal(false)} style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer", color: "var(--text-muted)" }}>
+                                <i className="fa-solid fa-xmark" />
+                            </button>
+                        </div>
+
+                        <div style={{ display: "flex", gap: "8px" }}>
+                            {(["fixed", "percent"] as const).map((t) => (
+                                <button key={t} className={`category-chip ${discountType === t ? "active" : ""}`} onClick={() => setDiscountType(t)}>
+                                    {t === "fixed" ? "Nominal (Rp)" : "Persen (%)"}
+                                </button>
+                            ))}
+                        </div>
+
+                        <input
+                            type="number"
+                            className="search-input"
+                            placeholder={discountType === "fixed" ? "Nominal diskon" : "Persen diskon (0–100)"}
+                            value={discountValue}
+                            onChange={(e) => setDiscountValue(e.target.value)}
+                            autoFocus
+                        />
+
+                        <button className="action-btn primary" onClick={handleApplyDiscount}>
+                            Terapkan Diskon
+                        </button>
+
+                        {pos.cartDiscount > 0 && (
+                            <button className="action-btn secondary" onClick={() => { pos.setCartDiscount(0); setShowDiscountModal(false); }}>
+                                Hapus Diskon
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* ── MODAL: Payment ─────────────────────────────────────────────── */}
+            {payment.showPaymentModal && pos.initData && (
                 <ModalPayment
-                    order={pos.currentOrder}
+                    order={{
+                        id: 0, saleCode: "-", saleType: 0, saleTypeName: "",
+                        cashierSessionId: currentActiveSession?.id ?? 0,
+                        memberId: pos.selectedMember?.id,
+                        memberName: pos.selectedMember?.name,
+                        memberPhone: pos.selectedMember?.phone,
+                        memberCreditBalance: pos.selectedMember?.creditBalance?.totalBalance,
+                        subtotal: pos.cartSubtotal, discountAmount: pos.cartDiscount,
+                        taxAmount: 0, grandTotal: pos.cartGrandTotal,
+                        amountPaid: 0, changeAmount: 0,
+                        paymentStatus: 0, paymentStatusName: "",
+                        items: pos.cartItems.map((ci: CartItem, idx: number) => ({
+                            id: idx, itemType: ci.itemType, itemTypeName: "",
+                            itemName: ci.displayName, duration: ci.duration,
+                            quantity: ci.quantity, unitPrice: ci.unitPrice,
+                            discountAmount: 0, subtotal: ci.unitPrice * ci.quantity,
+                        })),
+                        totalItems: pos.cartItems.reduce((s: number, i: CartItem) => s + i.quantity, 0),
+                        totalDuration: pos.cartTotalDuration,
+                    }}
                     paymentMethods={pos.initData.paymentMethods}
                     payments={payment.payments}
                     selectedPaymentMethod={payment.selectedPaymentMethod}
@@ -877,242 +855,10 @@ export default function POSPage() {
                     setPaymentReference={payment.setPaymentReference}
                     onAddEntry={payment.addPaymentEntry}
                     onRemoveEntry={payment.removePaymentEntry}
-                    onProcess={() =>
-                        payment.processPayment(
-                            pos.currentOrder!,
-                            pos.selectedTherapist,
-                            async () => {
-                                pos.setCurrentOrder(null);
-                                pos.setSelectedTherapist(null);
-                                await pos.loadPendingOrders();
-                            }
-                        )
-                    }
+                    onProcess={handleProcessPayment}
                     onClose={payment.closePaymentModal}
-                    isProcessing={payment.isProcessing}
+                    isProcessing={isCheckoutProcessing}
                 />
-            )}
-
-            {/* ── MODAL: Discount ── */}
-            {showDiscountModal && (
-                <div
-                    className="modal-overlay"
-                    style={{
-                        position: "fixed",
-                        inset: 0,
-                        background: "rgba(0,0,0,0.5)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        zIndex: 1000,
-                    }}
-                >
-                    <div
-                        style={{
-                            background: "var(--bg-card)",
-                            borderRadius: "24px",
-                            padding: "32px",
-                            width: "100%",
-                            maxWidth: "400px",
-                            boxShadow: "var(--shadow-lg)",
-                        }}
-                    >
-                        <div
-                            style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                marginBottom: "24px",
-                            }}
-                        >
-                            <h2 style={{ margin: 0 }}>Tambah Diskon</h2>
-                            <button
-                                onClick={() => {
-                                    setShowDiscountModal(false);
-                                    setDiscountValue("");
-                                }}
-                                style={{
-                                    background: "none",
-                                    border: "none",
-                                    fontSize: "24px",
-                                    cursor: "pointer",
-                                    color: "var(--text-muted)",
-                                }}
-                            >
-                                <i className="fa-solid fa-xmark"></i>
-                            </button>
-                        </div>
-                        <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
-                            {(["fixed", "percent"] as const).map((t) => (
-                                <button
-                                    key={t}
-                                    onClick={() => setDiscountType(t)}
-                                    style={{
-                                        flex: 1,
-                                        padding: "10px",
-                                        borderRadius: "8px",
-                                        border:
-                                            discountType === t
-                                                ? "2px solid var(--spa-green)"
-                                                : "2px solid var(--border-color)",
-                                        background:
-                                            discountType === t
-                                                ? "var(--spa-green-bg)"
-                                                : "var(--bg-main)",
-                                        color:
-                                            discountType === t
-                                                ? "var(--spa-green)"
-                                                : "var(--text-secondary)",
-                                        fontWeight: 600,
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    {t === "fixed" ? "Nominal (Rp)" : "Persen (%)"}
-                                </button>
-                            ))}
-                        </div>
-                        <input
-                            type="number"
-                            value={discountValue}
-                            onChange={(e) => setDiscountValue(e.target.value)}
-                            placeholder={discountType === "fixed" ? "50000" : "10"}
-                            className="search-input"
-                            style={{
-                                width: "100%",
-                                padding: "14px",
-                                fontSize: "20px",
-                                textAlign: "right",
-                                fontWeight: 700,
-                                marginBottom: "16px",
-                            }}
-                        />
-                        <div style={{ display: "flex", gap: "12px" }}>
-                            {(pos.currentOrder?.discountAmount || 0) > 0 && (
-                                <button
-                                    className="action-btn secondary"
-                                    onClick={() => {
-                                        pos.removeDiscount();
-                                        setShowDiscountModal(false);
-                                        setDiscountValue("");
-                                    }}
-                                    style={{ flex: 1 }}
-                                >
-                                    Hapus Diskon
-                                </button>
-                            )}
-                            <button
-                                className="action-btn primary"
-                                onClick={() => {
-                                    pos.applyDiscount(discountType, parseFloat(discountValue));
-                                    setShowDiscountModal(false);
-                                    setDiscountValue("");
-                                }}
-                                disabled={!discountValue || parseFloat(discountValue) <= 0}
-                                style={{ flex: 1 }}
-                            >
-                                Terapkan
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ── MODAL: Cash Movement ── */}
-            {showCashMovementModal && pos.initData?.currentSession && (
-                <div
-                    className="modal-overlay"
-                    style={{
-                        position: "fixed",
-                        inset: 0,
-                        background: "rgba(0,0,0,0.5)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        zIndex: 1000,
-                    }}
-                >
-                    <div
-                        style={{
-                            background: "var(--bg-card)",
-                            borderRadius: "24px",
-                            padding: "32px",
-                            width: "100%",
-                            maxWidth: "400px",
-                            boxShadow: "var(--shadow-lg)",
-                        }}
-                    >
-                        <div
-                            style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                marginBottom: "24px",
-                            }}
-                        >
-                            <h2 style={{ margin: 0 }}>
-                                Kas {cashMovementType === "in" ? "Masuk" : "Keluar"}
-                            </h2>
-                            <button
-                                onClick={() => setShowCashMovementModal(false)}
-                                style={{
-                                    background: "none",
-                                    border: "none",
-                                    fontSize: "24px",
-                                    cursor: "pointer",
-                                    color: "var(--text-muted)",
-                                }}
-                            >
-                                <i className="fa-solid fa-xmark"></i>
-                            </button>
-                        </div>
-                        <input
-                            type="number"
-                            value={cashMovementAmount}
-                            onChange={(e) => setCashMovementAmount(e.target.value)}
-                            placeholder="Jumlah (Rp)"
-                            className="search-input"
-                            style={{
-                                width: "100%",
-                                padding: "14px",
-                                fontSize: "20px",
-                                textAlign: "right",
-                                fontWeight: 700,
-                                marginBottom: "12px",
-                            }}
-                        />
-                        <input
-                            type="text"
-                            value={cashMovementReason}
-                            onChange={(e) => setCashMovementReason(e.target.value)}
-                            placeholder="Keterangan..."
-                            className="search-input"
-                            style={{
-                                width: "100%",
-                                padding: "12px",
-                                fontSize: "14px",
-                                marginBottom: "16px",
-                            }}
-                        />
-                        <button
-                            className="action-btn primary"
-                            onClick={async () => {
-                                if (!cashMovementAmount || !cashMovementReason) return;
-                                await pos.submitCashMovement(
-                                    pos.initData!.currentSession!.id,
-                                    cashMovementType,
-                                    parseFloat(cashMovementAmount),
-                                    cashMovementReason
-                                );
-                                setShowCashMovementModal(false);
-                                setCashMovementAmount("");
-                                setCashMovementReason("");
-                            }}
-                            style={{ width: "100%" }}
-                        >
-                            Simpan
-                        </button>
-                    </div>
-                </div>
             )}
         </div>
     );
