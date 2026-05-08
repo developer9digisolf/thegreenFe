@@ -71,7 +71,7 @@ export function usePosSession(
             await Promise.all(
                 userBranches.map(async (b) => {
                     try {
-                        const res = await get(`/cashier-sessions/branch/${b.branchId}/active`);
+                        const res = await get(`cashier-sessions/branch/${b.branchId}/active`);
                         if (res.success && res.data) {
                             sessionsMap[b.branchId] = res.data;
                         }
@@ -129,7 +129,7 @@ export function usePosSession(
         setGateState("INITIALIZING");
 
         try {
-            const res = await get(`/cashier-sessions/branch/${branch.branchId}/active`);
+            const res = await get(`cashier-sessions/branch/${branch.branchId}/active`);
             if (res.success && res.data) {
                 // [FIX] Selalu set activeSession saat masuk FORCE_CLOSE
                 // agar panel FORCE_CLOSE punya data lengkap (id, userName, sessionCode)
@@ -175,7 +175,7 @@ export function usePosSession(
 
         setIsProcessing(true);
         try {
-            const res = await post(`/cashier-sessions/${sessionToClose.id}/close`, {
+            const res = await post(`cashier-sessions/${sessionToClose.id}/close`, {
                 ActualClosingCash: parseFloat(closingCash),
                 Notes: cashMovementReason || null,
             });
@@ -222,7 +222,7 @@ export function usePosSession(
 
         setIsProcessing(true);
         try {
-            const res = await post("/cashier-sessions/open", {
+            const res = await post("cashier-sessions/open", {
                 OpeningCash: parseFloat(openingCash),
                 BranchId: selectedBranch.branchId,
                 note: null,
