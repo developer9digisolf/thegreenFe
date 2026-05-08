@@ -18,7 +18,7 @@ import dynamic from "next/dynamic";
 
 const MapPicker = dynamic(() => import("@afx/components/ui/maps/MapPicker"), { 
   ssr: false,
-  loading: () => <div className="h-[300px] bg-slate-100 animate-pulse rounded-xl flex items-center justify-center">Loading Map...</div>
+  loading: () => <div className="h-[300px] bg-slate-100 animate-pulse rounded-xl flex items-center justify-center">Memuat Peta...</div>
 });
 
 const itemLayouts = {
@@ -160,7 +160,7 @@ export function FormBranch(props: IPropsFormBranch) {
             "Tambah"
           : props?.formType === "detail" ?
             "Detail"
-          : "Update"}{" "}
+          : "Perbarui"}{" "}
           Cabang (Branch)
         </Typography>
         <p className="text-xs text-slate-400 font-medium m-0 mt-0.5">Lengkapi informasi data cabang Anda</p>
@@ -375,7 +375,7 @@ export function FormBranch(props: IPropsFormBranch) {
                     loading ? "bg-slate-400 cursor-not-allowed" : "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
                   }`}
                 >
-                  {loading ? "Processing..." : "Simpan Cabang"}
+                  {loading ? "Memproses..." : "Simpan Cabang"}
                 </button>
               </div>
             )}
@@ -411,7 +411,7 @@ export function FormBranch(props: IPropsFormBranch) {
                     loading ? "bg-slate-400 cursor-not-allowed" : "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
                   }`}
                 >
-                  {loading ? "Saving..." : "Simpan Perubahan"}
+                  {loading ? "Menyimpan..." : "Simpan Perubahan"}
                 </button>
               </div>
             )}

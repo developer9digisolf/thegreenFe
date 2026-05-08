@@ -10,9 +10,31 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        primary: '#DBAC34', // Gold from logo figure
+        secondary: '#76A13D', // Leaf green from logo
+        dark: '#2B4448', // Dark teal background from logo
+        darker: '#1E3236', // Darker teal
+        sand: '#F4F1ED',
       },
+      animation: {
+        'subtle-zoom': 'subtle-zoom 20s infinite alternate',
+        'soft-float': 'soft-float 3s ease-in-out infinite',
+        'fade-in': 'fade-in 0.8s ease-out forwards',
+      },
+      keyframes: {
+        'subtle-zoom': {
+          '0%': { transform: 'scale(1)' },
+          '100%': { transform: 'scale(1.1)' },
+        },
+        'soft-float': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+        'fade-in': {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        }
+      }
     },
   },
   plugins: [],

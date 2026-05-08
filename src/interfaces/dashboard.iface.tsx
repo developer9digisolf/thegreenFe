@@ -60,6 +60,27 @@ export interface IRecentSession {
     rating: number;
 }
 
+export interface IPeakHour {
+    labels: string[];
+    values: number[];
+}
+
+export interface ICustomerSegmentation {
+    newCustomers: number;
+    returningCustomers: number;
+    totalCustomers: number;
+    newPercentage: number;
+    returningPercentage: number;
+}
+
+export interface ITopMember {
+    memberCode: string;
+    name: string;
+    phone: string;
+    totalAmountSpent: number;
+    transactionCount: number;
+}
+
 export interface IDashboardParams {
     startDate?: string;
     endDate?: string;

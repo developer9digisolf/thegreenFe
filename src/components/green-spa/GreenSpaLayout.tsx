@@ -71,6 +71,7 @@ const menuConfig: MenuSection[] = [
           { key: "payment-method", label: "Payment Method", icon: "fa-solid fa-credit-card", path: "/dashboard/master/payment-methods" },
           { key: "member", label: "Member", icon: "fa-solid fa-users", path: "/dashboard/master/members" },
           { key: "room", label: "Ruangan", icon: "fa-solid fa-door-open", path: "/dashboard/master/rooms" },
+          { key: "service-package", label: "Paket Voucher", icon: "fa-solid fa-box-archive", path: "/dashboard/master/service-packages" },
         ]
       },
       { 
@@ -85,11 +86,7 @@ const menuConfig: MenuSection[] = [
             key: "employee", 
             label: "Employees", 
             icon: "fa-solid fa-user-doctor", 
-            subItems: [
-              { key: "employee-list", label: "List All", icon: "fa-solid fa-users", path: "/dashboard/organizations/employees" },
-              { key: "one-time-shifts", label: "One Time Shifts", icon: "fa-solid fa-calendar-day", path: "/dashboard/organizations/employees/one-time-shifts" },
-              { key: "recurring-shifts", label: "Recurring Shifts", icon: "fa-solid fa-calendar-week", path: "/dashboard/organizations/employees/recurring-shifts" },
-            ]
+            path: "/dashboard/organizations/employees"
           },
           { key: "position", label: "Position", icon: "fa-solid fa-user-tie", path: "/dashboard/organizations/positions" },
           { key: "department", label: "Department", icon: "fa-solid fa-building-columns", path: "/dashboard/organizations/departments" },
@@ -105,6 +102,16 @@ const menuConfig: MenuSection[] = [
           { key: "service-package", label: "Service Package", icon: "fa-solid fa-box-open", path: "/dashboard/master/packages" },
           { key: "voucher-package", label: "Paket Voucher", icon: "fa-solid fa-box-archive", path: "/dashboard/master/voucher-packages" },
           { key: "credit-package", label: "Paket Kredit", icon: "fa-solid fa-coins", path: "/dashboard/master/credit-packages" },
+        ]
+      },
+      { 
+        key: "reports", 
+        label: "Laporan", 
+        icon: "fa-solid fa-chart-line", 
+        roles: ["Owner", "Admin"],
+        subItems: [
+          { key: "commissions", label: "Commissions", icon: "fa-solid fa-money-bill-trend-up", path: "/dashboard/reports/commissions" },
+          { key: "sales-report", label: "Sales", icon: "fa-solid fa-file-invoice-dollar", path: "/dashboard/reports/sales" },
         ]
       },
     ]

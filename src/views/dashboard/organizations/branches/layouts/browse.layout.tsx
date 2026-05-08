@@ -48,7 +48,7 @@ export const BrowseBranch = ({
 
     const columns = [
         {
-            title: 'BRANCH INFO',
+            title: 'INFORMASI CABANG',
             key: 'branch',
             render: (text: any, record: any) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -71,7 +71,7 @@ export const BrowseBranch = ({
                         <div style={{ fontWeight: 700, color: '#1e293b' }}>
                             {record.name}
                             {record.isMainBranch && (
-                                <Tag color="gold" style={{ marginLeft: 8, fontSize: '10px', borderRadius: '4px' }}>Main</Tag>
+                                <Tag color="gold" style={{ marginLeft: 8, fontSize: '10px', borderRadius: '4px' }}>Utama</Tag>
                             )}
                         </div>
                         <div style={{ fontSize: '11px', color: '#94a3b8' }}>
@@ -82,7 +82,7 @@ export const BrowseBranch = ({
             )
         },
         {
-            title: 'CONTACT & ADDRESS',
+            title: 'KONTAK & ALAMAT',
             key: 'contact',
             render: (text: any, record: any) => (
                 <div style={{ fontSize: '13px' }}>
@@ -116,12 +116,12 @@ export const BrowseBranch = ({
             )
         },
         {
-            title: 'ACTION',
+            title: 'AKSI',
             key: 'action',
             align: 'center' as const,
             render: (text: any, record: any) => (
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                    <Tooltip title="Operating Hours">
+                    <Tooltip title="Jam Operasional">
                         <button 
                             onClick={() => handleOperatingHours(record)}
                             style={{ 
@@ -132,7 +132,7 @@ export const BrowseBranch = ({
                             <ClockCircleOutlined />
                         </button>
                     </Tooltip>
-                    <Tooltip title="Edit">
+                    <Tooltip title="Ubah">
                         <button 
                             onClick={() => handleToDetail(record.id)}
                             style={{ 
@@ -143,7 +143,7 @@ export const BrowseBranch = ({
                             <EditOutlined />
                         </button>
                     </Tooltip>
-                    <Tooltip title="Delete">
+                    <Tooltip title="Hapus">
                         <button 
                             onClick={() => handleDelete(record.id, record.name)}
                             style={{ 
@@ -163,8 +163,8 @@ export const BrowseBranch = ({
         <div className="branch-management-container" style={{ padding: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
                 <div>
-                    <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1e293b', margin: 0 }}>Branch Management</h1>
-                    <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: 14 }}>Configure branch locations, contact info, and operating hours</p>
+                    <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1e293b', margin: 0 }}>Manajemen Cabang</h1>
+                    <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: 14 }}>Kelola lokasi cabang, informasi kontak, dan jam operasional</p>
                 </div>
                 <button 
                     onClick={setOpenFormCreate}
@@ -175,7 +175,7 @@ export const BrowseBranch = ({
                         cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.2)'
                     }}
                 >
-                    <PlusOutlined /> <span>Add Branch</span>
+                    <PlusOutlined /> <span>Tambah Cabang</span>
                 </button>
             </div>
 
@@ -185,19 +185,19 @@ export const BrowseBranch = ({
                         <ShopOutlined style={{ fontSize: 20 }} />
                     </div>
                     <div style={{ fontSize: 28, fontWeight: 700, color: '#1e293b' }}>{pageInfo.total}</div>
-                    <div style={{ fontSize: 14, color: '#64748b' }}>Total Branches</div>
+                    <div style={{ fontSize: 14, color: '#64748b' }}>Total Cabang</div>
                 </div>
             </div>
 
             <div style={{ background: 'white', borderRadius: 24, boxShadow: '0 10px 40px rgba(0, 0, 0, 0.04)', border: '1px solid #edf2f7', overflow: 'hidden' }}>
                 <div style={{ padding: '24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1e293b', margin: 0 }}>Branch List</h3>
+                    <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1e293b', margin: 0 }}>Daftar Cabang</h3>
                     <div style={{ display: 'flex', gap: 12 }}>
                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                             <SearchOutlined style={{ position: 'absolute', left: 14, color: '#94a3b8' }} />
                             <input 
                                 type="text" 
-                                placeholder="Search name, code..." 
+                                placeholder="Cari nama, kode..." 
                                 value={searchText}
                                 onChange={(e) => setSearchText(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && onSearch(searchText)}
@@ -208,7 +208,7 @@ export const BrowseBranch = ({
                             onClick={() => onSearch(searchText)}
                             style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', padding: '9px 20px', borderRadius: 12, fontWeight: 600, cursor: 'pointer' }}
                         >
-                            Search
+                            Cari
                         </button>
                     </div>
                 </div>
@@ -222,7 +222,7 @@ export const BrowseBranch = ({
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderTop: '1px solid #f1f5f9' }}>
                     <div style={{ color: '#64748b', fontSize: 13 }}>
-                        Showing <b>{branches.length > 0 ? ((Number(page) - 1) * Number(pageSize)) + 1 : 0}</b> to <b>{Math.min(Number(page) * Number(pageSize), Number(pageInfo?.total) || 0)}</b> of <b>{Number(pageInfo?.total) || 0}</b> branches
+                        Menampilkan <b>{branches.length > 0 ? ((Number(page) - 1) * Number(pageSize)) + 1 : 0}</b> sampai <b>{Math.min(Number(page) * Number(pageSize), Number(pageInfo?.total) || 0)}</b> dari <b>{Number(pageInfo?.total) || 0}</b> cabang
                     </div>
                     <Pagination 
                         current={page}

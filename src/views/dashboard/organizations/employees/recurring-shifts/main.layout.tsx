@@ -39,9 +39,13 @@ import { IActionShift, IStateShift } from "@afx/models/dashboard/master/shifts.m
 
 const { Title, Text } = Typography;
 
-const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const days = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
 
-export default function RecurringShiftsView() {
+interface RecurringShiftsViewProps {
+  employeeId?: number;
+}
+
+export default function RecurringShiftsView({ employeeId }: RecurringShiftsViewProps) {
   const {
     useActions: useShiftActions,
     state: shiftState,
@@ -62,7 +66,7 @@ export default function RecurringShiftsView() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(null);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(employeeId || null);
   const [form] = Form.useForm();
   const searchParams = useSearchParams();
   const employeeIdParam = searchParams.get("employeeId");
@@ -71,10 +75,12 @@ export default function RecurringShiftsView() {
     useEmployeeActions<"getEmployees">("getEmployees", [{ page: 1, pageSize: 100 }], true);
     useMasterShiftActions<"getShifts">("getShifts", [{ page: 1, pageSize: 100 }], true);
     
-    if (employeeIdParam) {
+    if (employeeId) {
+      setSelectedEmployeeId(employeeId);
+    } else if (employeeIdParam) {
       setSelectedEmployeeId(Number(employeeIdParam));
     }
-  }, [employeeIdParam]);
+  }, [employeeId, employeeIdParam]);
 
   useEffect(() => {
     if (selectedEmployeeId) {
@@ -97,7 +103,7 @@ export default function RecurringShiftsView() {
 
   const columns = [
     {
-      title: "Day",
+      title: "Hari",
       dataIndex: "dayOfWeek",
       key: "dayOfWeek",
       render: (day: number) => <Text className="font-bold">{days[day]}</Text>
@@ -112,18 +118,18 @@ export default function RecurringShiftsView() {
         </Tag>
       ) : (
         <Tag className="border-none font-bold rounded-lg px-3 py-0.5 bg-slate-100 text-slate-400">
-          OFF
+          LIBUR
         </Tag>
       )
     },
     {
-      title: "Notes",
+      title: "Catatan",
       dataIndex: "notes",
       key: "notes",
       render: (notes: string) => <Text className="text-slate-400 italic text-xs">{notes || "-"}</Text>
     },
     {
-      title: "Actions",
+      title: "Aksi",
       key: "actions",
       width: 100,
       align: 'center' as const,
@@ -149,35 +155,37 @@ export default function RecurringShiftsView() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
         <div>
           <Title level={2} className="!m-0 text-slate-800 font-extrabold tracking-tight">
-            Recurring Schedules
+            Jadwal Rutin
           </Title>
           <Text className="text-slate-400 font-medium italic">
-            Manage permanent weekly shift patterns for your staff
+            Kelola pola shift mingguan permanen untuk staf Anda
           </Text>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex flex-col">
-            <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Select Employee to View</Text>
-            <Select 
-              placeholder="Choose employee..." 
-              className="w-64 premium-select-header"
-              onChange={setSelectedEmployeeId}
-              value={selectedEmployeeId}
-              loading={isLoadingEmployee("getEmployees")}
-              options={employeeState.employees.map(emp => ({
-                value: emp.id,
-                label: emp.fullName || emp.nickname || `Employee #${emp.id}`
-              }))}
-            />
-          </div>
-          <div className="flex gap-3 pt-5">
+          {!employeeId && (
+            <div className="flex flex-col">
+              <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Pilih Karyawan untuk Dilihat</Text>
+              <Select 
+                placeholder="Pilih karyawan..." 
+                className="w-64 premium-select-header"
+                onChange={setSelectedEmployeeId}
+                value={selectedEmployeeId}
+                loading={isLoadingEmployee("getEmployees")}
+                options={employeeState.employees.map(emp => ({
+                  value: emp.id,
+                  label: emp.fullName || emp.nickname || `Karyawan #${emp.id}`
+                }))}
+              />
+            </div>
+          )}
+          <div className={`flex gap-3 ${!employeeId ? 'pt-5' : ''}`}>
             <Button 
               icon={<SyncOutlined />} 
               disabled={!selectedEmployeeId}
               onClick={() => selectedEmployeeId && useShiftActions<"getRecurringShifts">("getRecurringShifts", [selectedEmployeeId], true)}
               className="flex items-center gap-2 h-11 px-5 rounded-xl border-slate-200 hover:border-emerald-400 hover:text-emerald-500 font-semibold"
             >
-              Refresh
+              Perbarui
             </Button>
             <Button 
               type="primary" 
@@ -189,7 +197,7 @@ export default function RecurringShiftsView() {
                 setIsModalOpen(true);
               }}
             >
-              Create Pattern
+              Buat Pola
             </Button>
           </div>
         </div>
@@ -220,7 +228,7 @@ export default function RecurringShiftsView() {
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
               <SyncOutlined />
             </div>
-            <span className="font-bold">{editingId ? 'Edit Pattern' : 'New Recurring Pattern'}</span>
+            <span className="font-bold">{editingId ? 'Ubah Pola' : 'Pola Rutin Baru'}</span>
           </div>
         }
         open={isModalOpen}
@@ -231,24 +239,30 @@ export default function RecurringShiftsView() {
         className="premium-modal"
       >
         <Form layout="vertical" form={form} onFinish={handleCreate} className="mt-6">
-          <Form.Item name="employeeId" label="Select Employee" required rules={[{ required: true }]}>
-            <Select 
-              placeholder="Search employee..." 
-              showSearch 
-              className="premium-select"
-              loading={isLoadingEmployee("getEmployees")}
-              filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
-              options={employeeState.employees.map(emp => ({
-                value: emp.id,
-                label: emp.fullName || emp.nickname || `Employee #${emp.id}`
-              }))}
-            />
-          </Form.Item>
+          {employeeId ? (
+            <Form.Item name="employeeId" hidden initialValue={employeeId}>
+              <Input />
+            </Form.Item>
+          ) : (
+            <Form.Item name="employeeId" label="Pilih Karyawan" required rules={[{ required: true }]}>
+              <Select 
+                placeholder="Cari karyawan..." 
+                showSearch 
+                className="premium-select"
+                loading={isLoadingEmployee("getEmployees")}
+                filterOption={(input, option) =>
+                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+                options={employeeState.employees.map(emp => ({
+                  value: emp.id,
+                  label: emp.fullName || emp.nickname || `Karyawan #${emp.id}`
+                }))}
+              />
+            </Form.Item>
+          )}
           
-          <Form.Item name="dayOfWeek" label="Day of Week" required rules={[{ required: true }]}>
-            <Select placeholder="Select day..." className="premium-select">
+          <Form.Item name="dayOfWeek" label="Hari dalam Seminggu" required rules={[{ required: true }]}>
+            <Select placeholder="Pilih hari..." className="premium-select">
                 {days.map((day, index) => (
                     <Select.Option key={index} value={index}>{day}</Select.Option>
                 ))}
@@ -257,7 +271,7 @@ export default function RecurringShiftsView() {
 
           <Form.Item name="shiftId" label="Shift" required rules={[{ required: true }]}>
             <Select 
-              placeholder="Choose shift..." 
+              placeholder="Pilih shift..." 
               className="premium-select"
               loading={isLoadingMasterShift("getShifts")}
               options={masterShiftState.shifts.map(s => ({
@@ -270,8 +284,8 @@ export default function RecurringShiftsView() {
 
 
           <div className="flex justify-end gap-3">
-            <Button size="large" className="rounded-xl px-6 border-slate-200 font-bold h-12" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button size="large" type="primary" htmlType="submit" loading={isLoadingShift("createRecurringShift")} className="rounded-xl px-8 bg-emerald-600 border-none font-bold h-12 shadow-lg shadow-emerald-200">Save Pattern</Button>
+            <Button size="large" className="rounded-xl px-6 border-slate-200 font-bold h-12" onClick={() => setIsModalOpen(false)}>Batal</Button>
+            <Button size="large" type="primary" htmlType="submit" loading={isLoadingShift("createRecurringShift")} className="rounded-xl px-8 bg-emerald-600 border-none font-bold h-12 shadow-lg shadow-emerald-200">Simpan Pola</Button>
           </div>
         </Form>
       </Modal>

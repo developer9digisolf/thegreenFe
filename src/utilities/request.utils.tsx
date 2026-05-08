@@ -58,6 +58,7 @@ export default async function request<T = any, R = any>({
             bodyType === "formData" ?
               "multipart/form-data"
             : "application/json;charset=UTF-8",
+          "ngrok-skip-browser-warning": "true",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         method,

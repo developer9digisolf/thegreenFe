@@ -342,18 +342,21 @@ export default function ServiceVariantsPage() {
                             />
                         </div>
                     </Col>
-                    <Col xs={24} md={8} className="flex items-end">
-                        <Button 
-                            icon={<ReloadOutlined />} 
-                            onClick={() => {
-                                setSelectedServiceId(null);
-                                setSearchQuery("");
-                                fetchData(1, pagination.pageSize, "");
-                            }}
-                            className="h-12 rounded-xl px-6 bg-slate-100 border-none font-bold text-slate-500 hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
-                        >
-                            Reset Filter
-                        </Button>
+                    <Col xs={24} md={8}>
+                        <div className="flex flex-col gap-1">
+                            <span className="text-[10px] font-black text-transparent uppercase tracking-widest ml-1 select-none">RESET</span>
+                            <Button 
+                                icon={<ReloadOutlined />} 
+                                onClick={() => {
+                                    setSelectedServiceId(null);
+                                    setSearchQuery("");
+                                    fetchData(1, pagination.pageSize, "");
+                                }}
+                                className="h-12 rounded-xl px-6 bg-slate-100 border-none font-bold text-slate-500 hover:bg-slate-200 transition-all flex items-center justify-center gap-2 w-fit"
+                            >
+                                Reset Filter
+                            </Button>
+                        </div>
                     </Col>
                 </Row>
             </Card>

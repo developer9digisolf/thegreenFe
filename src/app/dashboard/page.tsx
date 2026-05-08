@@ -12,15 +12,21 @@ import {
     GetTopTherapistsService, 
     GetPaymentMethodTotalsService, 
     GetRecentSalesService, 
-    GetRecentSessionsService 
+    GetRecentSessionsService,
+    GetTopMembersService,
+    GetPeakHoursService,
+    GetCustomerSegmentationService
 } from '@afx/services/dashboard.service';
 import { 
     ISummaryRevenue, 
     ISalesPerformance, 
     ITopTherapist, 
+    ITopMember,
     IPaymentMethodTotal, 
     IRecentSale, 
-    IRecentSession 
+    IRecentSession,
+    IPeakHour,
+    ICustomerSegmentation
 } from '@afx/interfaces/dashboard.iface';
 
 const { RangePicker } = DatePicker;
@@ -37,9 +43,12 @@ export default function Dashboard() {
     const [summary, setSummary] = useState<ISummaryRevenue | null>(null);
     const [salesPerf, setSalesPerf] = useState<ISalesPerformance | null>(null);
     const [topTherapists, setTopTherapists] = useState<ITopTherapist[]>([]);
+    const [topMembers, setTopMembers] = useState<ITopMember[]>([]);
     const [paymentMethods, setPaymentMethods] = useState<IPaymentMethodTotal | null>(null);
     const [recentSales, setRecentSales] = useState<IRecentSale[]>([]);
     const [recentSessions, setRecentSessions] = useState<IRecentSession[]>([]);
+    const [peakHours, setPeakHours] = useState<IPeakHour | null>(null);
+    const [customerSegmentation, setCustomerSegmentation] = useState<ICustomerSegmentation | null>(null);
 
     const fetchData = async () => {
         setLoading(true);
@@ -54,16 +63,22 @@ export default function Dashboard() {
                 summaryRes,
                 salesRes,
                 therapistsRes,
-                paymentsRes,
+                paymentMethodsRes,
                 salesRecentRes,
-                sessionsRecentRes
+                sessionsRecentRes,
+                membersRes,
+                peakRes,
+                segmentRes
             ] = await Promise.all([
                 GetSummaryRevenueService(),
                 GetSalesPerformanceService(params),
                 GetTopTherapistsService(params),
                 GetPaymentMethodTotalsService(params),
                 GetRecentSalesService(params),
-                GetRecentSessionsService(params)
+                GetRecentSessionsService(params),
+                GetTopMembersService(params),
+                GetPeakHoursService(params),
+                GetCustomerSegmentationService(params)
             ]);
 
             if (summaryRes.meta.success) setSummary(summaryRes.data);
@@ -72,9 +87,12 @@ export default function Dashboard() {
                 const filtered = therapistsRes.data.filter((t: ITopTherapist) => t.name && t.employeeCode);
                 setTopTherapists(filtered);
             }
-            if (paymentsRes.meta.success) setPaymentMethods(paymentsRes.data);
+            if (paymentMethodsRes.meta.success) setPaymentMethods(paymentMethodsRes.data);
             if (salesRecentRes.meta.success) setRecentSales(salesRecentRes.data);
             if (sessionsRecentRes.meta.success) setRecentSessions(sessionsRecentRes.data);
+            if (membersRes.meta.success) setTopMembers(membersRes.data);
+            if (peakRes.meta.success) setPeakHours(peakRes.data);
+            if (segmentRes.meta.success) setCustomerSegmentation(segmentRes.data);
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
         } finally {
@@ -149,10 +167,11 @@ export default function Dashboard() {
         labels: paymentMethods?.labels || [],
         colors: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'],
         legend: { position: 'bottom' as const },
+        stroke: { show: false },
         plotOptions: {
             pie: {
                 donut: {
-                    size: '70%',
+                    size: '75%',
                     labels: {
                         show: true,
                         total: {
@@ -168,6 +187,58 @@ export default function Dashboard() {
             }
         }
     }), [paymentMethods]);
+
+    const peakChartOptions = useMemo(() => ({
+        chart: { 
+            id: 'peak-hours',
+            toolbar: { show: false },
+            zoom: { enabled: false }
+        },
+        xaxis: {
+            categories: peakHours?.labels || [],
+            axisBorder: { show: false },
+            axisTicks: { show: false }
+        },
+        yaxis: {
+            title: { text: 'Jumlah Sesi' }
+        },
+        colors: ['#8b5cf6'],
+        stroke: { curve: 'smooth', width: 3 },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.45,
+                opacityTo: 0.05,
+                stops: [50, 100]
+            }
+        },
+        grid: { borderColor: '#f1f5f9' },
+        markers: { size: 4, strokeWidth: 2 }
+    }), [peakHours]);
+
+    const segmentChartOptions = useMemo(() => ({
+        chart: { id: 'customer-segmentation' },
+        labels: ['Baru', 'Kembali'],
+        colors: ['#10b981', '#f59e0b'],
+        legend: { position: 'bottom' as const },
+        stroke: { show: false },
+        plotOptions: {
+            pie: {
+                donut: {
+                    size: '75%',
+                    labels: {
+                        show: true,
+                        total: {
+                            show: true,
+                            label: 'Total',
+                            formatter: () => customerSegmentation?.totalCustomers || 0
+                        }
+                    }
+                }
+            }
+        }
+    }), [customerSegmentation]);
 
     const summaryCards = [
         {
@@ -238,6 +309,15 @@ export default function Dashboard() {
                     <h1 className="text-3xl font-extrabold text-slate-900 mb-1 tracking-tight">Dashboard</h1>
                     <p className="text-slate-500 text-sm">Selamat datang di The Green Spa Management System</p>
                 </div>
+                <div className="flex items-center gap-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
+                    <div className="text-xs font-bold text-slate-400 px-2 uppercase tracking-wider">Filter Periode</div>
+                    <RangePicker 
+                        value={dateRange}
+                        onChange={(dates) => dates && setDateRange([dates[0]!, dates[1]!])}
+                        allowClear={false}
+                        className="dashboard-range-picker !bg-slate-50 !border-none"
+                    />
+                </div>
             </div>
 
             {/* Stats Grid */}
@@ -274,12 +354,6 @@ export default function Dashboard() {
                             </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                            <RangePicker 
-                                value={dateRange}
-                                onChange={(dates) => dates && setDateRange([dates[0]!, dates[1]!])}
-                                allowClear={false}
-                                className="dashboard-range-picker"
-                            />
                             <Select 
                                 value={period} 
                                 onChange={(val: 'daily' | 'weekly' | 'monthly') => {
@@ -294,9 +368,9 @@ export default function Dashboard() {
                                 className="period-select"
                                 bordered={false}
                                 options={[
-                                    { value: 'daily', label: 'Daily' },
-                                    { value: 'weekly', label: 'Weekly' },
-                                    { value: 'monthly', label: 'Monthly' }
+                                    { value: 'daily', label: 'Harian' },
+                                    { value: 'weekly', label: 'Mingguan' },
+                                    { value: 'monthly', label: 'Bulanan' }
                                 ]}
                             />
                         </div>
@@ -327,15 +401,57 @@ export default function Dashboard() {
                 </div>
             </div>
 
+            {/* Row 3: Peak Hours & Customer Segmentation */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+                <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-5 sm:p-8 shadow-sm border border-slate-100 overflow-hidden">
+                    <h3 className="text-xl font-extrabold text-slate-900 mb-6">Jam Sibuk</h3>
+                    {loading ? <div className="h-[350px] flex items-center justify-center"><Spin /></div> : (
+                        peakHours && peakHours.labels.length > 0 ? (
+                            <DynamicChart 
+                                type="area"
+                                options={peakChartOptions}
+                                series={[{ name: 'Sesi', data: peakHours.values }]}
+                                height={350}
+                            />
+                        ) : <Empty description="Tidak ada data jam sibuk" />
+                    )}
+                </div>
+                <div className="bg-white rounded-[2.5rem] p-5 sm:p-8 shadow-sm border border-slate-100 overflow-hidden">
+                    <h3 className="text-xl font-extrabold text-slate-900 mb-6">Segmentasi Pelanggan</h3>
+                    {loading ? <div className="h-[350px] flex items-center justify-center"><Spin /></div> : (
+                        customerSegmentation && customerSegmentation.totalCustomers > 0 ? (
+                            <div className="flex flex-col items-center">
+                                <DynamicChart 
+                                    type="donut"
+                                    options={segmentChartOptions}
+                                    series={[customerSegmentation.newCustomers, customerSegmentation.returningCustomers]}
+                                    height={350}
+                                />
+                                <div className="grid grid-cols-2 gap-4 w-full mt-4">
+                                    <div className="p-3 bg-emerald-50 rounded-2xl text-center">
+                                        <div className="text-xs font-bold text-emerald-600 uppercase">Baru</div>
+                                        <div className="text-lg font-black text-slate-900">{customerSegmentation.newPercentage}%</div>
+                                    </div>
+                                    <div className="p-3 bg-amber-50 rounded-2xl text-center">
+                                        <div className="text-xs font-bold text-amber-600 uppercase">Kembali</div>
+                                        <div className="text-lg font-black text-slate-900">{customerSegmentation.returningPercentage}%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : <div className="h-[350px] flex items-center justify-center"><Empty description="Tidak ada data pelanggan pada periode ini" /></div>
+                    )}
+                </div>
+            </div>
+
             {/* Detailed Info Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                 {/* Recent Sales */}
                 <div className="lg:col-span-3 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col">
                     <div className="p-5 sm:p-8 pb-4 sm:pb-6 flex items-center justify-between">
                         <h3 className="text-xl font-extrabold text-slate-900 m-0">Penjualan Terbaru</h3>
-                        <Link href="/dashboard/sales" className="text-emerald-500 text-sm font-bold no-underline hover:underline">Lihat Semua</Link>
+                        {/* <Link href="/dashboard/sales" className="text-emerald-500 text-sm font-bold no-underline hover:underline">Lihat Semua</Link> */}
                     </div>
-                    <div className="p-0 overflow-x-auto">
+                    <div className="p-0 overflow-x-auto table-wrapper">
                         <Table 
                             dataSource={recentSales.slice(0, 5)}
                             loading={loading}
@@ -383,6 +499,96 @@ export default function Dashboard() {
                     </div>
                 </div>
 
+                {/* Top Members */}
+                <div className="lg:col-span-2 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+                    <div className="p-5 sm:p-8 pb-4 sm:pb-6 flex items-center justify-between">
+                        <h3 className="text-xl font-extrabold text-slate-900 m-0">Top Member Loyal</h3>
+                    </div>
+                    <div className="p-5 sm:p-8 pt-0 flex flex-col gap-4 sm:gap-6">
+                        {loading ? <Spin className="mt-4" /> : (
+                            topMembers.length > 0 ? topMembers.slice(0, 5).map((member, idx) => (
+                                <div key={idx} className="flex items-center gap-5 p-4 rounded-3xl hover:bg-slate-50 transition-all group border border-transparent hover:border-slate-100">
+                                    <div className="w-14 h-14 rounded-2xl bg-blue-500 text-white flex items-center justify-center font-bold text-xl shrink-0 shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
+                                        {member.name ? member.name.split(' ').map(n => n[0]).join('') : '?'}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-lg font-black text-slate-900 truncate">{member.name || 'Unknown Member'}</div>
+                                        <div className="text-[10px] font-bold text-slate-400 mb-2">{member.phone}</div>
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
+                                                <i className="fa-solid fa-crown text-[10px]"></i>
+                                                <span className="text-xs font-black">{member.transactionCount} Transaksi</span>
+                                            </div>
+                                            <div className="text-xs font-bold text-slate-400">
+                                                Total <span className="text-slate-900">{formatCurrency(member.totalAmountSpent)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )) : <Empty description="Belum ada data member" />
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Detailed Info Grid Row 2 */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mt-8">
+                {/* Recent Sessions */}
+                <div className="lg:col-span-3 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+                    <div className="p-5 sm:p-8 pb-4 sm:pb-6 flex items-center justify-between">
+                        <h3 className="text-xl font-extrabold text-slate-900 m-0">Sesi Terkini</h3>
+                        {/* <Link href="/dashboard/bookings" className="text-emerald-500 text-sm font-bold no-underline hover:underline">Lihat Semua</Link> */}
+                    </div>
+                    <div className="p-0 overflow-x-auto table-wrapper">
+                        <Table 
+                            dataSource={recentSessions.slice(0, 5)}
+                            loading={loading}
+                            pagination={false}
+                            rowKey="id"
+                            className="dashboard-table"
+                            columns={[
+                                {
+                                    title: 'Waktu',
+                                    dataIndex: 'scheduledTime',
+                                    key: 'scheduledTime',
+                                    render: (text, record) => (
+                                        <div>
+                                            <div className="font-bold text-slate-900">{dayjs(record.sessionDate).format('DD MMM')}</div>
+                                            <div className="text-[10px] text-slate-400">{text.split('.')[0]}</div>
+                                        </div>
+                                    )
+                                },
+                                {
+                                    title: 'Member',
+                                    dataIndex: 'memberName',
+                                    key: 'memberName',
+                                    render: (text) => <span className="font-bold text-slate-700">{text}</span>
+                                },
+                                {
+                                    title: 'Layanan',
+                                    dataIndex: 'serviceName',
+                                    key: 'serviceName',
+                                    render: (text) => <span className="text-sm text-slate-600 truncate max-w-[120px] inline-block">{text}</span>
+                                },
+                                {
+                                    title: 'Status',
+                                    dataIndex: 'statusName',
+                                    key: 'status',
+                                    render: (text, record) => (
+                                        <div className={`px-2 py-0.5 rounded-full w-fit text-[10px] font-extrabold uppercase tracking-widest border ${
+                                            record.status === 'completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                            record.status === 'claimed' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                            'bg-amber-50 text-amber-600 border-amber-100'
+                                        }`}>
+                                            {text}
+                                        </div>
+                                    )
+                                }
+                            ]}
+                        />
+                    </div>
+                </div>
+
                 {/* Top Therapists */}
                 <div className="lg:col-span-2 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col">
                     <div className="p-5 sm:p-8 pb-4 sm:pb-6 flex items-center justify-between">
@@ -415,67 +621,6 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* Recent Sessions Row */}
-            <div className="mt-8 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
-                <div className="p-5 sm:p-8 pb-4 sm:pb-6 flex items-center justify-between">
-                    <h3 className="text-xl font-extrabold text-slate-900 m-0">Sesi Terkini</h3>
-                    <Link href="/dashboard/bookings" className="text-emerald-500 text-sm font-bold no-underline hover:underline">Lihat Semua</Link>
-                </div>
-                <div className="p-0 overflow-x-auto">
-                    <Table 
-                        dataSource={recentSessions.slice(0, 10)}
-                        loading={loading}
-                        pagination={false}
-                        rowKey="id"
-                        className="dashboard-table"
-                        columns={[
-                            {
-                                title: 'Waktu',
-                                dataIndex: 'scheduledTime',
-                                key: 'scheduledTime',
-                                render: (text, record) => (
-                                    <div>
-                                        <div className="font-bold text-slate-900">{dayjs(record.sessionDate).format('DD MMM')}</div>
-                                        <div className="text-[10px] text-slate-400">{text.split('.')[0]}</div>
-                                    </div>
-                                )
-                            },
-                            {
-                                title: 'Member',
-                                dataIndex: 'memberName',
-                                key: 'memberName',
-                                render: (text) => <span className="font-bold text-slate-700">{text}</span>
-                            },
-                            {
-                                title: 'Layanan',
-                                dataIndex: 'serviceName',
-                                key: 'serviceName',
-                                render: (text) => <span className="text-sm text-slate-600">{text}</span>
-                            },
-                            {
-                                title: 'Terapis',
-                                dataIndex: 'therapistName',
-                                key: 'therapistName',
-                                render: (text) => <Badge status="success" text={text} className="text-xs font-semibold" />
-                            },
-                            {
-                                title: 'Status',
-                                dataIndex: 'statusName',
-                                key: 'status',
-                                render: (text, record) => (
-                                    <div className={`px-3 py-1 rounded-full w-fit text-[10px] font-extrabold uppercase tracking-widest border ${
-                                        record.status === 'completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                        record.status === 'claimed' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                        'bg-amber-50 text-amber-600 border-amber-100'
-                                    }`}>
-                                        {text}
-                                    </div>
-                                )
-                            }
-                        ]}
-                    />
-                </div>
-            </div>
 
             <style jsx global>{`
                 .dashboard-table .ant-table {
@@ -497,6 +642,16 @@ export default function Dashboard() {
                 }
                 .dashboard-table .ant-table-tbody > tr:hover > td {
                     background: #f1f5f9/30 !important;
+                }
+                /* Hide scrollbars for tables and their wrappers */
+                .dashboard-table ::-webkit-scrollbar,
+                .table-wrapper ::-webkit-scrollbar {
+                    display: none;
+                }
+                .dashboard-table,
+                .table-wrapper {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
                 }
                 .period-select {
                     background: #f8fafc;

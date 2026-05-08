@@ -45,7 +45,6 @@ export default function EmployeeView() {
       search: keyword,
       page,
       pageSize,
-      sortColumn: "createdAt",
       sortDirection: "desc" as const,
     };
     useEmployeeActions<"getEmployees">("getEmployees", [params], true);
@@ -71,6 +70,14 @@ export default function EmployeeView() {
     setOpenFormCreate(true);
   };
 
+  const getPathFromUrl = (url: string) => {
+    const cdnBase = "https://sin1.contabostorage.com/30e3a2fafcfd4aa0a6af34e9ca6f9492:thegreen-cdn/";
+    if (url && typeof url === "string" && url.startsWith(cdnBase)) {
+      return url.replace(cdnBase, "");
+    }
+    return url;
+  };
+
   const handleSubmit = () => {
     return forms
       .validateFields()
@@ -78,6 +85,7 @@ export default function EmployeeView() {
         // Format dates to YYYY-MM-DD for API as requested
         const payload = {
           ...val,
+          photoUrl: val.photoUrl ? getPathFromUrl(val.photoUrl) : val.photoUrl,
           dateOfBirth: val.dateOfBirth ? val.dateOfBirth.format("YYYY-MM-DD") : null,
           hireDate: val.hireDate ? val.hireDate.format("YYYY-MM-DD") : null,
         };

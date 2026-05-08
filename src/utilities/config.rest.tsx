@@ -113,15 +113,20 @@ export const rest = {
   // Dashboard
   dashboardSummaryRevenue: "dashboard/summary-revenue",
   dashboardSalesPerformance: "dashboard/sales-performance",
+  dashboardPeakHours: "dashboard/peak-hour",
+  dashboardCustomerSegmentation: "dashboard/customer-segmentation",
   dashboardTopTherapists: "dashboard/top-therapists",
+  dashboardTopMembers: "dashboard/top-loyal-members",
   dashboardPaymentMethodTotals: "dashboard/payment-method-totals",
   dashboardRecentSales: "dashboard/recent-sales",
   dashboardRecentSessions: "dashboard/recent-sessions",
 
   // Sales
   sales: "sales",
+  salesPaid: "sales/paid",
   salesSummary: "sales/summary",
   salesDetail: "sales/:id",
+  salesExport: "export/excel/sales",
 
   master: {
     companies: {
@@ -207,6 +212,18 @@ export const rest = {
       create: "master/branch-service-variants",
       update: "master/branch-service-variants/:ID",
       delete: "master/branch-service-variants/:ID",
+    },
+    servicePackages: {
+      index: "master/service-packages",
+      show: "master/service-packages/:ID",
+      create: "master/service-packages",
+      update: "master/service-packages/:ID",
+      delete: "master/service-packages/:ID",
+    },
+    commissions: {
+      byEmployee: "master/commissions/by-employee",
+      sessions: "master/commissions/sessions",
+      export: "export/excel/commissions",
     },
   },
 };

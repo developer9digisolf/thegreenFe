@@ -11,6 +11,7 @@ import {
     Select,
     Popconfirm
 } from "antd";
+import { useRouter } from "next/navigation";
 import { 
     PlusOutlined, 
     SearchOutlined, 
@@ -42,6 +43,7 @@ export const BrowseEmployee = ({
     handleToDetail,
     handleDelete
 }: IPropsEmployee) => {
+    const router = useRouter();
     const {
         state: employeeState,
     } = useStore<IStateEmployee, IActionEmployee>("employees");
@@ -66,9 +68,23 @@ export const BrowseEmployee = ({
                         justifyContent: 'center',
                         fontSize: '18px',
                         fontWeight: 700,
-                        border: '1px solid #d1fae5'
+                        border: '1px solid #d1fae5',
+                        overflow: 'hidden'
                     }}>
-                        {record.fullName?.charAt(0).toUpperCase() || "?"}
+                        {record.photoUrl ? (
+                            <img 
+                                src={record.photoUrl} 
+                                alt={record.fullName}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                onError={(e) => {
+                                    // Fallback if image fails to load
+                                    (e.target as any).style.display = 'none';
+                                    (e.target as any).parentElement.innerText = record.fullName?.charAt(0).toUpperCase() || "?";
+                                }}
+                            />
+                        ) : (
+                            record.fullName?.charAt(0).toUpperCase() || "?"
+                        )}
                     </div>
                     <div>
                         <div style={{ fontWeight: 700, color: '#1e293b' }}>{record.fullName}</div>
@@ -104,7 +120,7 @@ export const BrowseEmployee = ({
             )
         },
         {
-            title: 'GENDER',
+            title: 'JENIS KELAMIN',
             dataIndex: 'gender',
             key: 'gender',
             render: (gender: number) => (
@@ -116,7 +132,7 @@ export const BrowseEmployee = ({
                     padding: '4px 8px',
                     borderRadius: '6px'
                 }}>
-                    {gender === 1 ? "Male" : "Female"}
+                    {gender === 1 ? "Laki-laki" : "Perempuan"}
                 </span>
             )
         },
@@ -126,19 +142,19 @@ export const BrowseEmployee = ({
             key: 'status',
             render: (status: number) => (
                 <Tag color={status === 1 ? "success" : "default"} style={{ borderRadius: '6px', fontWeight: 600 }}>
-                    {status === 1 ? "Active" : "Inactive"}
+                    {status === 1 ? "Aktif" : "Tidak Aktif"}
                 </Tag>
             )
         },
         {
-            title: 'ACTION',
+            title: 'AKSI',
             key: 'action',
             align: 'center' as const,
             render: (text: any, record: any) => (
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                    <Tooltip title="Edit">
+                    <Tooltip title="Lihat Detail / Ubah">
                         <button 
-                            onClick={() => handleToDetail(record.id)}
+                            onClick={() => router.push(`/dashboard/organizations/employees/${record.id}`)}
                             style={{ 
                                 width: 32, height: 32, borderRadius: 8, border: '1px solid #e2e8f0', 
                                 background: 'white', cursor: 'pointer', color: '#3b82f6' 
@@ -147,7 +163,7 @@ export const BrowseEmployee = ({
                             <EditOutlined />
                         </button>
                     </Tooltip>
-                    <Tooltip title="Delete">
+                    <Tooltip title="Hapus">
                         <button 
                             onClick={() => handleDelete(record.id, record.fullName)}
                             style={{ 
@@ -167,8 +183,8 @@ export const BrowseEmployee = ({
         <div className="employee-management-container" style={{ padding: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
                 <div>
-                    <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1e293b', margin: 0 }}>Employee Management</h1>
-                    <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: 14 }}>Manage all employee, therapist, and operational staff data</p>
+                    <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1e293b', margin: 0 }}>Manajemen Karyawan</h1>
+                    <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: 14 }}>Kelola data karyawan, terapis, dan staf operasional</p>
                 </div>
                 <button 
                     onClick={setOpenFormCreate}
@@ -179,7 +195,7 @@ export const BrowseEmployee = ({
                         cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.2)'
                     }}
                 >
-                    <PlusOutlined /> <span>Add Employee</span>
+                    <PlusOutlined /> <span>Tambah Karyawan</span>
                 </button>
             </div>
 
@@ -189,7 +205,7 @@ export const BrowseEmployee = ({
                         <TeamOutlined style={{ fontSize: 20 }} />
                     </div>
                     <div style={{ fontSize: 28, fontWeight: 700, color: '#1e293b' }}>{pageInfo.total}</div>
-                    <div style={{ fontSize: 14, color: '#64748b' }}>Total Employees</div>
+                    <div style={{ fontSize: 14, color: '#64748b' }}>Total Karyawan</div>
                 </div>
                 <div style={{ background: 'white', padding: 24, borderRadius: 20, boxShadow: '0 10px 40px rgba(0, 0, 0, 0.04)', border: '1px solid #edf2f7' }}>
                     <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(59, 130, 246, 0.05)', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
@@ -198,20 +214,20 @@ export const BrowseEmployee = ({
                     <div style={{ fontSize: 28, fontWeight: 700, color: '#1e293b' }}>
                         {employees.filter(e => e.employmentStatus === 1).length}
                     </div>
-                    <div style={{ fontSize: 14, color: '#64748b' }}>Active Employees</div>
+                    <div style={{ fontSize: 14, color: '#64748b' }}>Karyawan Aktif</div>
                 </div>
                 {/* Add more stats if needed */}
             </div>
 
             <div style={{ background: 'white', borderRadius: 24, boxShadow: '0 10px 40px rgba(0, 0, 0, 0.04)', border: '1px solid #edf2f7', overflow: 'hidden' }}>
                 <div style={{ padding: '24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1e293b', margin: 0 }}>Employee List</h3>
+                    <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1e293b', margin: 0 }}>Daftar Karyawan</h3>
                     <div style={{ display: 'flex', gap: 12 }}>
                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                             <SearchOutlined style={{ position: 'absolute', left: 14, color: '#94a3b8' }} />
                             <input 
                                 type="text" 
-                                placeholder="Search name, code..." 
+                                placeholder="Cari nama, kode..." 
                                 value={searchText}
                                 onChange={(e) => setSearchText(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && onSearch(searchText)}
@@ -222,7 +238,7 @@ export const BrowseEmployee = ({
                             onClick={() => onSearch(searchText)}
                             style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', padding: '9px 20px', borderRadius: 12, fontWeight: 600, cursor: 'pointer' }}
                         >
-                            Search
+                            Cari
                         </button>
                     </div>
                 </div>
@@ -236,7 +252,7 @@ export const BrowseEmployee = ({
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderTop: '1px solid #f1f5f9' }}>
                     <div style={{ color: '#64748b', fontSize: 13 }}>
-                        Showing <b>{employees.length > 0 ? ((Number(page) - 1) * Number(pageSize)) + 1 : 0}</b> to <b>{Math.min(Number(page) * Number(pageSize), Number(pageInfo?.total) || 0)}</b> of <b>{Number(pageInfo?.total) || 0}</b> employees
+                        Menampilkan <b>{employees.length > 0 ? ((Number(page) - 1) * Number(pageSize)) + 1 : 0}</b> sampai <b>{Math.min(Number(page) * Number(pageSize), Number(pageInfo?.total) || 0)}</b> dari <b>{Number(pageInfo?.total) || 0}</b> karyawan
                     </div>
                     <Pagination 
                         current={page}
