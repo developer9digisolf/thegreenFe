@@ -41,7 +41,7 @@ export const GetSalesService = async (
         if (params.search)            query.append("search",     params.search);
 
         const response = await request<any>({
-            url: `/pos/sales?${query.toString()}`,
+            url: `pos/sales?${query.toString()}`,
             method: "GET",
         });
 

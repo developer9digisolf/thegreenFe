@@ -27,8 +27,8 @@ export function GetPosInitService() {
 
 export function GetBranchServicesService(branchId: number, categoryId?: number) {
     const url = categoryId
-        ? `/pos/service/branch/${branchId}/category?categoryId=${categoryId}`
-        : `/pos/service/branch/${branchId}/category`;
+        ? `pos/service/branch/${branchId}/category?categoryId=${categoryId}`
+        : `pos/service/branch/${branchId}/category`;
 
     return request<any[]>({ url, method: 'GET' });
 }
@@ -111,7 +111,7 @@ export const GetServiceCategoriesService = async (
 ): Promise<{ success: boolean; data?: ServiceCategory[]; message?: string }> => {
     try {
         const response = await request<any>({
-            url: `/pos/service-categories?branchId=${branchId}`,
+            url: `pos/service-categories?branchId=${branchId}`,
             method: 'GET'
         });
         return { success: true, data: response.data ?? response };
@@ -192,7 +192,7 @@ export const GetRoomsService = async (
 ): Promise<{ success: boolean; data?: RoomData[]; message?: string }> => {
     try {
         const response = await request<any>({
-            url: `/pos/rooms?branchId=${branchId}`,
+            url: `pos/rooms?branchId=${branchId}`,
             method: 'GET'
         });
         return { success: true, data: response.data || response };
@@ -206,7 +206,7 @@ export const GetTherapistsTodayService = async (
 ): Promise<{ success: boolean; data?: TherapistData[]; message?: string }> => {
     try {
         const response = await request<any>({
-            url: `/pos/therapists/today?branchId=${branchId}`,
+            url: `pos/therapists/today?branchId=${branchId}`,
             method: 'GET'
         });
         return { success: true, data: response.data || response };
