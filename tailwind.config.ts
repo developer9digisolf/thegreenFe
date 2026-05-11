@@ -15,6 +15,18 @@ const config: Config = {
         dark: '#2B4448', // Dark teal background from logo
         darker: '#1E3236', // Darker teal
         sand: '#F4F1ED',
+        emerald: {
+          50: '#f4f6f5',
+          100: '#e9eeec',
+          200: '#d2ddd9',
+          300: '#bbccc6',
+          400: '#8da9a1',
+          500: '#3d6b5f',
+          600: '#376056',
+          700: '#2e5047',
+          800: '#254039',
+          900: '#1e352f',
+        }
       },
       animation: {
         'subtle-zoom': 'subtle-zoom 20s infinite alternate',

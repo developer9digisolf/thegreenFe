@@ -220,8 +220,8 @@ export default function Login(): React.JSX.Element {
         }
 
         .custom-input:hover, .custom-input:focus {
-          border-color: #10B981 !important;
-          box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1) !important;
+          border-color: #3d6b5f !important;
+          box-shadow: 0 0 0 2px rgba(61, 107, 95, 0.1) !important;
         }
 
         .form-options {
@@ -311,7 +311,7 @@ export default function Login(): React.JSX.Element {
           position: absolute;
           width: 100%;
           height: 100%;
-          background: radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 70%);
+          background: radial-gradient(circle at 50% 50%, rgba(61, 107, 95, 0.05) 0%, transparent 70%);
           pointer-events: none;
         }
 
@@ -379,7 +379,7 @@ export default function Login(): React.JSX.Element {
         .page-dot.active {
           width: 24px;
           border-radius: 4px;
-          background: #10B981;
+          background: #3d6b5f;
         }
 
         /* Responsive Styles */

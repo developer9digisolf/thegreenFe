@@ -63,7 +63,7 @@ const CompanySwitcher = () => {
               {company.name}
             </span>
           </div>
-          {switching === company.id && <LoadingOutlined className="text-emerald-500" />}
+          {switching === company.id && <LoadingOutlined className="text-[#3d6b5f]" />}
         </div>
       ),
       onClick: () => handleSwitch(Number(company.id)),
@@ -95,8 +95,8 @@ const CompanySwitcher = () => {
         </div>
       )}
     >
-      <div className="flex items-center gap-3 py-2 px-4 rounded-2xl cursor-pointer transition-all border border-slate-100 bg-white hover:bg-emerald-50 hover:border-emerald-100 hover:shadow-lg hover:shadow-emerald-500/5 group">
-        <div className="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center group-hover:bg-emerald-100 group-hover:text-emerald-600 transition-all shadow-inner">
+      <div className="flex items-center gap-3 py-2 px-4 rounded-2xl cursor-pointer transition-all border border-slate-100 bg-white hover:bg-[#3d6b5f]/5 hover:border-[#3d6b5f]/10 hover:shadow-lg hover:shadow-[#3d6b5f]/5 group">
+        <div className="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center group-hover:bg-[#3d6b5f]/10 group-hover:text-[#3d6b5f] transition-all shadow-inner">
           <ApartmentOutlined className="text-lg" />
         </div>
         <div className="hidden lg:flex flex-col">
@@ -105,7 +105,7 @@ const CompanySwitcher = () => {
             {currentCompany?.name || "Select Workspace"}
           </span>
         </div>
-        <DownOutlined className="text-[10px] text-slate-300 ml-1 group-hover:text-emerald-500 group-hover:translate-y-0.5 transition-all" />
+        <DownOutlined className="text-[10px] text-slate-300 ml-1 group-hover:text-[#3d6b5f] group-hover:translate-y-0.5 transition-all" />
       </div>
     </Dropdown>
   );

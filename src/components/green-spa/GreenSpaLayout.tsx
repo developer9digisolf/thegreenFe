@@ -404,7 +404,7 @@ export default function GreenSpaLayout({
         {isMobile && isCollapsed && (
           <button
             onClick={toggleSidebar}
-            className="fixed bottom-6 right-6 z-[998] w-14 h-14 rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/50 flex items-center justify-center cursor-pointer hover:bg-emerald-600 transition-all duration-300 hover:scale-110 lg:hidden"
+            className="fixed bottom-6 right-6 z-[998] w-14 h-14 rounded-full bg-[#3d6b5f] text-white shadow-lg shadow-[#3d6b5f]/50 flex items-center justify-center cursor-pointer hover:bg-emerald-600 transition-all duration-300 hover:scale-110 lg:hidden"
           >
             <MenuOutlined className="text-xl" />
           </button>
@@ -426,7 +426,7 @@ export default function GreenSpaLayout({
                 href="/dashboard"
                 className="flex items-center gap-3 no-underline flex-1 min-w-0"
               >
-                <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white font-extrabold text-xl shadow-lg shadow-emerald-500/30 shrink-0">
+                <div className="w-10 h-10 bg-[#3d6b5f] rounded-xl flex items-center justify-center text-white font-extrabold text-xl shadow-lg shadow-[#3d6b5f]/30 shrink-0">
                   G
                 </div>
                 {(!isCollapsed || isMobile) && (
@@ -449,7 +449,7 @@ export default function GreenSpaLayout({
             {(!isCollapsed || isMobile) && (
               <div className="relative flex items-center group">
                 <SearchOutlined
-                  className={`absolute left-3 transition-colors ${searchQuery ? "text-emerald-500" : "text-white/40"} text-sm`}
+                  className={`absolute left-3 transition-colors ${searchQuery ? "text-[#3d6b5f]" : "text-white/40"} text-sm`}
                 />
                 <input
                   ref={searchInputRef}
@@ -457,7 +457,7 @@ export default function GreenSpaLayout({
                   placeholder="Search menu..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-10 pr-10 text-white text-sm outline-none focus:border-emerald-500 focus:bg-white/10 transition-all placeholder:text-white/20"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-10 pr-10 text-white text-sm outline-none focus:border-[#3d6b5f] focus:bg-white/10 transition-all placeholder:text-white/20"
                 />
                 {searchQuery ? (
                   <CloseOutlined
@@ -510,7 +510,7 @@ export default function GreenSpaLayout({
                         <div
                           className={`
                           flex items-center rounded-xl cursor-pointer transition-all no-underline
-                          ${isActive ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/40 font-semibold" : "text-white/50 hover:bg-white/5 hover:text-white"}
+                          ${isActive ? "bg-[#3d6b5f] text-white shadow-lg shadow-[#3d6b5f]/40 font-semibold" : "text-white/50 hover:bg-white/5 hover:text-white"}
                           ${isCollapsed && !isMobile ? "justify-center w-12 h-12" : "gap-3 px-3 py-2.5 w-full"}
                         `}
                           onClick={() => {
@@ -535,7 +535,7 @@ export default function GreenSpaLayout({
                                 {item.label}
                               </span>
                               {item.badge && (
-                                <span className="bg-emerald-400/20 text-emerald-400 text-[10px] px-1.5 py-0.5 rounded font-bold">
+                                <span className="bg-[#3d6b5f]/20 text-[#3d6b5f] text-[10px] px-1.5 py-0.5 rounded font-bold">
                                   {item.badge}
                                 </span>
                               )}
@@ -640,7 +640,7 @@ export default function GreenSpaLayout({
                                         <div
                                           className={`
                                         flex items-center gap-3 px-3 py-2 rounded-lg text-sm cursor-pointer transition-all
-                                        ${isSubActive ? "text-emerald-500 font-semibold" : "text-white/40 hover:text-white hover:bg-white/5"}
+                                        ${isSubActive ? "text-[#3d6b5f] font-semibold" : "text-white/40 hover:text-white hover:bg-white/5"}
                                       `}
                                           onClick={() => toggleSubMenu(sub.key)}
                                         >
@@ -663,7 +663,7 @@ export default function GreenSpaLayout({
                                           href={sub.path || "#"}
                                           className={`
                                         flex items-center gap-3 px-3 py-2 rounded-lg text-sm no-underline transition-all
-                                        ${pathname === sub.path ? "text-emerald-500 font-semibold" : "text-white/40 hover:text-white hover:bg-white/5"}
+                                        ${pathname === sub.path ? "text-[#3d6b5f] font-semibold" : "text-white/40 hover:text-white hover:bg-white/5"}
                                       `}
                                           onClick={() => {
                                             // Close sidebar on mobile after navigation
@@ -687,7 +687,7 @@ export default function GreenSpaLayout({
                                               href={nested.path || "#"}
                                               className={`
                                             flex items-center gap-3 px-3 py-1.5 rounded-lg text-[13px] no-underline transition-all
-                                            ${pathname === nested.path ? "text-emerald-500 font-semibold" : "text-white/30 hover:text-white hover:bg-white/5"}
+                                            ${pathname === nested.path ? "text-[#3d6b5f] font-semibold" : "text-white/30 hover:text-white hover:bg-white/5"}
                                           `}
                                               onClick={() => {
                                                 // Close sidebar on mobile after navigation
@@ -723,7 +723,7 @@ export default function GreenSpaLayout({
             <div
               className={`flex items-center bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-all ${isCollapsed && !isMobile ? "justify-center w-12 h-12 mx-auto" : "gap-3 p-3"}`}
             >
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-500 shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-[#3d6b5f]/20 flex items-center justify-center text-[#3d6b5f] shrink-0">
                 <i className="fa-solid fa-circle-question text-lg w-6 flex items-center justify-center"></i>
               </div>
               {(!isCollapsed || isMobile) && (
@@ -752,7 +752,7 @@ export default function GreenSpaLayout({
             <div className="flex items-center gap-5">
               {/* Hamburger menu button - Always visible on mobile, visible on desktop when collapsed */}
               <button
-                className="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center cursor-pointer text-slate-500 hover:bg-emerald-50 hover:border-emerald-500 hover:text-emerald-500 transition-all"
+                className="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center cursor-pointer text-slate-500 hover:bg-[#3d6b5f]/10 hover:border-[#3d6b5f] hover:text-[#3d6b5f] transition-all"
                 onClick={toggleSidebar}
               >
                 <MenuOutlined />
@@ -771,8 +771,8 @@ export default function GreenSpaLayout({
               <CompanySwitcher />
 
               <Dropdown menu={{ items: userMenuItems }} trigger={["click"]}>
-                <div className="flex items-center gap-3 py-1.5 px-3 rounded-xl cursor-pointer transition-all border border-transparent hover:bg-emerald-50 hover:border-emerald-100 group">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold text-base shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
+                <div className="flex items-center gap-3 py-1.5 px-3 rounded-xl cursor-pointer transition-all border border-transparent hover:bg-[#3d6b5f]/10 hover:border-[#3d6b5f]/20 group">
+                  <div className="w-10 h-10 rounded-xl bg-[#3d6b5f] text-white flex items-center justify-center font-bold text-base shadow-lg shadow-[#3d6b5f]/20 group-hover:scale-105 transition-transform">
                     {user?.username?.charAt(0).toUpperCase() || "A"}
                   </div>
                   <div className="hidden sm:flex flex-col">
@@ -783,7 +783,7 @@ export default function GreenSpaLayout({
                       {roleLabel}
                     </span>
                   </div>
-                  <DownOutlined className="text-[10px] text-slate-400 ml-1 group-hover:text-emerald-500 transition-colors" />
+                  <DownOutlined className="text-[10px] text-slate-400 ml-1 group-hover:text-[#3d6b5f] transition-colors" />
                 </div>
               </Dropdown>
             </div>
