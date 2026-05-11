@@ -26,6 +26,11 @@ export default function Login(): React.JSX.Element {
           AuthHelper.saveAuth(res.data)
           message.success(`Selamat datang, ${res.data.user.username}!`)
           setTimeout(() => { window.location.href = '/dashboard' }, 100)
+        } else if (role === 'cashier') {
+          AuthHelper.saveAuth(res.data)
+          message.success(`Selamat datang, ${res.data.user.username}!`)
+          // Biarkan diarahkan ke POS. Komponen POS yang akan menahan aksesnya dengan Modal.
+          setTimeout(() => { window.location.href = '/pos' }, 500) 
         } else if (role === 'therapist') {
           message.warning('Terapis silakan login melalui halaman khusus Terapis.')
           setLoading(false)
@@ -44,7 +49,7 @@ export default function Login(): React.JSX.Element {
       console.error('Login error:', err)
       message.error(err.message || 'Login gagal. Periksa username dan password.')
       setLoading(false)
-    }
+    } ``
   }
 
   return (
