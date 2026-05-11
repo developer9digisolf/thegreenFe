@@ -1,11 +1,11 @@
 import { IResPagination } from "./common.iface";
 
 export interface ISalesPaidRequest {
-  page?: number;
-  pageSize?: number;
-  startDate?: string;
-  endDate?: string;
-  search?: string;
+  Page?: number;
+  PageSize?: number;
+  StartDate?: string;
+  EndDate?: string;
+  Search?: string;
 }
 
 export interface ISalePaidItem {

@@ -120,6 +120,7 @@ export const rest = {
   dashboardPaymentMethodTotals: "dashboard/payment-method-totals",
   dashboardRecentSales: "dashboard/recent-sales",
   dashboardRecentSessions: "dashboard/recent-sessions",
+  dashboardTopServices: "dashboard/top-services",
 
   // Sales
   sales: "sales",
@@ -161,6 +162,14 @@ export const rest = {
       byBranch: "master/branch-operating-hours/branch/:ID",
       create: "master/branch-operating-hours",
       update: "master/branch-operating-hours/:ID",
+    },
+    branchPaymentMethods: {
+      index: "branch-payment-methods",
+      show: "branch-payment-methods/:ID",
+      create: "branch-payment-methods",
+      update: "branch-payment-methods/:ID",
+      delete: "branch-payment-methods/:ID",
+      toggleStatus: "branch-payment-methods/:ID/toggle-status",
     },
     shifts: {
       index: "master/shifts",

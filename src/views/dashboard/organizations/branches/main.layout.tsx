@@ -154,7 +154,7 @@ export default function BranchView() {
 
   return (
     <>
-      {(formType === "detail" || !openFormCreate) && (
+      {!openFormCreate && (
       <BrowseBranch
         {...{ page, pageSize, setPage, setPageSize }}
         onSearch={handleSearch}

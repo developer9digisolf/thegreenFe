@@ -18,3 +18,10 @@ export const UpdatePaymentMethodService = async (id: number, data: IUpdatePaymen
         data: data
     });
 };
+
+export const GetActivePaymentMethodsService = async () => {
+    return await request<any>({
+        url: "payment-methods/active",
+        method: "GET",
+    });
+};

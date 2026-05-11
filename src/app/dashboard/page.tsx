@@ -15,7 +15,8 @@ import {
     GetRecentSessionsService,
     GetTopMembersService,
     GetPeakHoursService,
-    GetCustomerSegmentationService
+    GetCustomerSegmentationService,
+    GetTopServicesService
 } from '@afx/services/dashboard.service';
 import { 
     ISummaryRevenue, 
@@ -26,7 +27,8 @@ import {
     IRecentSale, 
     IRecentSession,
     IPeakHour,
-    ICustomerSegmentation
+    ICustomerSegmentation,
+    ITopService
 } from '@afx/interfaces/dashboard.iface';
 
 const { RangePicker } = DatePicker;
@@ -49,6 +51,7 @@ export default function Dashboard() {
     const [recentSessions, setRecentSessions] = useState<IRecentSession[]>([]);
     const [peakHours, setPeakHours] = useState<IPeakHour | null>(null);
     const [customerSegmentation, setCustomerSegmentation] = useState<ICustomerSegmentation | null>(null);
+    const [topServices, setTopServices] = useState<ITopService[]>([]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -68,7 +71,8 @@ export default function Dashboard() {
                 sessionsRecentRes,
                 membersRes,
                 peakRes,
-                segmentRes
+                segmentRes,
+                topServicesRes
             ] = await Promise.all([
                 GetSummaryRevenueService(),
                 GetSalesPerformanceService(params),
@@ -78,7 +82,8 @@ export default function Dashboard() {
                 GetRecentSessionsService(params),
                 GetTopMembersService(params),
                 GetPeakHoursService(params),
-                GetCustomerSegmentationService(params)
+                GetCustomerSegmentationService(params),
+                GetTopServicesService(params)
             ]);
 
             if (summaryRes.meta.success) setSummary(summaryRes.data);
@@ -93,6 +98,7 @@ export default function Dashboard() {
             if (membersRes.meta.success) setTopMembers(membersRes.data);
             if (peakRes.meta.success) setPeakHours(peakRes.data);
             if (segmentRes.meta.success) setCustomerSegmentation(segmentRes.data);
+            if (topServicesRes.meta.success) setTopServices(topServicesRes.data);
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
         } finally {
@@ -125,14 +131,20 @@ export default function Dashboard() {
         },
         yaxis: [
             {
-                title: { text: 'Revenue' },
+                title: { text: 'Revenue', style: { fontWeight: 600, color: '#64748b' } },
                 labels: {
-                    formatter: (val: number) => formatCurrency(val)
+                    style: { fontWeight: 500, colors: '#64748b' },
+                    formatter: (val: number) => {
+                        if (val >= 1000000) return `Rp ${(val / 1000000).toFixed(1)}jt`;
+                        if (val >= 1000) return `Rp ${(val / 1000).toFixed(0)}rb`;
+                        return `Rp ${val}`;
+                    }
                 }
             },
             {
                 opposite: true,
-                title: { text: 'Quantity' }
+                title: { text: 'Quantity', style: { fontWeight: 600, color: '#64748b' } },
+                labels: { style: { fontWeight: 500, colors: '#64748b' } }
             }
         ],
         colors: ['#10b981', '#3b82f6'],
@@ -146,7 +158,15 @@ export default function Dashboard() {
         dataLabels: { enabled: false },
         stroke: { width: [0, 2] },
         grid: { borderColor: '#f1f5f9' },
-        legend: { position: 'top' as const }
+        legend: { position: 'top' as const },
+        tooltip: {
+            y: {
+                formatter: (val: number, opts: any) => {
+                    if (opts.seriesIndex === 0) return formatCurrency(val); // Revenue
+                    return val + ' qty'; // Quantity
+                }
+            }
+        }
     }), [salesPerf]);
 
     const salesChartSeries = useMemo(() => [
@@ -166,8 +186,30 @@ export default function Dashboard() {
         chart: { id: 'payment-methods' },
         labels: paymentMethods?.labels || [],
         colors: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'],
-        legend: { position: 'bottom' as const },
+        legend: { 
+            position: 'bottom' as const,
+            fontFamily: 'Inter, sans-serif',
+            fontWeight: 600,
+            labels: { colors: '#64748b' },
+            formatter: (seriesName: string, opts: any) => {
+                const val = opts.w.globals.series[opts.seriesIndex];
+                return `${seriesName}: ${formatCurrency(val)}`;
+            }
+        },
         stroke: { show: false },
+        dataLabels: {
+            enabled: true,
+            formatter: (val: any, opts: any) => {
+                // Show percentage in data labels but could also show absolute value
+                return val.toFixed(1) + '%';
+            },
+            dropShadow: { enabled: false }
+        },
+        tooltip: {
+            y: {
+                formatter: (val: number) => formatCurrency(val)
+            }
+        },
         plotOptions: {
             pie: {
                 donut: {
@@ -239,6 +281,73 @@ export default function Dashboard() {
             }
         }
     }), [customerSegmentation]);
+    
+    const topServicesChartOptions = useMemo(() => ({
+        chart: { 
+            id: 'top-services',
+            toolbar: { show: false },
+            fontFamily: 'Inter, sans-serif'
+        },
+        plotOptions: {
+            bar: {
+                borderRadius: 12,
+                horizontal: true,
+                distributed: true,
+                barHeight: '55%',
+                dataLabels: { 
+                    position: 'top', // Inside the bar at the end
+                }
+            }
+        },
+        colors: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'],
+        xaxis: {
+            categories: topServices.slice(0, 5).map(s => s.serviceName),
+            labels: {
+                style: { fontWeight: 600, colors: '#64748b' },
+                formatter: (val: number) => {
+                    if (val >= 1000000) return `Rp ${(val / 1000000).toFixed(1)}jt`;
+                    if (val >= 1000) return `Rp ${(val / 1000).toFixed(0)}rb`;
+                    return `Rp ${val}`;
+                }
+            },
+            axisBorder: { show: false },
+            axisTicks: { show: false }
+        },
+        yaxis: {
+            labels: {
+                style: { fontWeight: 700, colors: '#1e293b' }
+            }
+        },
+        dataLabels: {
+            enabled: true,
+            textAnchor: 'end',
+            style: { 
+                colors: ['#fff'],
+                fontWeight: 800,
+                fontSize: '12px'
+            },
+            formatter: (val: number) => formatCurrency(val),
+            offsetX: -10,
+            dropShadow: { enabled: true, opacity: 0.3 }
+        },
+        grid: {
+            borderColor: '#f1f5f9',
+            xaxis: { lines: { show: true } },
+            yaxis: { lines: { show: false } }
+        },
+        tooltip: {
+            theme: 'dark',
+            y: {
+                formatter: (val: number) => formatCurrency(val)
+            }
+        },
+        legend: { show: false }
+    }), [topServices]);
+
+    const topServicesSeries = useMemo(() => [{
+        name: 'Revenue',
+        data: topServices.slice(0, 5).map(s => s.totalRevenue)
+    }], [topServices]);
 
     const summaryCards = [
         {
@@ -349,9 +458,6 @@ export default function Dashboard() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                         <div className="flex flex-col">
                             <h3 className="text-xl font-extrabold text-slate-900 m-0">Performa Penjualan</h3>
-                            <div className="flex items-center gap-2 mt-1">
-                                <Badge status="processing" text="Real-time" className="font-bold text-[10px]" />
-                            </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                             <Select 
@@ -366,7 +472,7 @@ export default function Dashboard() {
                                     setDateRange([start, end]);
                                 }}
                                 className="period-select"
-                                bordered={false}
+                                variant="borderless"
                                 options={[
                                     { value: 'daily', label: 'Harian' },
                                     { value: 'weekly', label: 'Mingguan' },
@@ -618,6 +724,26 @@ export default function Dashboard() {
                             )) : <Empty description="Belum ada data terapis" />
                         )}
                     </div>
+                </div>
+            </div>
+
+
+            {/* Detailed Info Grid Row 3: Top Services */}
+            <div className="grid grid-cols-1 gap-8 mt-8">
+                <div className="bg-white rounded-[2.5rem] p-5 sm:p-8 shadow-sm border border-slate-100 overflow-hidden">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-xl font-extrabold text-slate-900 m-0">Top 5 Performa Layanan</h3>
+                    </div>
+                    {loading ? <div className="h-[400px] flex items-center justify-center"><Spin /></div> : (
+                        topServices.length > 0 ? (
+                            <DynamicChart 
+                                type="bar"
+                                options={topServicesChartOptions}
+                                series={topServicesSeries}
+                                height={400}
+                            />
+                        ) : <Empty description="Tidak ada data layanan" />
+                    )}
                 </div>
             </div>
 

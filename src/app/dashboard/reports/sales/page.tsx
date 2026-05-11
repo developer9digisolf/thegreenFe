@@ -53,12 +53,12 @@ export default function SalesReportPage() {
 
     setLoading(true);
     try {
-      const params: any = {
-        page,
-        pageSize: pagination.pageSize,
-        startDate: dateRange[0].format("YYYY-MM-DD"),
-        endDate: dateRange[1].format("YYYY-MM-DD"),
-        search,
+      const params: ISalesPaidRequest = {
+        Page: page,
+        PageSize: pagination.pageSize,
+        StartDate: dateRange[0].format("YYYY-MM-DD"),
+        EndDate: dateRange[1].format("YYYY-MM-DD"),
+        Search: search,
       };
 
       const res = await getSalesPaid(params);
@@ -86,10 +86,10 @@ export default function SalesReportPage() {
   const handleExport = async () => {
     if (!dateRange) return;
     try {
-      const params: any = {
-        startDate: dateRange[0].format("YYYY-MM-DD"),
-        endDate: dateRange[1].format("YYYY-MM-DD"),
-        search,
+      const params: ISalesPaidRequest = {
+        StartDate: dateRange[0].format("YYYY-MM-DD"),
+        EndDate: dateRange[1].format("YYYY-MM-DD"),
+        Search: search,
       };
 
       const blob = await exportSalesExcel(params);
@@ -268,12 +268,12 @@ export default function SalesReportPage() {
           icon={<SolutionOutlined />} 
           color="blue" 
         />
-        <SummaryCard 
+        {/* <SummaryCard 
           title="Tipe Produk" 
           value="Paket / Voucher" 
           icon={<ShoppingOutlined />} 
           color="purple" 
-        />
+        /> */}
         <SummaryCard 
           title="Periode Laporan" 
           value={dateRange ? `${dateRange[0].format("DD MMM")} - ${dateRange[1].format("DD MMM")}` : "-"} 

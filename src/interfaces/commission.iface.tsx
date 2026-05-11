@@ -3,20 +3,20 @@ import { IResPagination } from "./common.iface";
 export type DateFilterType = "Day" | "Week" | "Month" | "Custom";
 
 export interface ICommissionFilterRequest {
-  page?: number;
-  pageSize?: number;
-  search?: string;
-  dateFilterType?: DateFilterType;
-  date?: string;
-  year?: number;
-  month?: number;
-  week?: number;
-  startDate?: string;
-  endDate?: string;
-  employeeId?: number | string;
-  positionId?: number | string;
-  departmentId?: number | string;
-  isPaid?: boolean;
+  Page?: number;
+  PageSize?: number;
+  Search?: string;
+  DateFilterType?: DateFilterType;
+  Date?: string;
+  Year?: number;
+  Month?: number;
+  Week?: number;
+  StartDate?: string;
+  EndDate?: string;
+  EmployeeId?: number | string;
+  PositionId?: number | string;
+  DepartmentId?: number | string;
+  IsPaid?: boolean;
 }
 
 export interface ICommissionByEmployee {

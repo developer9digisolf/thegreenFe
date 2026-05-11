@@ -81,6 +81,14 @@ export interface ITopMember {
     transactionCount: number;
 }
 
+export interface ITopService {
+    serviceId: number;
+    serviceName: string;
+    totalRevenue: number;
+    totalQuantity: number;
+    transactionCount: number;
+}
+
 export interface IDashboardParams {
     startDate?: string;
     endDate?: string;

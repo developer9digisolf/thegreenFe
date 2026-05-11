@@ -11,10 +11,19 @@ import {
   IStateBranch,
 } from "@afx/models/dashboard/master/branches.model";
 import { useStore } from "@afx/store/core";
-import { Col, Modal, Row, Spin, Typography, Switch, Form, Card, Button, Input } from "antd";
-import { ArrowLeft } from "lucide-react";
+import { Col, Modal, Row, Spin, Typography, Switch, Form, Card, Button, Input, Tabs, Tag, Space, Table, Popconfirm, Select, notification as antdNotification } from "antd";
+import { ArrowLeft, Trash2, ListChecks, Info, CreditCard, Edit3 } from "lucide-react";
 
 import dynamic from "next/dynamic";
+import { 
+  GetBranchPaymentMethodsService, 
+  CreateBranchPaymentMethodService, 
+  UpdateBranchPaymentMethodService,
+  DeleteBranchPaymentMethodService, 
+  ToggleBranchPaymentMethodStatusService 
+} from "@afx/services/master/branch-payment-method.service";
+import { GetGroupedPaymentMethodsService, GetActivePaymentMethodsService } from "@afx/services/payment-method.service";
+import { IBranchPaymentMethod } from "@afx/interfaces/master/branch-payment-method.iface";
 
 const MapPicker = dynamic(() => import("@afx/components/ui/maps/MapPicker"), { 
   ssr: false,
@@ -148,6 +157,313 @@ export function FormBranch(props: IPropsFormBranch) {
       }
     }
   }, [formLat, props.forms]);
+
+  const [activeTab, setActiveTab] = useState<string>("general");
+  const [branchPaymentMethods, setBranchPaymentMethods] = useState<IBranchPaymentMethod[]>([]);
+  const [loadingPaymentMethods, setLoadingPaymentMethods] = useState<boolean>(false);
+  const [allPaymentMethods, setAllPaymentMethods] = useState<any[]>([]);
+  const [isModalPMOpen, setIsModalPMOpen] = useState<boolean>(false);
+  const [modalPMMode, setModalPMMode] = useState<"create" | "update">("create");
+  const [selectedBPM, setSelectedBPM] = useState<IBranchPaymentMethod | null>(null);
+  const [addPMForm] = Form.useForm();
+
+  const fetchBranchPaymentMethods = useCallback(async () => {
+    if (branch?.id) {
+      setLoadingPaymentMethods(true);
+      try {
+        const res = await GetBranchPaymentMethodsService(branch.id);
+        if (res.success) {
+          setBranchPaymentMethods(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch branch payment methods", err);
+      } finally {
+        setLoadingPaymentMethods(false);
+      }
+    }
+  }, [branch?.id]);
+
+  const fetchAllPaymentMethods = useCallback(async () => {
+    try {
+      const res = await GetGroupedPaymentMethodsService();
+      console.log("Grouped Payment Methods Response:", res);
+      
+      let groups = [];
+      if (res && res.groups) {
+        groups = res.groups;
+      } else if (Array.isArray(res)) {
+        groups = res;
+      }
+
+      if (groups.length > 0) {
+        const flatList = groups.flatMap((group: any) => group.paymentMethods || []);
+        console.log("Flattened Payment Methods:", flatList);
+        setAllPaymentMethods(flatList);
+      } else {
+        // Fallback to active payment methods if grouped is empty or structured differently
+        const activeRes = await GetActivePaymentMethodsService();
+        if (activeRes && Array.isArray(activeRes)) {
+          setAllPaymentMethods(activeRes);
+        } else if (activeRes && activeRes.data) {
+          setAllPaymentMethods(activeRes.data);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch all payment methods", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (props.open && (props.formType === "detail" || props.formType === "update") && branch?.id) {
+      fetchBranchPaymentMethods();
+      fetchAllPaymentMethods();
+    }
+  }, [props.open, props.formType, branch?.id, fetchBranchPaymentMethods, fetchAllPaymentMethods]);
+
+  const handleSavePM = async (values: any) => {
+    try {
+      if (modalPMMode === "create") {
+        const res = await CreateBranchPaymentMethodService({
+          branchId: branch!.id,
+          paymentMethodId: values.paymentMethodId,
+          sortOrder: values.sortOrder || 0,
+          notes: values.notes || null,
+        });
+        if (res.success) {
+          antdNotification.success({ message: "Berhasil menambahkan metode pembayaran" });
+        }
+      } else if (selectedBPM) {
+        const res = await UpdateBranchPaymentMethodService(selectedBPM.id, {
+          sortOrder: values.sortOrder,
+          notes: values.notes,
+        });
+        if (res.success) {
+          antdNotification.success({ message: "Berhasil memperbarui metode pembayaran" });
+        }
+      }
+      
+      setIsModalPMOpen(false);
+      addPMForm.resetFields();
+      fetchBranchPaymentMethods();
+    } catch (err: any) {
+      antdNotification.error({ message: err?.message || "Gagal menyimpan metode pembayaran" });
+    }
+  };
+
+  const handleEditPM = (record: IBranchPaymentMethod) => {
+    setSelectedBPM(record);
+    setModalPMMode("update");
+    addPMForm.setFieldsValue({
+      paymentMethodId: record.paymentMethodId,
+      sortOrder: record.sortOrder,
+      notes: record.notes,
+    });
+    setIsModalPMOpen(true);
+  };
+
+  const handleDeletePM = async (id: number) => {
+    try {
+      const res = await DeleteBranchPaymentMethodService(id);
+      if (res.success) {
+        antdNotification.success({ message: "Berhasil menghapus metode pembayaran" });
+        fetchBranchPaymentMethods();
+      }
+    } catch (err: any) {
+      antdNotification.error({ message: err?.message || "Gagal menghapus metode pembayaran" });
+    }
+  };
+
+  const handleTogglePM = async (id: number) => {
+    try {
+      const res = await ToggleBranchPaymentMethodStatusService(id);
+      if (res.success) {
+        fetchBranchPaymentMethods();
+      }
+    } catch (err: any) {
+      antdNotification.error({ message: err?.message || "Gagal mengubah status" });
+    }
+  };
+
+  const renderPaymentMethods = () => (
+    <div className="flex flex-col gap-4">
+      <div className="flex justify-between items-center mb-2">
+        <div>
+          <Typography.Title level={5} className="m-0">Metode Pembayaran Cabang</Typography.Title>
+          <Typography.Text className="text-slate-500 text-xs">Kelola metode pembayaran yang tersedia untuk cabang ini</Typography.Text>
+        </div>
+        <Button 
+          type="primary" 
+          icon={<Plus size={16} />} 
+          onClick={() => {
+            setModalPMMode("create");
+            setSelectedBPM(null);
+            addPMForm.resetFields();
+            setIsModalPMOpen(true);
+          }}
+          className="bg-emerald-500 hover:bg-emerald-600 border-none rounded-lg"
+        >
+          Tambah Metode
+        </Button>
+      </div>
+
+      <Table
+        dataSource={branchPaymentMethods}
+        loading={loadingPaymentMethods}
+        rowKey="id"
+        pagination={false}
+        className="premium-table"
+        columns={[
+          {
+            title: "Nama",
+            dataIndex: "name",
+            key: "name",
+            render: (text, record) => (
+              <Space>
+                {record.imageUrl ? (
+                  <img 
+                    src={record.imageUrl} 
+                    alt={text} 
+                    className="w-8 h-8 object-contain rounded border border-slate-100" 
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                      const parent = (e.target as HTMLImageElement).parentElement;
+                      if (parent) {
+                        const placeholder = document.createElement('div');
+                        placeholder.className = "w-8 h-8 rounded bg-slate-100 flex items-center justify-center text-slate-400";
+                        placeholder.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-credit-card"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>';
+                        parent.prepend(placeholder);
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center text-slate-400">
+                    <CreditCard size={16} />
+                  </div>
+                )}
+                <Typography.Text strong>{text}</Typography.Text>
+              </Space>
+            )
+          },
+          {
+            title: "Catatan",
+            dataIndex: "notes",
+            key: "notes",
+            render: (text) => <Typography.Text className="text-xs text-slate-500">{text || "-"}</Typography.Text>
+          },
+          {
+            title: "Urutan",
+            dataIndex: "sortOrder",
+            key: "sortOrder",
+            width: 80,
+            align: "center"
+          },
+          {
+            title: "Status",
+            dataIndex: "isActive",
+            key: "isActive",
+            render: (active, record) => (
+              <Switch 
+                size="small" 
+                checked={active} 
+                onChange={() => handleTogglePM(record.id)}
+              />
+            )
+          },
+          {
+            title: "Aksi",
+            key: "action",
+            width: 100,
+            render: (_, record) => (
+              <Space>
+                <Button 
+                  type="text" 
+                  icon={<Edit3 size={16} className="text-blue-500" />} 
+                  onClick={() => handleEditPM(record)}
+                />
+                <Popconfirm
+                  title="Hapus metode pembayaran?"
+                  description="Aksi ini tidak dapat dibatalkan."
+                  onConfirm={() => handleDeletePM(record.id)}
+                  okText="Ya, Hapus"
+                  cancelText="Batal"
+                >
+                  <Button type="text" danger icon={<Trash2 size={16} />} />
+                </Popconfirm>
+              </Space>
+            )
+          }
+        ]}
+      />
+
+      <Modal
+        title={modalPMMode === "create" ? "Tambah Metode Pembayaran" : "Edit Metode Pembayaran"}
+        open={isModalPMOpen}
+        onCancel={() => setIsModalPMOpen(false)}
+        footer={null}
+        destroyOnHidden
+      >
+        <Form form={addPMForm} layout="vertical" onFinish={handleSavePM}>
+          <Form.Item
+            name="paymentMethodId"
+            label="Pilih Metode Pembayaran"
+            rules={[{ required: true, message: "Pilih metode pembayaran" }]}
+          >
+            <Select 
+              placeholder="Pilih metode" 
+              disabled={modalPMMode === "update"}
+              loading={allPaymentMethods.length === 0}
+            >
+              {allPaymentMethods
+                .filter(pm => {
+                  if (modalPMMode === "update") {
+                    return Number(pm.id) === Number(selectedBPM?.paymentMethodId);
+                  }
+                  return !branchPaymentMethods.find(bpm => Number(bpm.paymentMethodId) === Number(pm.id));
+                })
+                .map(pm => (
+                  <Select.Option key={pm.id} value={pm.id}>
+                    <Space>
+                      {pm.imageUrl ? (
+                        <img 
+                          src={pm.imageUrl} 
+                          alt={pm.name} 
+                          className="w-5 h-5 object-contain" 
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            const parent = (e.target as HTMLImageElement).parentElement;
+                            if (parent) {
+                              const placeholder = document.createElement('div');
+                              placeholder.className = "w-5 h-5 flex items-center justify-center text-slate-400";
+                              placeholder.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-credit-card"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>';
+                              parent.prepend(placeholder);
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div className="w-5 h-5 flex items-center justify-center text-slate-400">
+                          <CreditCard size={12} />
+                        </div>
+                      )}
+                      {pm.name}
+                    </Space>
+                  </Select.Option>
+                ))}
+            </Select>
+          </Form.Item>
+          <Form.Item name="sortOrder" label="Urutan Sortir" initialValue={0}>
+            <Input type="number" />
+          </Form.Item>
+          <Form.Item name="notes" label="Catatan Internal">
+            <Input.TextArea placeholder="Contoh: Metode pembayaran utama..." />
+          </Form.Item>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button onClick={() => setIsModalPMOpen(false)}>Batal</Button>
+            <Button type="primary" htmlType="submit" className="bg-emerald-500 hover:bg-emerald-600 border-none">Simpan</Button>
+          </div>
+        </Form>
+      </Modal>
+    </div>
+  );
 
   const renderHeader = () => (
     <div className="flex items-center gap-3 p-2">
@@ -421,43 +737,95 @@ export function FormBranch(props: IPropsFormBranch) {
     </Spin>
   );
 
-  if (props?.formType === "detail") {
-    return (
-      <Modal
-        width={800}
-        title={renderHeader()}
-        open={props?.open}
-        onCancel={() => {
-          !loading && props?.onCancel();
-        }}
-        destroyOnHidden={true}
-        footer={[]}
-      >
-        {renderFormContent()}
-      </Modal>
-    );
-  }
+  const tabsItems = [
+    {
+      key: "general",
+      label: (
+        <div className="flex items-center gap-2">
+          <Info size={16} />
+          Informasi Umum
+        </div>
+      ),
+      children: <div className="max-w-[800px] mx-auto py-4">{renderFormContent()}</div>,
+    },
+    {
+      key: "payment",
+      label: (
+        <div className="flex items-center gap-2">
+          <ListChecks size={16} />
+          Metode Pembayaran
+        </div>
+      ),
+      children: <div className="max-w-[900px] mx-auto py-4">{renderPaymentMethods()}</div>,
+    },
+  ];
 
   return (
-    <Card 
-      className="border-0 shadow-sm rounded-2xl overflow-hidden mt-4"
-      title={
-        <div className="flex items-center justify-between">
-          {renderHeader()}
-          <Button 
-            type="text" 
-            icon={<ArrowLeft size={18} />} 
-            onClick={props.onCancel}
-            className="flex items-center gap-2 text-slate-400 hover:text-slate-600"
-          >
-            Kembali ke Daftar
-          </Button>
-        </div>
-      }
-    >
-      <div className="max-w-[800px] mx-auto">
-        {renderFormContent()}
-      </div>
-    </Card>
+    <>
+      <Card 
+        className="border-0 shadow-sm rounded-2xl overflow-hidden mt-4"
+        title={
+          <div className="flex items-center justify-between">
+            {renderHeader()}
+            <Button 
+              type="text" 
+              icon={<ArrowLeft size={18} />} 
+              onClick={props.onCancel}
+              className="flex items-center gap-2 text-slate-400 hover:text-slate-600"
+            >
+              Kembali ke Daftar
+            </Button>
+          </div>
+        }
+      >
+        {(props.formType === "detail" || props.formType === "update") ? (
+          <Tabs 
+            activeKey={activeTab} 
+            onChange={setActiveTab} 
+            items={tabsItems}
+            className="premium-tabs"
+          />
+        ) : (
+          <div className="max-w-[800px] mx-auto">
+            {renderFormContent()}
+          </div>
+        )}
+      </Card>
+      <style jsx global>{`
+        .premium-tabs .ant-tabs-nav {
+          margin-bottom: 24px !important;
+          padding: 0 16px;
+        }
+        .premium-tabs .ant-tabs-tab {
+          padding: 12px 16px !important;
+          font-weight: 600 !important;
+          transition: all 0.3s !important;
+        }
+        .premium-tabs .ant-tabs-tab-active {
+          color: #10b981 !important;
+        }
+        .premium-tabs .ant-tabs-ink-bar {
+          background: #10b981 !important;
+          height: 3px !important;
+          border-radius: 3px 3px 0 0;
+        }
+        .premium-table .ant-table-thead > tr > th {
+          background: #f8fafc !important;
+          color: #64748b !important;
+          font-size: 11px !important;
+          text-transform: uppercase !important;
+          font-weight: 700 !important;
+          letter-spacing: 0.05em !important;
+          border-bottom: 1px solid #f1f5f9 !important;
+        }
+        .premium-table .ant-table-tbody > tr > td {
+          border-bottom: 1px solid #f8fafc !important;
+          padding: 12px 16px !important;
+        }
+        .premium-table .ant-table-row:hover > td {
+          background: #fdfdfd !important;
+        }
+      `}</style>
+    </>
   );
 }

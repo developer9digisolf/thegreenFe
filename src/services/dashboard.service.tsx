@@ -8,6 +8,7 @@ import {
     IRecentSession,
     IPeakHour,
     ICustomerSegmentation,
+    ITopService,
     IDashboardParams
 } from '@afx/interfaces/dashboard.iface'
 import { IPaginationResponse } from '@afx/interfaces/global.iface'
@@ -80,6 +81,14 @@ export function GetPeakHoursService(params: IDashboardParams) {
 export function GetCustomerSegmentationService(params: IDashboardParams) {
     return request<ICustomerSegmentation>({
         url: rest.dashboardCustomerSegmentation,
+        method: 'GET',
+        data: params
+    })
+}
+
+export function GetTopServicesService(params: IDashboardParams) {
+    return request<ITopService[]>({
+        url: rest.dashboardTopServices,
         method: 'GET',
         data: params
     })

@@ -34,7 +34,8 @@ import {
 import { 
   ICommissionByEmployee, 
   ICommissionSession, 
-  DateFilterType 
+  DateFilterType,
+  ICommissionFilterRequest
 } from "@afx/interfaces/commission.iface";
 
 // Extend dayjs with weekOfYear plugin
@@ -72,24 +73,24 @@ export default function CommissionsReportPage() {
 
     setLoading(true);
     try {
-      const params: any = {
-        page,
-        pageSize: pagination.pageSize,
-        dateFilterType,
-        search,
+      const params: ICommissionFilterRequest = {
+        Page: page,
+        PageSize: pagination.pageSize,
+        DateFilterType: dateFilterType,
+        Search: search,
       };
 
       if (dateFilterType === "Day" && selectedDate) {
-        params.date = selectedDate.format("YYYY-MM-DD");
+        params.Date = selectedDate.format("YYYY-MM-DD");
       } else if (dateFilterType === "Month" && selectedDate) {
-        params.month = selectedDate.month() + 1;
-        params.year = selectedDate.year();
+        params.Month = selectedDate.month() + 1;
+        params.Year = selectedDate.year();
       } else if (dateFilterType === "Week" && selectedDate) {
-        params.week = selectedDate.week();
-        params.year = selectedDate.year();
+        params.Week = selectedDate.week();
+        params.Year = selectedDate.year();
       } else if (dateFilterType === "Custom" && dateRange) {
-        params.startDate = dateRange[0].format("YYYY-MM-DD");
-        params.endDate = dateRange[1].format("YYYY-MM-DD");
+        params.StartDate = dateRange[0].format("YYYY-MM-DD");
+        params.EndDate = dateRange[1].format("YYYY-MM-DD");
       }
 
       const res = await getCommissionsByEmployee(params);
@@ -113,24 +114,24 @@ export default function CommissionsReportPage() {
   const fetchSessions = useCallback(async (employeeId: number, page = 1) => {
     setLoadingSessions(true);
     try {
-      const params: any = {
-        page,
-        pageSize: sessionPagination.pageSize,
-        dateFilterType,
-        employeeId,
+      const params: ICommissionFilterRequest = {
+        Page: page,
+        PageSize: sessionPagination.pageSize,
+        DateFilterType: dateFilterType,
+        EmployeeId: employeeId,
       };
 
       if (dateFilterType === "Day" && selectedDate) {
-        params.date = selectedDate.format("YYYY-MM-DD");
+        params.Date = selectedDate.format("YYYY-MM-DD");
       } else if (dateFilterType === "Month" && selectedDate) {
-        params.month = selectedDate.month() + 1;
-        params.year = selectedDate.year();
+        params.Month = selectedDate.month() + 1;
+        params.Year = selectedDate.year();
       } else if (dateFilterType === "Week" && selectedDate) {
-        params.week = selectedDate.week();
-        params.year = selectedDate.year();
+        params.Week = selectedDate.week();
+        params.Year = selectedDate.year();
       } else if (dateFilterType === "Custom" && dateRange) {
-        params.startDate = dateRange[0].format("YYYY-MM-DD");
-        params.endDate = dateRange[1].format("YYYY-MM-DD");
+        params.StartDate = dateRange[0].format("YYYY-MM-DD");
+        params.EndDate = dateRange[1].format("YYYY-MM-DD");
       }
 
       const res = await getCommissionSessions(params);
@@ -155,11 +156,11 @@ export default function CommissionsReportPage() {
 
   const handleExport = async () => {
     try {
-      const params: any = { dateFilterType };
-      if (dateFilterType === "Day" && selectedDate) params.date = selectedDate.format("YYYY-MM-DD");
-      else if (dateFilterType === "Month" && selectedDate) { params.month = selectedDate.month() + 1; params.year = selectedDate.year(); }
-      else if (dateFilterType === "Week" && selectedDate) { params.week = selectedDate.week(); params.year = selectedDate.year(); }
-      else if (dateFilterType === "Custom" && dateRange) { params.startDate = dateRange[0].format("YYYY-MM-DD"); params.endDate = dateRange[1].format("YYYY-MM-DD"); }
+      const params: ICommissionFilterRequest = { DateFilterType: dateFilterType };
+      if (dateFilterType === "Day" && selectedDate) params.Date = selectedDate.format("YYYY-MM-DD");
+      else if (dateFilterType === "Month" && selectedDate) { params.Month = selectedDate.month() + 1; params.Year = selectedDate.year(); }
+      else if (dateFilterType === "Week" && selectedDate) { params.Week = selectedDate.week(); params.Year = selectedDate.year(); }
+      else if (dateFilterType === "Custom" && dateRange) { params.StartDate = dateRange[0].format("YYYY-MM-DD"); params.EndDate = dateRange[1].format("YYYY-MM-DD"); }
 
       const blob = await exportCommissionsExcel(params);
       const url = window.URL.createObjectURL(new Blob([blob as any]));
@@ -413,12 +414,7 @@ export default function CommissionsReportPage() {
           icon={<SolutionOutlined />} 
           color="blue" 
         />
-        <SummaryCard 
-          title="Karyawan Aktif" 
-          value={`${data.length} Orang`} 
-          icon={<UserOutlined />} 
-          color="indigo" 
-        />
+
         <SummaryCard 
           title="Periode" 
           value={dateFilterType === "Custom" ? 

@@ -8,7 +8,7 @@ import request from "@afx/utils/request.utils";
 export function getSalesPaid(params: ISalesPaidRequest) {
   return request<ISalesPaidResponse>({
     url: rest.salesPaid,
-    params,
+    data: params,
     method: "GET",
   });
 }
@@ -16,7 +16,7 @@ export function getSalesPaid(params: ISalesPaidRequest) {
 export function exportSalesExcel(params: ISalesPaidRequest) {
   return request<Blob>({
     url: rest.salesExport,
-    params,
+    data: params,
     method: "GET",
     responseType: "blob",
   });
