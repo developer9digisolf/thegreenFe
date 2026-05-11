@@ -37,19 +37,6 @@ export interface GetBranchesParams {
   SortDirection?: string;
 }
 
-export interface BranchesResponse {
-  success: boolean;
-  message: string;
-  data: Branch[];
-  pagination?: {
-    lastPage: number;
-    currentPage: number;
-    path: string;
-    total: number;
-    pageSize: number;
-  };
-}
-
 export interface TherapistsResponse {
   success: boolean;
   message: string;

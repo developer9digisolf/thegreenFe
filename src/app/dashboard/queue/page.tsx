@@ -11,8 +11,9 @@ import type {
   Branch,
   TherapistAPIResponse,
 } from "@afx/interfaces/queue.iface";
+import { useSignalR } from "@/hooks/useSignalR";
+import { useAuth } from "@/contexts/AuthContext";
 
-const AUTO_SLIDE_INTERVAL = 4000;
 const EST_TREATMENT_MINUTES = 30;
 const TOP_COUNT = 3;
 
@@ -45,23 +46,40 @@ export default function TherapistSlide() {
   const [loadingTherapists, setLoadingTherapists] = useState(false);
   const [current, setCurrent] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
 
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
 
+  // Get authentication token from AuthContext
+  const { token } = useAuth();
+
+  // Initialize SignalR connection for real-time updates
+  const { on: signalROn } = useSignalR({
+    hubName: "hubs/notification",
+    accessToken: token || undefined, // Pass authentication token
+    autoConnect: true,
+    onConnected: () => {
+      console.log(
+        "[TherapistSlide] SignalR connected - listening for SessionCreated",
+      );
+    },
+    onError: (error) => {
+      console.error("[TherapistSlide] SignalR error:", error);
+    },
+  });
+
   // Fetch branches on mount
   const fetchBranches = useCallback(
     async (searchTerm = "") => {
       try {
-        const response = await GetBranchesService({
+        const response = (await GetBranchesService({
           Page: 1,
           PageSize: 10,
           Search: searchTerm,
           SortColumn: "createdAt",
           SortDirection: "asc",
-        });
+        })) as unknown as { success: boolean; data: Branch[] };
         if (response.success) {
           setBranches(response.data);
           // Select first branch by default if no branch selected
@@ -78,33 +96,30 @@ export default function TherapistSlide() {
     [selectedBranch],
   );
 
-  useEffect(() => {
-    fetchBranches("");
-  }, [fetchBranches]);
-
-  // Handle branch search
-  const handleBranchSearch = (searchTerm: string) => {
-    setLoadingBranches(true);
-    fetchBranches(searchTerm);
-  };
-
-  // Branch options for select dropdown
-  const branchOptions = branches.map((branch) => ({
-    label: `${branch.name} (${branch.city})`,
-    value: branch.id,
-  }));
+  // Use ref to track if we're already fetching to prevent loops
+  const isFetchingRef = useRef(false);
 
   // Fetch therapists when branch is selected
-  useEffect(() => {
-    const fetchTherapists = async () => {
-      if (!selectedBranch) {
+  const fetchTherapists = useCallback(
+    async (branchId?: number) => {
+      const targetBranchId = branchId || selectedBranch;
+      if (!targetBranchId) {
         setTherapists([]);
         return;
       }
 
+      // Prevent duplicate fetches
+      if (isFetchingRef.current) {
+        console.log("[TherapistSlide] Already fetching, skipping...");
+        return;
+      }
+
+      isFetchingRef.current = true;
       setLoadingTherapists(true);
       try {
-        const response = await GetTherapistsTodayService(selectedBranch);
+        const response = (await GetTherapistsTodayService(
+          targetBranchId,
+        )) as unknown as { success: boolean; data: TherapistAPIResponse[] };
         if (response.success && response.data) {
           // Transform API response to TherapistQueue format
           const transformedTherapists: TherapistQueue[] = response.data.map(
@@ -125,11 +140,58 @@ export default function TherapistSlide() {
         console.error("Failed to fetch therapists:", error);
       } finally {
         setLoadingTherapists(false);
+        // Reset fetch flag after delay to allow next fetch
+        setTimeout(() => {
+          isFetchingRef.current = false;
+        }, 500);
       }
-    };
+    },
+    [selectedBranch],
+  );
 
-    fetchTherapists();
+  useEffect(() => {
+    fetchBranches("");
+  }, [fetchBranches]);
+
+  // Fetch therapists when branch is selected
+  useEffect(() => {
+    if (selectedBranch) {
+      fetchTherapists(selectedBranch);
+    }
   }, [selectedBranch]);
+
+  // Listen for SessionCreated event from backend
+  useEffect(() => {
+    signalROn("SessionCreated", (data: any) => {
+      console.log("[TherapistSlide] SessionCreated event received:", data);
+
+      // Fetch therapists again to get updated data
+      if (selectedBranch) {
+        console.log(
+          "[TherapistSlide] Refreshing therapists after SessionCreated...",
+        );
+        fetchTherapists(selectedBranch);
+      }
+
+      // Auto-slide to first card after data refresh
+      setCurrent(0);
+
+      // Reset progress bar
+      setProgress(0);
+    });
+  }, [signalROn, selectedBranch]);
+
+  // Handle branch search
+  const handleBranchSearch = (searchTerm: string) => {
+    setLoadingBranches(true);
+    fetchBranches(searchTerm);
+  };
+
+  // Branch options for select dropdown
+  const branchOptions = branches.map((branch) => ({
+    label: `${branch.name} (${branch.city})`,
+    value: branch.id,
+  }));
 
   // Split: waiting → top cards, do treatment → bottom table
   const waitingList = therapists.filter((t) => t.status === "waiting");
@@ -161,27 +223,14 @@ export default function TherapistSlide() {
     setProgress(0);
   };
 
-  useEffect(() => {
-    if (isPaused || total === 0) return;
-    setProgress(0);
-    const step = 50;
-    const increment = (step / AUTO_SLIDE_INTERVAL) * 100;
-    const progressTimer = setInterval(() => {
-      setProgress((p) => (p >= 100 ? 100 : p + increment));
-    }, step);
-    const slideTimer = setTimeout(() => next(), AUTO_SLIDE_INTERVAL);
-    return () => {
-      clearInterval(progressTimer);
-      clearTimeout(slideTimer);
-    };
-  }, [current, isPaused, next, total]);
-
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
   };
+
   const handleTouchMove = (e: React.TouchEvent) => {
     touchEndX.current = e.touches[0].clientX;
   };
+
   const handleTouchEnd = () => {
     if (touchStartX.current === null || touchEndX.current === null) return;
     const diff = touchStartX.current - touchEndX.current;
@@ -208,11 +257,7 @@ export default function TherapistSlide() {
   };
 
   return (
-    <div
-      className="w-full px-4 py-6 space-y-6"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-    >
+    <div className="w-full px-4 py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -239,9 +284,6 @@ export default function TherapistSlide() {
             className="w-48"
             allowClear={false}
           />
-          {isPaused && (
-            <span className="text-xs text-slate-400 italic">Dijeda</span>
-          )}
         </div>
       </div>
 
@@ -289,12 +331,12 @@ export default function TherapistSlide() {
             </div>
 
             <div
-              className="overflow-hidden w-full"
+              className="w-full"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-1 py-1">
                 {topCards.map((therapist, index) => {
                   const isActive = index === current;
                   const estWait = getEstWait(index);
@@ -353,23 +395,12 @@ export default function TherapistSlide() {
                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                           />
                         </svg>
-                        <span className="font-medium">{estWait}</span>
+                        {/* <span className="font-medium">{estWait}</span> */}
                         <span className="text-slate-300">•</span>
                         <span className="text-slate-400">
                           {formatTime(therapist.dateTime)}
                         </span>
                       </div>
-
-                      {/* Action */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStartTreatment(therapist.id);
-                        }}
-                        className="w-full py-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold transition-colors"
-                      >
-                        Mulai Treatment
-                      </button>
                     </div>
                   );
                 })}
@@ -580,7 +611,7 @@ export default function TherapistSlide() {
       )}
 
       <p className="text-center text-xs text-slate-300">
-        Arahkan kursor untuk menjeda • Geser untuk navigasi
+        Geser untuk navigasi • Klik untuk pilih
       </p>
     </div>
   );

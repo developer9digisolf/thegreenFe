@@ -12,6 +12,7 @@
   "dependencies": {
     "@googlemaps/react-wrapper": "^1.2.0",
     "@googlemaps/typescript-guards": "^2.0.3",
+    "@microsoft/signalr": "^10.0.0",
     "@south-paw/react-vector-maps": "^3.2.0",
     "@styled-system/theme-get": "^5.1.2",
     "@types/react-portal": "^4.0.7",
