@@ -19,6 +19,7 @@ import { useAuth } from "@afx/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { ServiceCategoryGetActiveService } from "@afx/services/service-category.service";
 import { ServiceGetActiveService } from "@afx/services/service.service";
+import { GetBranchesService } from "@afx/services/master/branches.service";
 import { IStateServicePackage, IActionServicePackage } from "@afx/models/dashboard/master/service-packages.model";
 import { UseFormItem } from "@afx/components/form/form.layout";
 import UseInput from "@afx/components/ui/input/input.layout";
@@ -50,22 +51,22 @@ export const FormServicePackagePage = ({ formType, id }: { formType: "create" | 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [catRes, svcRes] = await Promise.all([
+      const [catRes, svcRes, branchRes] = await Promise.all([
         ServiceCategoryGetActiveService(),
         ServiceGetActiveService(),
+        GetBranchesService({ Page: 1, PageSize: 100 })
       ]);
 
       if (catRes.success) setCategories(catRes.data);
       if (svcRes.success) setServices(svcRes.data);
-      
-      if (user) {
-        const userBranches = (user as any).branches || [];
-        setBranches(userBranches.map((b: any) => ({
-          id: b.branchId,
-          name: b.branchName
+      if (branchRes.success) {
+        const branchData = branchRes.data?.pageData || branchRes.data || [];
+        setBranches(branchData.map((b: any) => ({
+          id: b.id,
+          name: b.name
         })));
       }
-
+      
       if (formType === "update" && id) {
         usePackageActions<"getServicePackage">("getServicePackage", [id], true);
       }
