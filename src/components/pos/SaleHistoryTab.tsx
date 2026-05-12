@@ -254,15 +254,25 @@
                             </div>
                         ) : !sale ? null : (
                             <>
-                                <div style={{ background: "var(--bg-main)", borderRadius: "12px", padding: "16px", marginBottom: "20px", display: "flex", gap: "20px", flexWrap: "wrap" }}>
-                                    <div>
+                                <div style={{ background: "var(--bg-main)", borderRadius: "12px", padding: "16px", marginBottom: "20px", display: "flex", gap: "20px", flexWrap: "wrap", alignItems: "center" }}>
+                                    <div style={{ flex: 1 }}>
                                         <div style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>TOTAL</div>
                                         <div style={{ fontSize: "20px", fontWeight: 800, color: "var(--spa-green)" }}>{formatCurrency(sale.grandTotal)}</div>
+                                        {sale.discountAmount > 0 && (
+                                            <div style={{ marginTop: "4px" }}>
+                                                <div style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>DISKON</div>
+                                                <div style={{ fontSize: "16px", fontWeight: 700, color: "var(--accent-red)" }}>- {formatCurrency(sale.discountAmount)}</div>
+                                            </div>
+                                        )}
                                     </div>
-                                    {sale.discountAmount > 0 && (
-                                        <div>
-                                            <div style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>DISKON</div>
-                                            <div style={{ fontSize: "16px", fontWeight: 700, color: "var(--accent-red)" }}>- {formatCurrency(sale.discountAmount)}</div>
+                                    {sale.sessionCode && (
+                                        <div style={{ textAlign: "center", background: "#fff", padding: "8px", borderRadius: "12px", border: "1px solid var(--border-color)" }}>
+                                            <img 
+                                                src={`https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(sale.sessionCode)}&scale=2&backgroundcolor=ffffff`}
+                                                alt="Session QR"
+                                                style={{ width: "80px", height: "80px" }}
+                                            />
+                                            <div style={{ fontSize: "10px", fontWeight: 700, marginTop: "4px", color: "var(--text-muted)", fontFamily: "monospace" }}>{sale.sessionCode}</div>
                                         </div>
                                     )}
                                 </div>
@@ -293,13 +303,24 @@
                                                             <SessionStatus hasSession={item.hasSession} sessionStatus={item.sessionStatus} />
                                                         </div>
                                                     </div>
-                                                    {!item.hasSession && (
+                                                    {!item.hasSession ? (
                                                         <button
                                                             onClick={() => onOpenAssign({ type: "item", saleItemId: item.id, label: item.itemName })}
                                                             style={{ padding: "7px 14px", fontSize: "12px", fontWeight: 700, background: "var(--spa-green-bg)", color: "var(--spa-green)", border: "1px solid var(--spa-green-border)", borderRadius: "8px", cursor: "pointer", whiteSpace: "nowrap" }}
                                                         >
                                                             <i className="fa-solid fa-play" /> Buat Sesi
                                                         </button>
+                                                    ) : (
+                                                        item.session?.sessionCode && (
+                                                            <div style={{ textAlign: "center", background: "#fff", padding: "4px", borderRadius: "8px", border: "1px solid var(--border-color)", flexShrink: 0 }}>
+                                                                <img 
+                                                                    src={`https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(item.session.sessionCode)}&scale=1&backgroundcolor=ffffff`}
+                                                                    alt="Item Session QR"
+                                                                    style={{ width: "48px", height: "48px" }}
+                                                                />
+                                                                <div style={{ fontSize: "8px", fontWeight: 700, marginTop: "2px", color: "var(--text-muted)", fontFamily: "monospace" }}>{item.session.sessionCode}</div>
+                                                            </div>
+                                                        )
                                                     )}
                                                 </div>
                                             ))}
@@ -322,13 +343,24 @@
                                                             <SessionStatus hasSession={bk.hasSession} sessionStatus={bk.sessionStatus} />
                                                         </div>
                                                     </div>
-                                                    {!bk.hasSession && (
+                                                    {!bk.hasSession ? (
                                                         <button
                                                             onClick={() => onOpenAssign({ type: "booking", bookingCode: bk.code, label: bk.serviceName || `Booking ${bk.code}` })}
                                                             style={{ padding: "7px 14px", fontSize: "12px", fontWeight: 700, background: "rgba(59,130,246,0.08)", color: "#2563eb", border: "1px solid rgba(59,130,246,0.3)", borderRadius: "8px", cursor: "pointer", whiteSpace: "nowrap" }}
                                                         >
                                                             <i className="fa-solid fa-user-plus" /> Assign
                                                         </button>
+                                                    ) : (
+                                                        bk.session?.sessionCode && (
+                                                            <div style={{ textAlign: "center", background: "#fff", padding: "4px", borderRadius: "8px", border: "1px solid var(--border-color)", flexShrink: 0 }}>
+                                                                <img 
+                                                                    src={`https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(bk.session.sessionCode)}&scale=1&backgroundcolor=ffffff`}
+                                                                    alt="Booking Session QR"
+                                                                    style={{ width: "48px", height: "48px" }}
+                                                                />
+                                                                <div style={{ fontSize: "8px", fontWeight: 700, marginTop: "2px", color: "var(--text-muted)", fontFamily: "monospace" }}>{bk.session.sessionCode}</div>
+                                                            </div>
+                                                        )
                                                     )}
                                                 </div>
                                             ))}
