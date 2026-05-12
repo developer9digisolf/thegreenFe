@@ -43,6 +43,10 @@ const nextConfig = {
         source: "/api/:path*",
         destination: `${process.env.API_DESTINATION || "https://green-api-staging.digisolf.com"}/api/:path*`,
       },
+      {
+        source: "/hubs/:path*",
+        destination: `${process.env.API_DESTINATION || "https://green-api-staging.digisolf.com"}/hubs/:path*`,
+      },
     ];
   },
   // Tambahkan webpack fallback untuk Turbopack
