@@ -10,9 +10,11 @@ import type {
 // Backend menyimpan pesan di: error.response.data.meta.message
 // ============================================
 function extractErrorMessage(error: any, fallback = "Terjadi kesalahan"): string {
+    // Prioritaskan struktur backend: meta.message
     return (
-        error?.response?.data?.meta?.message ||   // ← struktur backend TheGreenSpa
+        error?.response?.data?.meta?.message ||   
         error?.response?.data?.message        ||
+        error?.data?.meta?.message             || // jika response mentah di-passing
         error?.message                         ||
         fallback
     );

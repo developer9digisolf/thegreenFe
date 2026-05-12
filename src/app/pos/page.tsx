@@ -49,6 +49,7 @@ export default function POSPage() {
     const [isClosingSession, setIsClosingSession]           = useState(false);
     const [isCheckoutProcessing, setIsCheckoutProcessing]   = useState(false);
     const [showMemberModal, setShowMemberModal] = useState(false);
+    const [saleRefreshKey, setSaleRefreshKey] = useState(0);
 
     // ── Computed Variables ─────────────────────────────────────────────────
     const activeBranchId = useMemo<number | null>(
@@ -194,6 +195,7 @@ export default function POSPage() {
                 showToast("Pembayaran Berhasil Disimpan!", "success");
                 pos.clearCart();
                 payment.closePaymentModal();
+                setSaleRefreshKey(prev => prev + 1); // Trigger refresh tab sale
             } else {
                 showToast(response.message ?? "Gagal menyimpan transaksi", "error");
             }
@@ -335,12 +337,9 @@ export default function POSPage() {
                     </div>
 
                     <div className="pos-header-actions">
-                        <Link href="/dashboard" className="header-btn back">
-                            <i className="fa-solid fa-arrow-left" /> Backend
-                        </Link>
-                        <Link href="/dashboard/sales" className="header-btn">
+                        {/* <Link href="/dashboard/sales" className="header-btn">
                             <i className="fa-solid fa-clock-rotate-left" />
-                        </Link>
+                        </Link> */}
                         {hasOpenSession && (
                             <button
                                 className="header-btn"
@@ -459,7 +458,7 @@ export default function POSPage() {
                                     voucher: { icon: "fa-ticket",           label: "Paket Voucher" },
                                     credit:  { icon: "fa-wallet",           label: "Top Up Kredit" },
                                     redeem:  { icon: "fa-qrcode",           label: "Redeem"        },
-                                    sale:    { icon: "fa-tag",              label: "Sale"          },
+                                    sale:    { icon: "fa-tag",              label: "Penjualan"          },
                                 };
                                 const { icon, label } = labels[m];
                                 return (
@@ -636,10 +635,10 @@ export default function POSPage() {
                             </div>
                         )}
 
-                        {/* Riwayat Penjualan (SaleHistoryTab) */}
                         {mode === "sale" && (
                             <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
                                 <SaleHistoryTab 
+                                    key={saleRefreshKey}
                                     branchId={
                                         activeBranchId ??
                                         session.selectedBranch?.branchId ??
@@ -907,7 +906,7 @@ export default function POSPage() {
                             showToast("Member berhasil ditambahkan!", "success");
                             return true;
                         }
-                        showToast("Gagal menambahkan member", "error");
+                        // Gagal ditangani di dalam pos.createMember (toast pesan backend)
                         return false;
                     }}
                 />

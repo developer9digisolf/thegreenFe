@@ -42,23 +42,28 @@ export const GetSalesService = async (
         if (params.search)            query.append("search",     params.search);
         if (params.statuses != null)  query.append("statuses",   String(params.statuses));
 
+        // Default Sorting: Selalu paling baru di atas
+        query.append("SortColumn", "createdat");
+        query.append("SortDirection", "desc");
+
         const response = await request<any>({
             url: `pos/sales?${query.toString()}`,
             method: "GET",
         });
 
-        // Mapping response data
-        const pageData = (response as any).data?.pageData ?? (response as any).data?.items ?? (response as any).data ?? [];
+        // Mapping response data — Backend TheGreenSpa biasanya membungkus di data.pageData
+        const items = response?.data?.pageData ?? response?.data?.items ?? response?.data ?? [];
 
         return {
             success: true,
-            data: pageData,
+            data: { items },
         };
     } catch (error: any) {
         return {
             success: false,
             message:
                 error?.response?.data?.meta?.message ??
+                error?.response?.data?.message ??
                 error?.message ??
                 "Gagal mengambil data riwayat penjualan",
         };

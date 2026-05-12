@@ -140,9 +140,10 @@ export function usePosSession(
                 setActiveSession(null);
                 setGateState("OPEN_SESSION");
             }
-        } catch {
+        } catch (err: any) {
             setActiveSession(null);
             setGateState("OPEN_SESSION");
+            showToast(err.message || "Gagal memuat status sesi", "error");
         }
     };
 
@@ -199,8 +200,8 @@ export function usePosSession(
                 showToast(res.message || "Gagal menutup sesi lama", "error");
                 return false; // ← [FIX] return false saat gagal
             }
-        } catch {
-            showToast("Gagal menutup sesi lama", "error");
+        } catch (err: any) {
+            showToast(err.message || "Gagal menutup sesi lama", "error");
             return false;
         } finally {
             setIsProcessing(false);
@@ -235,8 +236,8 @@ export function usePosSession(
             } else {
                 showToast(res.message || "Gagal membuka sesi", "error");
             }
-        } catch {
-            showToast("Gagal membuka sesi", "error");
+        } catch (err: any) {
+            showToast(err.message || "Gagal membuka sesi", "error");
         } finally {
             setIsProcessing(false);
         }

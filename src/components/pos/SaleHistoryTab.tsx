@@ -37,28 +37,30 @@
     // 2. CONSTANTS & STYLE HELPERS
     // ============================================
     const SALE_TYPE_STYLE: Record<string | number, { bg: string; color: string; label: string }> = {
-        0: { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6", label: "Service" },
-        "walkIn": { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6", label: "Service" },
-        "service": { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6", label: "Service" },
-        1: { bg: "rgba(245,158,11,0.1)", color: "#d97706", label: "Voucher" },
-        "voucher": { bg: "rgba(245,158,11,0.1)", color: "#d97706", label: "Voucher" },
-        2: { bg: "rgba(59,130,246,0.1)", color: "#2563eb", label: "Kredit" },
-        "credit": { bg: "rgba(59,130,246,0.1)", color: "#2563eb", label: "Kredit" },
+        0: { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6", label: "Walk-in" },
+        "walkIn": { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6", label: "Walk-in" },
+        1: { bg: "rgba(245,158,11,0.1)", color: "#d97706", label: "Paket" },
+        "package": { bg: "rgba(245,158,11,0.1)", color: "#d97706", label: "Paket" },
+        2: { bg: "rgba(16,185,129,0.1)", color: "#059669", label: "Top-up Kredit" },
+        "creditPurchase": { bg: "rgba(16,185,129,0.1)", color: "#059669", label: "Top-up Kredit" },
+        "credit": { bg: "rgba(16,185,129,0.1)", color: "#059669", label: "Top-up Kredit" },
         3: { bg: "rgba(59,130,246,0.1)", color: "#2563eb", label: "Booking" },
         "booking": { bg: "rgba(59,130,246,0.1)", color: "#2563eb", label: "Booking" },
     };
-    const PAYMENT_STATUS_STYLE: Record<string | number, { bg: string; color: string }> = {
-        2: { bg: "rgba(16,185,129,0.1)", color: "#059669" },       // Paid
-        "Paid": { bg: "rgba(16,185,129,0.1)", color: "#059669" },
-        "Lunas": { bg: "rgba(16,185,129,0.1)", color: "#059669" },
-        0: { bg: "rgba(239,68,68,0.1)", color: "#dc2626" },       // Pending
-        "Pending": { bg: "rgba(239,68,68,0.1)", color: "#dc2626" },
-        "Unpaid": { bg: "rgba(239,68,68,0.1)", color: "#dc2626" },
-        "Belum Dibayar": { bg: "rgba(239,68,68,0.1)", color: "#dc2626" },
-        1: { bg: "rgba(245,158,11,0.1)", color: "#d97706" },      // Partial
-        3: { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6" },      // Refunded
-        4: { bg: "rgba(100,116,139,0.1)", color: "#64748b" },     // Cancelled
-        5: { bg: "rgba(100,116,139,0.1)", color: "#64748b" },     // Expired
+    const PAYMENT_STATUS_STYLE: Record<string | number, { bg: string; color: string; label: string }> = {
+        0: { bg: "rgba(239,68,68,0.1)", color: "#dc2626", label: "Belum Lunas" },
+        "Pending": { bg: "rgba(239,68,68,0.1)", color: "#dc2626", label: "Belum Lunas" },
+        1: { bg: "rgba(245,158,11,0.1)", color: "#d97706", label: "Partial" },
+        "Partial": { bg: "rgba(245,158,11,0.1)", color: "#d97706", label: "Partial" },
+        2: { bg: "rgba(16,185,129,0.1)", color: "#059669", label: "Lunas" },
+        "Paid": { bg: "rgba(16,185,129,0.1)", color: "#059669", label: "Lunas" },
+        "Lunas": { bg: "rgba(16,185,129,0.1)", color: "#059669", label: "Lunas" },
+        3: { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6", label: "Refunded" },
+        "Refunded": { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6", label: "Refunded" },
+        4: { bg: "rgba(100,116,139,0.1)", color: "#64748b", label: "Dibatalkan" },
+        "Cancelled": { bg: "rgba(100,116,139,0.1)", color: "#64748b", label: "Dibatalkan" },
+        5: { bg: "rgba(100,116,139,0.1)", color: "#64748b", label: "Expired" },
+        "Expired": { bg: "rgba(100,116,139,0.1)", color: "#64748b", label: "Expired" },
     };
 
     function Pill({ label, bg, color }: { label: string; bg: string; color: string }) {
@@ -320,7 +322,7 @@
                                                             <SessionStatus hasSession={bk.hasSession} sessionStatus={bk.sessionStatus} />
                                                         </div>
                                                     </div>
-                                                    {(bk.status === "Pending" || bk.status === "InProgress" || !bk.hasSession) && (
+                                                    {!bk.hasSession && (
                                                         <button
                                                             onClick={() => onOpenAssign({ type: "booking", bookingCode: bk.code, label: bk.serviceName || `Booking ${bk.code}` })}
                                                             style={{ padding: "7px 14px", fontSize: "12px", fontWeight: 700, background: "rgba(59,130,246,0.08)", color: "#2563eb", border: "1px solid rgba(59,130,246,0.3)", borderRadius: "8px", cursor: "pointer", whiteSpace: "nowrap" }}
@@ -371,7 +373,6 @@
                         </button>
                     </div>
 
-                    {/* FIX: Tampilkan loading saat master data masih di-fetch */}
                     {masterLoading ? (
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "32px", gap: "10px", color: "var(--text-muted)" }}>
                             <i className="fa-solid fa-spinner fa-spin" style={{ color: "var(--spa-green)" }} />
@@ -379,7 +380,6 @@
                         </div>
                     ) : (
                         <>
-                            {/* Dropdown Therapist */}
                             <div style={{ marginBottom: "14px" }}>
                                 <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", marginBottom: "6px" }}>
                                     Therapist * {therapists.length === 0 && <span style={{ color: "var(--accent-red)", fontWeight: 400 }}>(tidak ada data)</span>}
@@ -394,14 +394,12 @@
                                     <option value="">— Pilih Therapist —</option>
                                     {therapists.map((t: any) => (
                                         <option key={t.id} value={t.id}>
-                                            {/* FIX: fallback field name — coba employeeName, name, therapistName */}
                                             {t.employeeName ?? t.name ?? t.therapistName ?? `Therapist #${t.id}`}
                                         </option>
                                     ))}
                                 </select>
                             </div>
 
-                            {/* Dropdown Room */}
                             <div style={{ marginBottom: "14px" }}>
                                 <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", marginBottom: "6px" }}>
                                     Ruangan * {rooms.length === 0 && <span style={{ color: "var(--accent-red)", fontWeight: 400 }}>(tidak ada data)</span>}
@@ -416,7 +414,6 @@
                                     <option value="">— Pilih Ruangan —</option>
                                     {rooms.map((r: any) => (
                                         <option key={r.id} value={r.id}>
-                                            {/* FIX: fallback field name — coba name, roomName */}
                                             {r.name ?? r.roomName ?? `Ruangan #${r.id}`}
                                             {r.statusDisplay ? ` (${r.statusDisplay})` : ""}
                                         </option>
@@ -424,7 +421,6 @@
                                 </select>
                             </div>
 
-                            {/* Notes */}
                             <div style={{ marginBottom: "20px" }}>
                                 <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", marginBottom: "6px" }}>Catatan</label>
                                 <textarea
@@ -456,6 +452,58 @@
         );
     }
 
+    function SessionSuccessModal({ session, onClose }: { session: any; onClose: () => void }) {
+        if (!session) return null;
+        
+        const barcodeUrl = `https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(session.sessionCode)}&scale=3&rotate=N&includetext&backgroundcolor=ffffff`;
+
+        return (
+            <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1400, backdropFilter: "blur(10px)" }}>
+                <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--bg-card)", borderRadius: "32px", padding: "40px", width: "min(420px, 92vw)", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)", textAlign: "center", animation: "modalScale 0.3s ease-out" }}>
+                    <div style={{ width: "72px", height: "72px", background: "var(--spa-green-bg)", color: "var(--spa-green)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", margin: "0 auto 24px" }}>
+                        <i className="fa-solid fa-circle-check" />
+                    </div>
+                    
+                    <h2 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "var(--text-primary)" }}>Sesi Berhasil Dibuat!</h2>
+                    <p style={{ margin: "8px 0 28px", color: "var(--text-muted)", fontSize: "14px" }}>Gunakan barcode di bawah untuk memulai sesi</p>
+                    
+                    <div style={{ background: "#fff", padding: "24px", borderRadius: "20px", border: "1px solid var(--border-color)", marginBottom: "28px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+                        <img 
+                            src={barcodeUrl} 
+                            alt={session.sessionCode} 
+                            style={{ maxWidth: "100%", height: "auto" }} 
+                            onError={(e) => {
+                                (e.target as any).src = "https://via.placeholder.com/300x100?text=Barcode+Error";
+                            }}
+                        />
+                        <div style={{ fontFamily: "monospace", fontSize: "16px", fontWeight: 700, color: "var(--spa-green)", letterSpacing: "1px" }}>
+                            {session.sessionCode}
+                        </div>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "28px", textAlign: "left" }}>
+                        <div style={{ background: "var(--bg-main)", padding: "12px 16px", borderRadius: "14px" }}>
+                            <div style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase" }}>Terapis</div>
+                            <div style={{ fontSize: "13px", fontWeight: 700 }}>{session.therapistName}</div>
+                        </div>
+                        <div style={{ background: "var(--bg-main)", padding: "12px 16px", borderRadius: "14px" }}>
+                            <div style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase" }}>Ruangan</div>
+                            <div style={{ fontSize: "13px", fontWeight: 700 }}>{session.roomName}</div>
+                        </div>
+                    </div>
+
+                    <button 
+                        className="action-btn primary" 
+                        onClick={onClose}
+                        style={{ width: "100%", padding: "16px", fontSize: "15px", fontWeight: 700, borderRadius: "16px" }}
+                    >
+                        Tutup & Selesai
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     // ============================================
     // 4. MAIN ORCHESTRATOR COMPONENT
     // ============================================
@@ -464,9 +512,12 @@
 
         const getDefaultDates = () => {
             const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(now.getDate() + 1); // Tambah 1 hari agar inclusive hari ini
             const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+            
             const formatDate = (date: Date) => date.toISOString().split("T")[0];
-            return { start: formatDate(lastMonth), end: formatDate(now) };
+            return { start: formatDate(lastMonth), end: formatDate(tomorrow) };
         };
 
         const { start, end } = getDefaultDates();
@@ -482,26 +533,37 @@
 
         const [therapists, setTherapists] = useState<any[]>([]);
         const [rooms, setRooms] = useState<any[]>([]);
+        const [createdSession, setCreatedSession] = useState<any | null>(null);
 
         // ── Fetch list transaksi ───────────────────────────────────────────────────
         const fetchSales = useCallback(async (overrideFilter?: any) => {
-            // Check if overrideFilter is an actual filter object, not a MouseEvent
             const f = (overrideFilter && !overrideFilter.nativeEvent) ? overrideFilter : filter;
             setLoading(true);
+            
+            console.log("SaleHistoryTab: fetching with branchId:", branchId, "and filter:", f);
+
             try {
+                // Jika sedang melakukan pencarian (search), abaikan filter lain agar lebih global
+                const isSearching = !!f.search?.trim();
+
                 const res = await GetSalesService({
-                    branchId,
+                    branchId: branchId || undefined,
                     page: 1,
-                    pageSize: 50,
+                    pageSize: 100, // perbesar limit agar lebih banyak data muncul
                     search: f.search || undefined,
-                    SaleType: f.SaleType >= 0 ? f.SaleType : undefined,
-                    startDate: f.startDate || undefined,
-                    endDate: f.endDate || undefined,
-                    statuses: f.statuses || undefined,
+                    SaleType: isSearching ? undefined : (f.SaleType >= 0 ? f.SaleType : undefined),
+                    startDate: isSearching ? undefined : (f.startDate || undefined),
+                    endDate: isSearching ? undefined : (f.endDate || undefined),
+                    statuses: isSearching ? undefined : (f.statuses || undefined),
                 });
-                if (res.success) setSales(res.data?.items ?? res.data ?? []);
-                else onToast(res.message ?? "Gagal memuat data", "error");
-            } catch {
+                
+                if (res.success) {
+                    setSales(res.data?.items ?? res.data ?? []);
+                } else {
+                    onToast(res.message ?? "Gagal memuat data", "error");
+                }
+            } catch (err) {
+                console.error("SaleHistoryTab Error:", err);
                 onToast("Gagal memuat riwayat", "error");
             } finally {
                 setLoading(false);
@@ -561,6 +623,9 @@
                     onToast("Sesi berhasil dibuat!", "success");
                     setAssignTarget(null);
                     fetchMasterData();
+                    
+                    // Ambil data sesi dari response untuk ditampilkan di modal barcode
+                    if (res.data) setCreatedSession(res.data);
 
                     // Update status item/booking di drawer tanpa fetch ulang
                     setSelectedSale((prev) => {
@@ -616,6 +681,10 @@
                     masterLoading={masterLoading}
                     onClose={() => setAssignTarget(null)}
                     onSubmit={handleAssignSubmit}
+                />
+                <SessionSuccessModal
+                    session={createdSession}
+                    onClose={() => setCreatedSession(null)}
                 />
             </div>
         );

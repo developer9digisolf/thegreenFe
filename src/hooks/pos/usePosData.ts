@@ -183,10 +183,10 @@ export function usePosData(
         loadInitialMembers();
         try {
             const [initRes, creditPackagesRes, servicePackagesRes, paymentMethodsRes] = await Promise.all([
-                GetPosInitService(branchId).catch(() => ({ success: false, data: null })),
-                CreditPackageGetActiveService().catch(() => ({ success: false, data: [] })),
-                GetPosServicePackagesService(branchId).catch(() => ({ success: false, data: { pageData: [] } })),
-                GetActivePaymentMethodsService(branchId).catch(() => ({ success: false, data: [] })),
+                GetPosInitService(branchId).catch((err) => ({ success: false, data: null, message: err.message })),
+                CreditPackageGetActiveService().catch((err) => ({ success: false, data: [], message: err.message })),
+                GetPosServicePackagesService(branchId).catch((err) => ({ success: false, data: { pageData: [] }, message: err.message })),
+                GetActivePaymentMethodsService(branchId).catch((err) => ({ success: false, data: [], message: err.message })),
             ]);
 
             let combinedData: PosInitData = initRes.success && initRes.data
@@ -273,10 +273,11 @@ export function usePosData(
             } else if (res.success && (res.data as any)?.items) {
                 setMemberResults((res.data as any).items);
             }
-        } catch (err) {
-            console.error("Member Search Error:", err);
+        } catch (error: any) {
+            console.error("Member Search Error:", error);
+            showToast(error.message || "Gagal mencari member", "error");
         }
-    }, []);
+    }, [showToast]);
 
     const handleSetMemberSearch = useCallback((v: string) => {
         console.log("handleSetMemberSearch TRIGGERED:", v);
@@ -300,11 +301,12 @@ export function usePosData(
                 return res.data;
             }
             return null;
-        } catch (error) {
-            console.error("Gagal membuat member:", error);
+        } catch (error: any) {
+            console.error("Gagal membuat member - FULL ERROR:", error);
+            showToast(error.message || "Gagal membuat member", "error");
             return null;
         }
-    }, []);
+    }, [showToast]);
 
     // ── Cart handlers ──────────────────────────────────────────────────────────
     const addServiceToCart = useCallback((variant: ServiceVariant) => {
