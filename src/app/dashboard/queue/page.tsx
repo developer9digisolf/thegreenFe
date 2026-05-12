@@ -13,6 +13,7 @@ import type {
 } from "@afx/interfaces/queue.iface";
 import { useSignalR } from "@/hooks/useSignalR";
 import { useAuth } from "@/contexts/AuthContext";
+import { TextToSpeechAndPlay } from "@/services/text-to-speech.service";
 
 const EST_TREATMENT_MINUTES = 30;
 const TOP_COUNT = 3;
@@ -165,6 +166,18 @@ export default function TherapistSlide() {
     signalROn("SessionCreated", (data: any) => {
       console.log("[TherapistSlide] SessionCreated event received:", data);
 
+      // Play text-to-speech if textToSpeach is provided
+      const textToSpeach = data?.textToSpeach ?? "Hidup Jokowi...............";
+
+      TextToSpeechAndPlay({ text: textToSpeach, language: "id" }).catch(
+        (error) => {
+          console.error(
+            "[TherapistSlide] Failed to play text-to-speech:",
+            error,
+          );
+        },
+      );
+
       // Fetch therapists again to get updated data
       if (selectedBranch) {
         console.log(
@@ -179,7 +192,7 @@ export default function TherapistSlide() {
       // Reset progress bar
       setProgress(0);
     });
-  }, [signalROn, selectedBranch]);
+  }, [signalROn, selectedBranch, fetchTherapists]);
 
   // Handle branch search
   const handleBranchSearch = (searchTerm: string) => {
