@@ -58,7 +58,7 @@ export const getSignalRHubUrl = (
   const baseUrl =
     process.env.NEXT_PUBLIC_SIGNALR_URL ||
     process.env.API_DESTINATION ||
-    "http://localhost:5100";
+    "https://green-api-staging.digisolf.com";
 
   // Remove trailing slash from baseUrl and leading slash from hubName
   const cleanBaseUrl = baseUrl.replace(/\/$/, "");
