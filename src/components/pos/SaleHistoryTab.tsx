@@ -69,16 +69,34 @@
 
     function SessionStatus({ hasSession, sessionStatus }: { hasSession?: boolean; sessionStatus?: string }) {
         if (!hasSession) return <span style={{ fontSize: "11px", color: "var(--text-muted)", fontStyle: "italic" }}>Belum ada sesi</span>;
-        const isActive = sessionStatus === "InProgress" || sessionStatus === "InSession";
+        
+        const status = sessionStatus?.toLowerCase() || "";
+        let label = "Selesai";
+        let color = "#64748b";
+        let bg = "rgba(100,116,139,0.1)";
+        let dot = "#94a3b8";
+
+        if (status === "claimed") {
+            label = "Diklaim"; color = "#3b82f6"; bg = "rgba(59,130,246,0.1)"; dot = "#3b82f6";
+        } else if (status === "inprogress" || status === "insession") {
+            label = "Sesi Berjalan"; color = "#059669"; bg = "rgba(16,185,129,0.1)"; dot = "#22c55e";
+        } else if (status === "paused") {
+            label = "Tertunda"; color = "#d97706"; bg = "rgba(245,158,11,0.1)"; dot = "#f59e0b";
+        } else if (status === "pending") {
+            label = "Menunggu"; color = "#64748b"; bg = "rgba(100,116,139,0.1)"; dot = "#94a3b8";
+        } else if (status === "completed" || status === "finished") {
+            label = "Selesai"; color = "#64748b"; bg = "rgba(100,116,139,0.1)"; dot = "#94a3b8";
+        }
+
         return (
             <span style={{
                 display: "inline-flex", alignItems: "center", gap: "5px",
-                background: isActive ? "rgba(16,185,129,0.1)" : "rgba(100,116,139,0.1)",
-                color: isActive ? "#059669" : "#64748b",
+                background: bg,
+                color: color,
                 padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700,
             }}>
-                <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: isActive ? "#22c55e" : "#94a3b8" }} />
-                {isActive ? "Sesi Berjalan" : (sessionStatus ?? "Selesai")}
+                <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: dot }} />
+                {label}
             </span>
         );
     }
@@ -300,7 +318,7 @@
                                                             ×{item.quantity} • <span style={{ color: "var(--spa-green)", fontWeight: 600 }}>{formatCurrency(item.subtotal)}</span>
                                                         </div>
                                                         <div style={{ marginTop: "6px" }}>
-                                                            <SessionStatus hasSession={item.hasSession} sessionStatus={item.sessionStatus} />
+                                                            <SessionStatus hasSession={item.hasSession} sessionStatus={item.session?.status ?? item.sessionStatus} />
                                                         </div>
                                                     </div>
                                                     {!item.hasSession ? (
@@ -340,7 +358,7 @@
                                                         <div style={{ fontWeight: 700, fontSize: "14px" }}>{bk.serviceName}</div>
                                                         <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>{bk.bookingCode}</div>
                                                         <div style={{ marginTop: "6px" }}>
-                                                            <SessionStatus hasSession={bk.hasSession} sessionStatus={bk.sessionStatus} />
+                                                            <SessionStatus hasSession={bk.hasSession} sessionStatus={bk.session?.status ?? bk.sessionStatus} />
                                                         </div>
                                                     </div>
                                                     {!bk.hasSession ? (
