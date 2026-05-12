@@ -45,6 +45,7 @@ export interface Package {
 
 export interface CreditPackage {
     id: number;
+    code: string;
     name: string;
     description?: string;
     payAmount: number;

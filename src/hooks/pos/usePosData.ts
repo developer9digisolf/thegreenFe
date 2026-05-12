@@ -10,6 +10,7 @@ import {
     SearchMembersPosService,
     GetServiceCategoriesService,
 } from "@afx/services/pos.service";
+import { CreditPackageGetActiveService } from "@afx/services/credit-package.service";
 
 // ============================================
 // TYPES
@@ -166,13 +167,25 @@ export function usePosData(
     const loadInitData = useCallback(async (branchId?: number) => {
         setLoading(true);
         try {
-            const initRes = await GetPosInitService().catch(() => ({ success: false, data: null }));
+            const [initRes, creditPackagesRes] = await Promise.all([
+                GetPosInitService().catch(() => ({ success: false, data: null })),
+                CreditPackageGetActiveService().catch(() => ({ success: false, data: [] })),
+            ]);
+
             let combinedData: PosInitData = initRes.success && initRes.data
                 ? initRes.data
                 : {
                     hasOpenSession: true, categories: [], packages: [],
                     creditPackages: [], paymentMethods: [], pendingOrders: [], therapists: [],
                   };
+
+            // Override creditPackages from master API if successful
+            if ((creditPackagesRes as any).success && Array.isArray((creditPackagesRes as any).data)) {
+                combinedData.creditPackages = (creditPackagesRes as any).data;
+            } else if (Array.isArray(creditPackagesRes)) {
+                // In case request() returns data directly (standard in some older parts of the app)
+                combinedData.creditPackages = creditPackagesRes;
+            }
 
             const bId = branchId ?? (combinedData.currentSession as any)?.branchId;
 

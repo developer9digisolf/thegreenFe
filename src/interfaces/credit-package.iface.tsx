@@ -1,6 +1,7 @@
 // Credit Package
 export interface ICreditPackage {
     id: number;
+    code?: string;
     name: string;
     description?: string;
     payAmount: number;
@@ -15,6 +16,7 @@ export interface ICreditPackage {
 }
 
 export interface ICreateCreditPackageRequest {
+    code?: string;
     name: string;
     description?: string;
     payAmount: number;
@@ -24,6 +26,7 @@ export interface ICreateCreditPackageRequest {
 }
 
 export interface IUpdateCreditPackageRequest {
+    code?: string;
     name?: string;
     description?: string;
     payAmount?: number;

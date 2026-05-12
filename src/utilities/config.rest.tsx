@@ -45,7 +45,7 @@ export const rest = {
 
   // Credit Packages
   creditPackage: "credit-packages",
-  creditPackageActive: "credit-packages/active",
+  creditPackageActive: "master/credit-packages/active",
   creditPackageDetail: "credit-packages/:id",
   creditPackageCheckName: "credit-packages/check-name",
 
