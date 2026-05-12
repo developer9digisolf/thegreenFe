@@ -325,8 +325,8 @@ export default function SalesReportPage() {
           border-radius: 12px !important;
         }
         .ant-picker-focused, .ant-select-focused .ant-select-selector {
-          border-color: #10b981 !important;
-          box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1) !important;
+          border-color: #3d6b5f !important;
+          box-shadow: 0 0 0 2px rgba(61, 107, 95, 0.1) !important;
         }
       `}</style>
     </div>

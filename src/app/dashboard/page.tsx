@@ -147,7 +147,7 @@ export default function Dashboard() {
                 labels: { style: { fontWeight: 500, colors: '#64748b' } }
             }
         ],
-        colors: ['#10b981', '#3b82f6'],
+        colors: ['#3d6b5f', '#3b82f6'],
         plotOptions: {
             bar: {
                 borderRadius: 6,
@@ -185,7 +185,7 @@ export default function Dashboard() {
     const paymentChartOptions = useMemo(() => ({
         chart: { id: 'payment-methods' },
         labels: paymentMethods?.labels || [],
-        colors: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'],
+        colors: ['#3d6b5f', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'],
         legend: { 
             position: 'bottom' as const,
             fontFamily: 'Inter, sans-serif',
@@ -262,7 +262,7 @@ export default function Dashboard() {
     const segmentChartOptions = useMemo(() => ({
         chart: { id: 'customer-segmentation' },
         labels: ['Baru', 'Kembali'],
-        colors: ['#10b981', '#f59e0b'],
+        colors: ['#3d6b5f', '#f59e0b'],
         legend: { position: 'bottom' as const },
         stroke: { show: false },
         plotOptions: {
@@ -299,7 +299,7 @@ export default function Dashboard() {
                 }
             }
         },
-        colors: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'],
+        colors: ['#3d6b5f', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'],
         xaxis: {
             categories: topServices.slice(0, 5).map(s => s.serviceName),
             labels: {
@@ -594,7 +594,7 @@ export default function Dashboard() {
                                     key: 'paymentStatus',
                                     render: (text, record) => (
                                         <Badge 
-                                            color={record.paymentStatus === 'paid' ? '#10b981' : '#f59e0b'} 
+                                            color={record.paymentStatus === 'paid' ? '#3d6b5f' : '#f59e0b'} 
                                             text={text} 
                                             className="text-[10px] font-bold uppercase tracking-wider"
                                         />
@@ -784,10 +784,10 @@ export default function Dashboard() {
                     border-radius: 12px;
                     padding: 4px 8px;
                     font-weight: 700;
-                    color: #10b981;
+                    color: #3d6b5f;
                 }
                 .period-select .ant-select-selection-item {
-                    color: #10b981 !important;
+                    color: #3d6b5f !important;
                 }
                 .dashboard-range-picker {
                     background: #f8fafc;
