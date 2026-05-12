@@ -34,11 +34,15 @@ export function GetBranchServicesService(branchId: number, categoryId?: number) 
 }
 
 export function GetActivePaymentMethodsService() {
-    return request<PaymentMethod[]>({ url: rest.paymentMethodActive, method: 'GET' });
+    return request<PaymentMethod[]>({ url: rest.posPaymentMethods, method: 'GET' });
 }
 
 export function GetAvailableTherapistsService() {
     return request<Therapist[]>({ url: rest.therapistAvailable, method: 'GET' });
+}
+
+export function GetPosServicePackagesService() {
+    return request<any>({ url: rest.posServicePackages, method: 'GET' });
 }
 
 // ============================================

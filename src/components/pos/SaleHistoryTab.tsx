@@ -44,14 +44,21 @@
         "voucher": { bg: "rgba(245,158,11,0.1)", color: "#d97706", label: "Voucher" },
         2: { bg: "rgba(59,130,246,0.1)", color: "#2563eb", label: "Kredit" },
         "credit": { bg: "rgba(59,130,246,0.1)", color: "#2563eb", label: "Kredit" },
+        3: { bg: "rgba(59,130,246,0.1)", color: "#2563eb", label: "Booking" },
+        "booking": { bg: "rgba(59,130,246,0.1)", color: "#2563eb", label: "Booking" },
     };
     const PAYMENT_STATUS_STYLE: Record<string | number, { bg: string; color: string }> = {
-        1: { bg: "rgba(16,185,129,0.1)", color: "#059669" },
+        2: { bg: "rgba(16,185,129,0.1)", color: "#059669" },       // Paid
         "Paid": { bg: "rgba(16,185,129,0.1)", color: "#059669" },
         "Lunas": { bg: "rgba(16,185,129,0.1)", color: "#059669" },
-        0: { bg: "rgba(239,68,68,0.1)", color: "#dc2626" },
+        0: { bg: "rgba(239,68,68,0.1)", color: "#dc2626" },       // Pending
         "Pending": { bg: "rgba(239,68,68,0.1)", color: "#dc2626" },
         "Unpaid": { bg: "rgba(239,68,68,0.1)", color: "#dc2626" },
+        "Belum Dibayar": { bg: "rgba(239,68,68,0.1)", color: "#dc2626" },
+        1: { bg: "rgba(245,158,11,0.1)", color: "#d97706" },      // Partial
+        3: { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6" },      // Refunded
+        4: { bg: "rgba(100,116,139,0.1)", color: "#64748b" },     // Cancelled
+        5: { bg: "rgba(100,116,139,0.1)", color: "#64748b" },     // Expired
     };
 
     function Pill({ label, bg, color }: { label: string; bg: string; color: string }) {
@@ -94,7 +101,16 @@
                         <label style={{ display: "block", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", marginBottom: "4px" }}>Cari Member / Kode</label>
                         <div className="search-input-wrapper">
                             <i className="fa-solid fa-magnifying-glass" />
-                            <input type="text" className="search-input" placeholder="Nama atau kode..." value={filter.search} onChange={(e) => setFilter((f: any) => ({ ...f, search: e.target.value }))} />
+                            <input 
+                                type="text" 
+                                className="search-input" 
+                                placeholder="Nama atau kode..." 
+                                value={filter.search} 
+                                onChange={(e) => setFilter((f: any) => ({ ...f, search: e.target.value }))}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") onSearch();
+                                }}
+                            />
                         </div>
                     </div>
                     <div style={{ flex: "0 1 155px" }}>
@@ -104,6 +120,7 @@
                             <option value={0}>Service</option>
                             <option value={1}>Voucher</option>
                             <option value={2}>Kredit</option>
+                            <option value={3}>Booking</option>
                         </select>
                     </div>
                     <div style={{ flex: "0 1 145px" }}>
@@ -113,6 +130,16 @@
                     <div style={{ flex: "0 1 145px" }}>
                         <label style={{ display: "block", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", marginBottom: "4px" }}>Sampai</label>
                         <input type="date" className="search-input" value={filter.endDate} onChange={(e) => setFilter((f: any) => ({ ...f, endDate: e.target.value }))} style={{ width: "100%", padding: "9px 12px" }} />
+                    </div>
+                    <div style={{ flex: 0, minWidth: "120px" }}>
+                        <label style={{ display: "block", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", marginBottom: "4px" }}>Status</label>
+                        <select value={filter.statuses} onChange={(e) => setFilter((f: any) => ({ ...f, statuses: e.target.value }))} className="search-input" style={{ width: "100%", padding: "9px 12px", cursor: "pointer" }}>
+                            <option value="">Semua Status</option>
+                            <option value="2">Lunas</option>
+                            <option value="0">Belum Lunas</option>
+                            <option value="1">Partial / Cicil</option>
+                            <option value="4">Dibatalkan</option>
+                        </select>
                     </div>
                     <div style={{ display: "flex", gap: "8px", alignItems: "flex-end" }}>
                         <button className="action-btn primary" onClick={onSearch} disabled={loading} style={{ padding: "9px 20px", fontSize: "13px", height: "38px" }}>
@@ -435,7 +462,15 @@
     export default function SaleHistoryTab({ branchId, onToast }: Props) {
         const { post } = useApi();
 
-        const [filter, setFilter] = useState({ search: "", SaleType: -1, startDate: "", endDate: "" });
+        const getDefaultDates = () => {
+            const now = new Date();
+            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+            const formatDate = (date: Date) => date.toISOString().split("T")[0];
+            return { start: formatDate(lastMonth), end: formatDate(now) };
+        };
+
+        const { start, end } = getDefaultDates();
+        const [filter, setFilter] = useState({ search: "", SaleType: -1, startDate: start, endDate: end, statuses: "" });
         const [sales, setSales] = useState<SaleRow[]>([]);
         const [loading, setLoading] = useState(false);
 
@@ -449,17 +484,20 @@
         const [rooms, setRooms] = useState<any[]>([]);
 
         // ── Fetch list transaksi ───────────────────────────────────────────────────
-        const fetchSales = useCallback(async () => {
+        const fetchSales = useCallback(async (overrideFilter?: any) => {
+            // Check if overrideFilter is an actual filter object, not a MouseEvent
+            const f = (overrideFilter && !overrideFilter.nativeEvent) ? overrideFilter : filter;
             setLoading(true);
             try {
                 const res = await GetSalesService({
                     branchId,
                     page: 1,
                     pageSize: 50,
-                    search: filter.search || undefined,
-                    SaleType: filter.SaleType >= 0 ? filter.SaleType : undefined,
-                    startDate: filter.startDate || undefined,
-                    endDate: filter.endDate || undefined,
+                    search: f.search || undefined,
+                    SaleType: f.SaleType >= 0 ? f.SaleType : undefined,
+                    startDate: f.startDate || undefined,
+                    endDate: f.endDate || undefined,
+                    statuses: f.statuses || undefined,
                 });
                 if (res.success) setSales(res.data?.items ?? res.data ?? []);
                 else onToast(res.message ?? "Gagal memuat data", "error");
@@ -549,7 +587,12 @@
                     filter={filter}
                     setFilter={setFilter}
                     onSearch={fetchSales}
-                    onReset={() => setFilter({ search: "", SaleType: -1, startDate: "", endDate: "" })}
+                    onReset={() => {
+                        const { start, end } = getDefaultDates();
+                        const newFilter = { search: "", SaleType: -1, startDate: start, endDate: end, statuses: "" };
+                        setFilter(newFilter);
+                        fetchSales(newFilter);
+                    }}
                     loading={loading}
                 />
                 <SaleTable

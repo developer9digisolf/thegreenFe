@@ -9,6 +9,7 @@ import {
     GetAvailableTherapistsService,
     SearchMembersPosService,
     GetServiceCategoriesService,
+    GetPosServicePackagesService,
 } from "@afx/services/pos.service";
 import { CreditPackageGetActiveService } from "@afx/services/credit-package.service";
 
@@ -167,9 +168,11 @@ export function usePosData(
     const loadInitData = useCallback(async (branchId?: number) => {
         setLoading(true);
         try {
-            const [initRes, creditPackagesRes] = await Promise.all([
+            const [initRes, creditPackagesRes, servicePackagesRes, paymentMethodsRes] = await Promise.all([
                 GetPosInitService().catch(() => ({ success: false, data: null })),
                 CreditPackageGetActiveService().catch(() => ({ success: false, data: [] })),
+                GetPosServicePackagesService().catch(() => ({ success: false, data: { pageData: [] } })),
+                GetActivePaymentMethodsService().catch(() => ({ success: false, data: [] })),
             ]);
 
             let combinedData: PosInitData = initRes.success && initRes.data
@@ -179,12 +182,36 @@ export function usePosData(
                     creditPackages: [], paymentMethods: [], pendingOrders: [], therapists: [],
                   };
 
-            // Override creditPackages from master API if successful
             if ((creditPackagesRes as any).success && Array.isArray((creditPackagesRes as any).data)) {
                 combinedData.creditPackages = (creditPackagesRes as any).data;
             } else if (Array.isArray(creditPackagesRes)) {
-                // In case request() returns data directly (standard in some older parts of the app)
                 combinedData.creditPackages = creditPackagesRes;
+            }
+
+            // Override paymentMethods from POS API if successful
+            if ((paymentMethodsRes as any).success && Array.isArray((paymentMethodsRes as any).data)) {
+                combinedData.paymentMethods = (paymentMethodsRes as any).data;
+            } else if (Array.isArray(paymentMethodsRes)) {
+                combinedData.paymentMethods = paymentMethodsRes;
+            }
+
+            // Map Service Packages (Vouchers) from new API
+            const servicePackagesData = (servicePackagesRes as any).data?.pageData || servicePackagesRes?.data || [];
+            if (Array.isArray(servicePackagesData)) {
+                combinedData.packages = servicePackagesData.map((pkg: any) => ({
+                    id: pkg.id,
+                    code: pkg.code,
+                    name: pkg.name,
+                    description: pkg.description,
+                    totalSessions: pkg.quantity, // map quantity to totalSessions
+                    price: pkg.price,
+                    validityDays: pkg.durationExpired, // map durationExpired to validityDays
+                    duration: pkg.duration,
+                    pricePerSession: pkg.basicPrice / (pkg.quantity || 1),
+                    savings: (pkg.basicPrice || 0) - (pkg.price || 0),
+                    quantity: pkg.quantity,
+                    durationExpired: pkg.durationExpired
+                }));
             }
 
             const bId = branchId ?? (combinedData.currentSession as any)?.branchId;

@@ -33,14 +33,18 @@ export interface Category {
 
 export interface Package {
     id: number;
+    code?: string;
     name: string;
     description?: string;
-    totalSessions: number;
+    totalSessions: number; // mapped to quantity
     price: number;
-    validityDays: number;
+    validityDays: number; // mapped to durationExpired
+    duration?: string;
     pricePerSession: number;
     savings?: number;
     serviceVariantName?: string;
+    quantity?: number;
+    durationExpired?: number;
 }
 
 export interface CreditPackage {
@@ -59,12 +63,15 @@ export interface PaymentMethod {
     id: number;
     code: string;
     name: string;
-    type: number;
-    typeName: string;
-    icon?: string;
+    description?: string | null;
+    imageUrl?: string;
     requiresReference: boolean;
     isCash: boolean;
     sortOrder: number;
+    isActive?: boolean;
+    type?: number;
+    typeName?: string;
+    icon?: string;
 }
 
 export interface Therapist {

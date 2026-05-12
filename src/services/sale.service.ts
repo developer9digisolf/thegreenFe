@@ -12,6 +12,7 @@ export interface GetSalesParams {
     endDate?: string;
     search?: string;
     SaleType?: number;
+    statuses?: string | number;
 }
 
 export interface GetSalesResult {
@@ -39,15 +40,19 @@ export const GetSalesService = async (
         if (params.startDate)         query.append("startDate",  params.startDate);
         if (params.endDate)           query.append("endDate",    params.endDate);
         if (params.search)            query.append("search",     params.search);
+        if (params.statuses != null)  query.append("statuses",   String(params.statuses));
 
         const response = await request<any>({
             url: `pos/sales?${query.toString()}`,
             method: "GET",
         });
 
+        // Mapping response data
+        const pageData = (response as any).data?.pageData ?? (response as any).data?.items ?? (response as any).data ?? [];
+
         return {
             success: true,
-            data: (response as any).data ?? response,
+            data: pageData,
         };
     } catch (error: any) {
         return {
