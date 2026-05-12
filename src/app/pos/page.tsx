@@ -12,6 +12,7 @@ import { usePayment } from "@afx/hooks/pos/usePayment";
 import GatekeeperScreen from "@afx/components/pos/GatekeeperScreen";
 import SaleHistoryTab from "@afx/components/pos/SaleHistoryTab";
 import ModalPayment from "@afx/components/pos/ModalPayment";
+import ModalMemberAdd from "@afx/components/pos/ModalMemberAdd";
 import { CloseCashierSessionService } from "@afx/services/pos.service";
 
 
@@ -47,11 +48,12 @@ export default function POSPage() {
     const [actualClosingCash, setActualClosingCash]         = useState("");
     const [isClosingSession, setIsClosingSession]           = useState(false);
     const [isCheckoutProcessing, setIsCheckoutProcessing]   = useState(false);
+    const [showMemberModal, setShowMemberModal] = useState(false);
 
     // ── Computed Variables ─────────────────────────────────────────────────
     const activeBranchId = useMemo<number | null>(
-        () => session.activeSession?.branchId ?? session.selectedBranch?.branchId ?? null,
-        [session.activeSession, session.selectedBranch]
+        () => session.activeSession?.branchId ?? session.selectedBranch?.branchId ?? (session.selectedBranch as any)?.id ?? pos.initData?.currentSession?.branchId ?? null,
+        [session.activeSession, session.selectedBranch, pos.initData]
     );
 
     const currentActiveSession =
@@ -71,10 +73,18 @@ export default function POSPage() {
     // ── Handlers ───────────────────────────────────────────────────────────
     const handleContinueSession = useCallback(() => {
         const entry = Object.entries(session.activeSessionsMap).find(([, s]) => s != null);
-        const branchId = entry ? parseInt(entry[0]) : (session.selectedBranch?.branchId ?? null);
-        if (!branchId) { showToast("Branch tidak ditemukan, hubungi admin", "error"); return; }
-        session.setGateState("READY");
-        pos.loadInitData(branchId);
+        if (entry) {
+            const bId = parseInt(entry[0]);
+            const targetBranch = session.branches.find(b => (b as any).branchId === bId || (b as any).id === bId);
+            if (targetBranch) session.setSelectedBranch(targetBranch);
+            session.setGateState("READY");
+            pos.loadInitData(bId);
+        } else {
+            const branchId = session.selectedBranch?.branchId ?? null;
+            if (!branchId) { showToast("Branch tidak ditemukan, hubungi admin", "error"); return; }
+            session.setGateState("READY");
+            pos.loadInitData(branchId);
+        }
     }, [session, pos, showToast]);
 
     const handleBack = useCallback(() => {
@@ -135,26 +145,48 @@ export default function POSPage() {
     };
 
     const handleProcessPayment = async () => {
+        console.log("handleProcessPayment TRIGGERED");
+        console.log("Check activeBranchId:", activeBranchId);
+        console.log("Check session.selectedBranch:", session.selectedBranch);
+        console.log("Check pos.initData:", pos.initData);
+
         if (!hasCartItems) return;
         setIsCheckoutProcessing(true);
 
+        if (!activeBranchId && !session.selectedBranch?.branchId && !(session.selectedBranch as any)?.id && !pos.initData?.currentSession?.branchId) {
+            showToast("Branch ID tidak ditemukan. Mohon pilih cabang kembali.", "error");
+            setIsCheckoutProcessing(false);
+            return;
+        }
+
+        if ((mode === "voucher" || mode === "credit") && !pos.selectedMember) {
+            showToast("Pilih Member terlebih dahulu untuk pembelian Paket/Kredit", "error");
+            setIsCheckoutProcessing(false);
+            return;
+        }
+
         const payload = {
             SaleType: mode === "voucher" ? 1 : mode === "credit" ? 2 : 0,
-            BranchId: session.selectedBranch?.branchId ?? activeBranchId,
+            BranchId: activeBranchId || session.selectedBranch?.branchId || (session.selectedBranch as any)?.id || pos.initData?.currentSession?.branchId,
+            MemberId: pos.selectedMember?.id ?? null,
             PaymentMethodId: payment.payments[0]?.paymentMethodId ?? null,
-            notes: payment.paymentReference ?? "Paid in full",
+            notes: payment.paymentReference ?? "",
             amountPaid: pos.cartGrandTotal,
-            Items: pos.cartItems.map((item: CartItem) => ({
+            Items: pos.cartItems.map((item: any) => ({
                 ItemType: item.itemType,
-                BranchServiceVariantId: item.serviceVariantId,
-                ServicePackageId: item.packageId,
-                CreditPackageId: item.creditPackageId,
-                Notes: null,
-                AppointmentDate: null,
-                StartTime: null,
-                AppointmentNotes: null,
+                BranchServiceVariantId: item.branchServiceVariantId ?? item.serviceVariantId ?? null,
+                ServicePackageId: item.packageId ?? item.servicePackageId ?? null,
+                CreditPackageId: item.creditPackageId ?? null,
+                Notes: item.notes ?? null,
+                AppointmentDate: item.appointmentDate ?? null,
+                StartTime: item.startTime ?? null,
+                AppointmentNotes: item.appointmentNotes ?? null,
             })),
         };
+
+        console.log("DEBUG: activeBranchId", activeBranchId);
+        console.log("DEBUG: session.selectedBranch", session.selectedBranch);
+        console.log("[POS Sale Payload]", payload);
 
         try {
             const response = await post("/pos/sales", payload);
@@ -219,6 +251,7 @@ export default function POSPage() {
                 }}
                 onContinueSession={async (branch: any) => {
                     const bId = branch.branchId ?? branch.id;
+                    session.setSelectedBranch(branch);
                     session.setGateState("READY");
                     await pos.loadInitData(bId);
                     showToast("Sesi aktif ditemukan. Mengembalikan data kasir...", "info");
@@ -331,7 +364,7 @@ export default function POSPage() {
                     <aside className="member-panel">
                         <div className="member-search" style={{ position: "relative" }}>
                             <div className="member-search-row">
-                                <div className="search-input-wrapper">
+                                <div className="search-input-wrapper" style={{ position: 'relative', width: '100%' }}>
                                     <i className="fa-solid fa-magnifying-glass" />
                                     <input
                                         type="text"
@@ -340,75 +373,80 @@ export default function POSPage() {
                                         value={pos.memberSearch}
                                         onChange={(e) => pos.setMemberSearch(e.target.value)}
                                         onFocus={() => pos.setShowMemberDropdown(true)}
+                                        style={{ width: "100%", paddingLeft: "40px" }}
                                     />
+                                    {/* Dropdown Hasil Pencarian dihapus karena sudah menyatu dengan list di bawah */}
                                 </div>
-                                <button className="btn-add-member">
+                                <button
+                                    className="btn-add-member"
+                                    onClick={() => setShowMemberModal(true)}
+                                    title="Tambah Member Baru"
+                                >
                                     <i className="fa-solid fa-plus" />
                                 </button>
                             </div>
-
-                            {pos.showMemberDropdown && pos.memberResults.length > 0 && (
-                                <div
-                                    style={{
-                                        position: "absolute", top: "100%", left: 16, right: 16,
-                                        background: "var(--bg-card)", border: "1px solid var(--border-color)",
-                                        borderRadius: "12px", boxShadow: "var(--shadow-lg)",
-                                        zIndex: 100, maxHeight: "250px", overflowY: "auto",
-                                    }}
-                                >
-                                    {pos.memberResults.map((member) => (
-                                        <div
-                                            key={member.id}
-                                            onClick={() => {
-                                                pos.setSelectedMember(member);
-                                                pos.setShowMemberDropdown(false);
-                                                pos.setMemberSearch("");
-                                            }}
-                                            style={{ padding: "12px 16px", cursor: "pointer", borderBottom: "1px solid var(--border-color)" }}
-                                            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-main)")}
-                                            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                                        >
-                                            <div style={{ fontWeight: 600 }}>{member.name}</div>
-                                            <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                                                {member.phone} • Saldo: {formatCurrency(member.creditBalance?.totalBalance ?? 0)}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
                         </div>
 
-                        <div className="member-info">
-                            {pos.selectedMember ? (
-                                <div className="member-card">
-                                    <div className="member-header">
-                                        <div className="member-avatar">{pos.selectedMember.name.charAt(0)}</div>
-                                        <div className="member-details">
-                                            <h4>{pos.selectedMember.name}</h4>
-                                            <p><i className="fa-solid fa-phone" /> {pos.selectedMember.phone}</p>
-                                        </div>
-                                        <button
-                                            onClick={() => pos.setSelectedMember(null)}
-                                            style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: "8px", padding: "8px", cursor: "pointer", color: "white" }}
-                                        >
-                                            <i className="fa-solid fa-xmark" />
-                                        </button>
-                                    </div>
-                                    <div className="member-stats">
-                                        <div className="member-stat">
-                                            <div className="member-stat-value">
-                                                {formatCurrency(pos.selectedMember.creditBalance?.totalBalance ?? 0)}
+                        <div className="member-info" style={{ padding: "0 16px", flex: 1, overflowY: "auto" }}>
+                            <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px", marginTop: "10px" }}>
+                                {pos.memberSearch ? "Hasil Pencarian" : "Member Terdaftar"}
+                            </div>
+                            
+                            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                                {pos.memberResults.length > 0 ? (
+                                    pos.memberResults.map((member) => {
+                                        const isActive = pos.selectedMember?.id === member.id;
+                                        return (
+                                            <div
+                                                key={member.id}
+                                                onClick={() => pos.setSelectedMember(isActive ? null : member)}
+                                                className={`member-mini-card ${isActive ? 'active' : ''}`}
+                                                style={{
+                                                    padding: "12px",
+                                                    borderRadius: "16px",
+                                                    background: isActive ? "var(--gradient-spa)" : "var(--bg-card)",
+                                                    border: isActive ? "none" : "1px solid var(--border-color)",
+                                                    color: isActive ? "white" : "var(--text-primary)",
+                                                    cursor: "pointer",
+                                                    transition: "all 0.2s ease",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: "12px",
+                                                    boxShadow: isActive ? "0 8px 16px rgba(61, 107, 95, 0.25)" : "none"
+                                                }}
+                                            >
+                                                <div style={{ 
+                                                    width: "40px", height: "40px", borderRadius: "12px", 
+                                                    background: isActive ? "rgba(255,255,255,0.2)" : "var(--spa-green-bg)",
+                                                    color: isActive ? "white" : "var(--spa-green)",
+                                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                                    fontWeight: 800, fontSize: "16px"
+                                                }}>
+                                                    {(member.name || member.fullName || "M").charAt(0).toUpperCase()}
+                                                </div>
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <div style={{ fontWeight: 700, fontSize: "14px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                        {member.name || member.fullName || "No Name"}
+                                                    </div>
+                                                    <div style={{ fontSize: "12px", opacity: isActive ? 0.8 : 1, color: isActive ? "white" : "var(--text-muted)" }}>
+                                                        {member.phone || "No phone"}
+                                                    </div>
+                                                </div>
+                                                {isActive && (
+                                                    <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px" }}>
+                                                        <i className="fa-solid fa-check"></i>
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="member-stat-label">Saldo Kredit</div>
-                                        </div>
+                                        );
+                                    })
+                                ) : (
+                                    <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-muted)" }}>
+                                        <i className="fa-solid fa-user-slash" style={{ fontSize: "32px", marginBottom: "12px", opacity: 0.3 }}></i>
+                                        <p style={{ fontSize: "12px" }}>Tidak ada member ditemukan</p>
                                     </div>
-                                </div>
-                            ) : (
-                                <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--text-muted)" }}>
-                                    <i className="fa-solid fa-user-plus" style={{ fontSize: "48px", marginBottom: "16px", opacity: 0.5 }} />
-                                    <p style={{ fontSize: "12px", lineHeight: 1.5 }}>Cari member atau lanjutkan sebagai guest</p>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </aside>
 
@@ -858,6 +896,20 @@ export default function POSPage() {
                     onProcess={handleProcessPayment}
                     onClose={payment.closePaymentModal}
                     isProcessing={isCheckoutProcessing}
+                />
+            )}
+            {showMemberModal && (
+                <ModalMemberAdd
+                    onClose={() => setShowMemberModal(false)}
+                    onSave={async (data) => {
+                        const res = await pos.createMember(data);
+                        if (res) {
+                            showToast("Member berhasil ditambahkan!", "success");
+                            return true;
+                        }
+                        showToast("Gagal menambahkan member", "error");
+                        return false;
+                    }}
                 />
             )}
         </div>

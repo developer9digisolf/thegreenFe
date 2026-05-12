@@ -137,6 +137,12 @@ const menuConfig: MenuSection[] = [
             icon: "fa-solid fa-box-archive",
             path: "/dashboard/master/service-packages",
           },
+            {
+            key: "credit-package",
+            label: "Paket Kredit",
+            icon: "fa-solid fa-coins",
+            path: "/dashboard/master/credit-packages",
+          },
         ],
       },
       {
@@ -188,25 +194,7 @@ const menuConfig: MenuSection[] = [
             label: "Service Variant",
             icon: "fa-solid fa-tags",
             path: "/dashboard/master/service-variants",
-          },
-          {
-            key: "service-package",
-            label: "Service Package",
-            icon: "fa-solid fa-box-open",
-            path: "/dashboard/master/packages",
-          },
-          {
-            key: "voucher-package",
-            label: "Paket Voucher",
-            icon: "fa-solid fa-box-archive",
-            path: "/dashboard/master/voucher-packages",
-          },
-          {
-            key: "credit-package",
-            label: "Paket Kredit",
-            icon: "fa-solid fa-coins",
-            path: "/dashboard/master/credit-packages",
-          },
+          }   
         ],
       },
       {

@@ -502,21 +502,22 @@ export default function MasterPackages() {
                         {/* Preview Box */}
                         <div style={{ 
                             backgroundColor: '#f8f9fa', 
-                            padding: '12px 16px', 
-                            borderRadius: '8px',
-                            marginTop: '8px'
+                            padding: '16px', 
+                            borderRadius: '12px',
+                            marginTop: '20px',
+                            border: '1px dashed #e2e8f0'
                         }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                <span style={{ color: '#666' }}>Harga per sesi:</span>
-                                <span style={{ fontWeight: 600 }} suppressHydrationWarning>
+                                <span style={{ color: '#64748b', fontSize: '13px', fontWeight: 500 }}>Harga per sesi</span>
+                                <span style={{ fontWeight: 700, color: '#1e293b', fontSize: '15px' }} suppressHydrationWarning>
                                     {formatCurrency(pricePerSession)}
                                 </span>
                             </div>
                             {savingsPreview !== null && savingsPreview > 0 && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span style={{ color: '#666' }}>Penghematan:</span>
-                                    <span style={{ fontWeight: 600, color: '#2e7d32' }} suppressHydrationWarning>
-                                        {formatCurrency(savingsPreview)}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ color: '#64748b', fontSize: '12px' }}>Total Penghematan</span>
+                                    <span style={{ fontWeight: 600, color: '#2e7d32', fontSize: '13px' }} suppressHydrationWarning>
+                                        Hemat {formatCurrency(savingsPreview)}
                                     </span>
                                 </div>
                             )}

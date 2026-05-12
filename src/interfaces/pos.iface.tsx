@@ -210,7 +210,7 @@ export interface Member {
     name: string;
     phone: string;
     email?: string;
-    creditBalance?: { totalBalance: number };
+    creditBalance?: { totalBalance: number } | number;
     totalVisits?: number;
     status: string;
     avoidAreas?: string[];

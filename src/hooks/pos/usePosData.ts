@@ -8,6 +8,8 @@ import {
     GetActivePaymentMethodsService,
     GetAvailableTherapistsService,
     SearchMembersPosService,
+    CreateMemberPosService,
+    UpdateMemberPosService,
     GetServiceCategoriesService,
     GetPosServicePackagesService,
 } from "@afx/services/pos.service";
@@ -51,6 +53,7 @@ export interface UsePosDataReturn {
     memberResults:        Member[];
     showMemberDropdown:   boolean;
     setShowMemberDropdown:(v: boolean) => void;
+    createMember:         (data: any) => Promise<any>;
 
     // Therapist
     selectedTherapist:    number | null;
@@ -164,15 +167,26 @@ export function usePosData(
         }
     }, [showToast]);
 
+    const loadInitialMembers = useCallback(async () => {
+        try {
+            const res = await SearchMembersPosService("");
+            const items = res.data?.pageData || (res.data as any)?.items || (Array.isArray(res.data) ? res.data : []);
+            if (res.success && Array.isArray(items)) {
+                setMemberResults(items);
+            }
+        } catch {}
+    }, []);
+
     // ── Load init data ─────────────────────────────────────────────────────────
     const loadInitData = useCallback(async (branchId?: number) => {
         setLoading(true);
+        loadInitialMembers();
         try {
             const [initRes, creditPackagesRes, servicePackagesRes, paymentMethodsRes] = await Promise.all([
-                GetPosInitService().catch(() => ({ success: false, data: null })),
+                GetPosInitService(branchId).catch(() => ({ success: false, data: null })),
                 CreditPackageGetActiveService().catch(() => ({ success: false, data: [] })),
-                GetPosServicePackagesService().catch(() => ({ success: false, data: { pageData: [] } })),
-                GetActivePaymentMethodsService().catch(() => ({ success: false, data: [] })),
+                GetPosServicePackagesService(branchId).catch(() => ({ success: false, data: { pageData: [] } })),
+                GetActivePaymentMethodsService(branchId).catch(() => ({ success: false, data: [] })),
             ]);
 
             let combinedData: PosInitData = initRes.success && initRes.data
@@ -236,12 +250,8 @@ export function usePosData(
             }
 
             if (!initRes.success) {
-                const [payRes, therapistRes] = await Promise.all([
-                    GetActivePaymentMethodsService().catch(() => ({ data: [] })),
-                    GetAvailableTherapistsService().catch(() => ({ data: [] })),
-                ]);
-                combinedData.paymentMethods = payRes.data     ?? [];
-                combinedData.therapists     = therapistRes.data ?? [];
+                // If init failed, we already have partial data from other parallel calls
+                // No need to re-fetch without parameters
             }
 
             setInitData(combinedData);
@@ -257,15 +267,44 @@ export function usePosData(
         if (query.length < 2) { setMemberResults([]); return; }
         try {
             const res = await SearchMembersPosService(query);
-            if (res.success && res.data?.items) setMemberResults(res.data.items);
-        } catch {}
+            console.log("Member Search Response:", res);
+            if (res.success && Array.isArray(res.data)) {
+                setMemberResults(res.data);
+            } else if (res.success && (res.data as any)?.items) {
+                setMemberResults((res.data as any).items);
+            }
+        } catch (err) {
+            console.error("Member Search Error:", err);
+        }
     }, []);
 
     const handleSetMemberSearch = useCallback((v: string) => {
+        console.log("handleSetMemberSearch TRIGGERED:", v);
         setMemberSearch(v);
-        searchMembers(v);
-        setShowMemberDropdown(true);
-    }, [searchMembers]);
+        if (!v.trim()) {
+            loadInitialMembers();
+            setShowMemberDropdown(false);
+        } else {
+            searchMembers(v);
+            setShowMemberDropdown(true);
+        }
+    }, [searchMembers, loadInitialMembers]);
+
+    const createMember = useCallback(async (data: any) => {
+        console.log("Creating Member Payload:", data);
+        try {
+            const res = await CreateMemberPosService(data);
+            console.log("Create Member Response:", res);
+            if (res.success && res.data) {
+                setSelectedMember(res.data);
+                return res.data;
+            }
+            return null;
+        } catch (error) {
+            console.error("Gagal membuat member:", error);
+            return null;
+        }
+    }, []);
 
     // ── Cart handlers ──────────────────────────────────────────────────────────
     const addServiceToCart = useCallback((variant: ServiceVariant) => {
@@ -351,6 +390,7 @@ export function usePosData(
         selectedMember, setSelectedMember,
         memberSearch, setMemberSearch: handleSetMemberSearch,
         memberResults, showMemberDropdown, setShowMemberDropdown,
+        createMember,
         selectedTherapist, setSelectedTherapist,
         cartItems, cartSubtotal, cartDiscount, setCartDiscount,
         cartGrandTotal, cartTotalDuration,

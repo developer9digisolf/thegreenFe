@@ -45,10 +45,10 @@ export const rest = {
   packageCheckName: "packages/check-name",
 
   // Credit Packages
-  creditPackage: "credit-packages",
+  creditPackage: "master/credit-packages",
   creditPackageActive: "master/credit-packages/active",
-  creditPackageDetail: "credit-packages/:id",
-  creditPackageCheckName: "credit-packages/check-name",
+  creditPackageDetail: "master/credit-packages/:id",
+  creditPackageCheckName: "master/credit-packages/check-name",
 
   // Members
   member: "members",
