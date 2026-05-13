@@ -44,17 +44,18 @@ export function FormCompany(props: IPropsFormCompany) {
 
   // Convert hierarchical company data to TreeSelect format
   const treeData = useMemo(() => {
+    const isCreate = props?.formType === 'create';
     const mapNode = (nodes: any[], isDescendant = false): any[] => {
       return nodes.map(node => {
-        const isCurrent = node.id === company?.id;
+        // Rules for Update/Detail mode only:
+        const isCurrent = !isCreate && node.id === company?.id;
         const isMaster = !node.parentId; // Top level companies
-        const isUpdatingChild = props?.formType === 'update' && company?.parentId;
+        const isUpdatingChild = !isCreate && props?.formType === 'update' && company?.parentId;
         
-        // Rules:
         // 1. Cannot be own parent (isCurrent)
         // 2. Cannot pick descendant (isDescendant)
         // 3. Child companies cannot pick a Master company as parent (isMaster && isUpdatingChild)
-        const shouldDisable = isCurrent || isDescendant || (isMaster && isUpdatingChild);
+        const shouldDisable = !isCreate && (isCurrent || isDescendant || (isMaster && isUpdatingChild));
 
         return {
           title: `${node.name} (${node.code})`,
