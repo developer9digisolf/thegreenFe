@@ -192,6 +192,28 @@ export default function TherapistSlide() {
       // Reset progress bar
       setProgress(0);
     });
+
+    // Listen for RefreshQueueTherapist event from backend
+    signalROn("RefreshQueueTherapist", (data: any) => {
+      console.log(
+        "[TherapistSlide] RefreshQueueTherapist event received:",
+        data,
+      );
+
+      // Fetch therapists again to get updated data
+      if (selectedBranch) {
+        console.log(
+          "[TherapistSlide] Refreshing therapists after RefreshQueueTherapist...",
+        );
+        fetchTherapists(selectedBranch);
+      }
+
+      // Auto-slide to first card after data refresh
+      setCurrent(0);
+
+      // Reset progress bar
+      setProgress(0);
+    });
   }, [signalROn, selectedBranch, fetchTherapists]);
 
   // Handle branch search
