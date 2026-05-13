@@ -200,6 +200,35 @@ export default function TherapistSlide() {
     };
   }, [signalROn, signalROff, selectedBranch, fetchTherapists]);
 
+  // Listen for RefreshQueueTherapist event from backend
+  useEffect(() => {
+    const handleRefreshQueueTherapist = (data: any) => {
+      console.log(
+        "[TherapistSlide] RefreshQueueTherapist event received:",
+        data,
+      );
+
+      // Fetch therapists again to get updated data (no text-to-speech)
+      if (selectedBranch) {
+        console.log(
+          "[TherapistSlide] Refreshing therapists after RefreshQueueTherapist...",
+        );
+        fetchTherapists(selectedBranch);
+      }
+
+      // Auto-slide to first card after data refresh
+      setCurrent(0);
+      setProgress(0);
+    };
+
+    signalROn("RefreshQueueTherapist", handleRefreshQueueTherapist);
+
+    return () => {
+      // Cleanup listener on unmount or re-run
+      signalROff("RefreshQueueTherapist", handleRefreshQueueTherapist);
+    };
+  }, [signalROn, signalROff, selectedBranch, fetchTherapists]);
+
   // Handle branch search
   const handleBranchSearch = (searchTerm: string) => {
     setLoadingBranches(true);
@@ -612,14 +641,6 @@ export default function TherapistSlide() {
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         Do Treatment
                       </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => handleFinish(therapist.id)}
-                        className="px-3 py-1.5 rounded-lg bg-white hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-semibold transition-colors"
-                      >
-                        Selesai
-                      </button>
                     </td>
                   </tr>
                 ))}
