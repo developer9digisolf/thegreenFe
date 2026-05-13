@@ -190,7 +190,7 @@ export default function POSPage() {
         console.log("[POS Sale Payload]", payload);
 
         try {
-            const response = await post("/pos/sales", payload);
+            const response = await post("pos/sales", payload);
             if (response.success) {
                 showToast("Pembayaran Berhasil Disimpan!", "success");
                 pos.clearCart();

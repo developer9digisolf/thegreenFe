@@ -44,16 +44,28 @@ export function FormCompany(props: IPropsFormCompany) {
 
   // Convert hierarchical company data to TreeSelect format
   const treeData = useMemo(() => {
-    const mapNode = (nodes: any[]): any[] => {
-      return nodes.map(node => ({
-        title: `${node.name} (${node.code})`,
-        value: node.id,
-        disabled: node.id === company?.id, // Prevent self-parenting
-        children: node.children ? mapNode(node.children) : undefined
-      }));
+    const mapNode = (nodes: any[], isDescendant = false): any[] => {
+      return nodes.map(node => {
+        const isCurrent = node.id === company?.id;
+        const isMaster = !node.parentId; // Top level companies
+        const isUpdatingChild = props?.formType === 'update' && company?.parentId;
+        
+        // Rules:
+        // 1. Cannot be own parent (isCurrent)
+        // 2. Cannot pick descendant (isDescendant)
+        // 3. Child companies cannot pick a Master company as parent (isMaster && isUpdatingChild)
+        const shouldDisable = isCurrent || isDescendant || (isMaster && isUpdatingChild);
+
+        return {
+          title: `${node.name} (${node.code})`,
+          value: node.id,
+          disabled: shouldDisable,
+          children: node.children ? mapNode(node.children, isCurrent || isDescendant) : undefined
+        };
+      });
     };
     return mapNode(companies || []);
-  }, [companies, company?.id]);
+  }, [companies, company?.id, company?.parentId, props?.formType]);
 
   const renderHeader = () => (
     <div className="flex items-center justify-between w-full pr-6">

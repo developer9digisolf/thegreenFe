@@ -52,7 +52,7 @@ export default async function request<T = any, R = any>({
   return new Promise((resolve, reject) =>
     axios
       .request({
-        url: `${baseUrl}${url}`,
+        url: `${baseUrl.replace(/\/$/, '')}/${url.replace(/^\//, '')}`,
         headers: {
           "Content-Type":
             bodyType === "formData" ?

@@ -15,7 +15,7 @@ import { IReqFormCompany } from "@afx/interfaces/master/company.iface";
 export default function CompanyView() {
   const {
     useActions,
-    state: { company },
+    state: { company, companies, allCompaniesFlat },
     isLoading,
   } = useStore<IStateCompany, IActionCompany>("companies");
 
@@ -27,6 +27,23 @@ export default function CompanyView() {
   const [formType, setFormType] = useState<string>("create");
 
   const [tempSearch, setTempSearch] = useState<string>("");
+
+  const checkIsDescendant = (nodes: any[], currentId: number, targetId: number): boolean => {
+    for (const node of nodes) {
+      if (node.id === currentId) {
+        const isChild = (children: any[]): boolean => {
+          for (const child of children) {
+            if (child.id === targetId) return true;
+            if (child.children && isChild(child.children)) return true;
+          }
+          return false;
+        };
+        return node.children ? isChild(node.children) : false;
+      }
+      if (node.children && checkIsDescendant(node.children, currentId, targetId)) return true;
+    }
+    return false;
+  };
 
   const handleSearch = () => {
     setKeywords(tempSearch);
@@ -58,23 +75,41 @@ export default function CompanyView() {
     return forms
       .validateFields()
       .then((val) => {
-        if (formType === "create") {
-          useActions<"createCompany">(
-            "createCompany",
-            [
-              val,
-              (code: any) => {
-                const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
-                if (isSuccess) {
-                  getCompanies();
-                  // For company creation, we might want to stay open to add branches/etc later
-                  // but for now let's at least keep it open as requested
-                }
-              },
-            ],
-            true,
-          );
-        } else {
+        if (formType === "update") {
+          if (val.parentId === company?.id) {
+            notification.warning({
+              message: "Validasi Gagal",
+              description: "Perusahaan tidak boleh menjadi induk bagi dirinya sendiri.",
+              duration: 3,
+            });
+            return;
+          }
+
+          // Check for descendant (Circular Reference)
+          if (val.parentId && checkIsDescendant(companies, company?.id, val.parentId)) {
+            notification.warning({
+              message: "Validasi Struktur Gagal",
+              description: "Anak perusahaan tidak bisa menjadi induk bagi perusahaan di atasnya (Circular Reference).",
+              duration: 4,
+            });
+            return;
+          }
+
+          // Check for "Perusahaan Utama" selection or promotion to Root by "Anak Perusahaan"
+          const targetParent = allCompaniesFlat.find(c => c.id === val.parentId);
+          const isTargetMaster = targetParent && !targetParent.parentId;
+          const isBecomingRoot = !val.parentId;
+          const isUpdatingChild = !!company?.parentId;
+
+          if (isUpdatingChild && (isBecomingRoot || isTargetMaster)) {
+            notification.warning({
+              message: "Validasi Struktur Gagal",
+              description: "Anak perusahaan tidak boleh diubah menjadi Perusahaan Utama atau memilih Perusahaan Utama sebagai induk langsung.",
+              duration: 4,
+            });
+            return;
+          }
+
           useActions<"updateCompany">(
             "updateCompany",
             [
@@ -90,15 +125,31 @@ export default function CompanyView() {
             ],
             true,
           );
+        } else {
+          useActions<"createCompany">(
+            "createCompany",
+            [
+              val,
+              (code: any) => {
+                const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
+                if (isSuccess) {
+                  getCompanies();
+                }
+              },
+            ],
+            true,
+          );
         }
       })
       .catch((err: any) => {
-        notification.warning({
-          message: "Failed to load data",
-          description: err?.errorFields?.[0]?.errors,
-          duration: 2,
-          key: "FUNC-CREATE-COMPANY",
-        });
+        if (err?.errorFields) {
+          notification.warning({
+            message: "Data Belum Lengkap",
+            description: "Silakan lengkapi semua kolom yang wajib diisi.",
+            duration: 2,
+            key: "FUNC-VALIDATION-ERROR",
+          });
+        }
       });
   };
 

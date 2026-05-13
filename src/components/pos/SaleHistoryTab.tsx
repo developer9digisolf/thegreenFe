@@ -666,8 +666,8 @@
                     Notes: form.notes || null,
                 };
                 const res = assignTarget.type === "item"
-                        ? await post("/pos/sessions/create-from-sale-item", { ...payload, SaleItemId: assignTarget.saleItemId })
-                        : await post("/pos/bookings/create-session", { ...payload, BookingCode: assignTarget.bookingCode });
+                        ? await post("pos/sessions/create-from-sale-item", { ...payload, SaleItemId: assignTarget.saleItemId })
+                        : await post("pos/bookings/create-session", { ...payload, BookingCode: assignTarget.bookingCode });
 
                 if (res?.success || res?.meta?.success) {
                     onToast("Sesi berhasil dibuat!", "success");
