@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Services — The Green</title>
+  <meta name="description" content="Signature spa & wellness treatments crafted with intention." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Cormorant Garamond"', 'serif'],
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            forest: '#2d4a36',
+            sage: '#8aa68f',
+            gold: '#c9a96a',
+            cream: '#f5efe4',
+            bg: '#fbf9f3',
+            muted: '#7a8478',
+            line: '#e6dfcf',
+          },
+          boxShadow: {
+            soft: '0 20px 60px -20px rgba(45,74,54,0.18)',
+            lift: '0 30px 80px -30px rgba(45,74,54,0.30)',
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #fbf9f3;
+      color: #2d4a36;
+      scroll-behavior: smooth;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5 {
+      font-family: 'Cormorant Garamond', serif;
+      letter-spacing: -0.02em;
+      font-weight: 500;
+    }
+
+    .gradient-soft {
+      background: linear-gradient(180deg, #fbf9f3 0%, #f5efe4 100%);
+    }
+
+    .nav-link.active {
+      background: #2d4a36;
+      color: #fff;
+    }
+
+    /* Animations */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slowZoom {
+      from {
+        transform: scale(1);
+      }
+
+      to {
+        transform: scale(1.1);
+      }
+    }
+
+    .animate-slow-zoom {
+      animation: slowZoom 20s infinite alternate ease-in-out;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 1s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .reveal.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .stagger-reveal>* {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .stagger-reveal.active>* {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .stagger-reveal.active>*:nth-child(1) {
+      transition-delay: 0.1s;
+    }
+
+    .stagger-reveal.active>*:nth-child(2) {
+      transition-delay: 0.2s;
+    }
+
+    .stagger-reveal.active>*:nth-child(3) {
+      transition-delay: 0.3s;
+    }
+
+    .stagger-reveal.active>*:nth-child(4) {
+      transition-delay: 0.4s;
+    }
+  </style>
+</head>
+
+<body class="overflow-x-hidden">
+
+  <header class="absolute top-0 inset-x-0 z-30 pt-8 md:pt-10">
+    <div class="max-w-7xl mx-auto px-5 md:px-6 flex items-center justify-between gap-4">
+      <a href="index.html" class="flex items-center gap-2 font-display text-lg md:text-xl tracking-widest text-white">
+        <img src="logo.png" alt="The Green Logo" class="h-8 md:h-10 w-auto object-contain" />
+        THE GREEN
+      </a>
+      <nav
+        class="hidden lg:flex items-center gap-1 bg-white/10 backdrop-blur-md border-white/20 border rounded-full px-2 py-2">
+        <a href="index.html"
+          class="nav-link px-4 py-2 text-sm rounded-full transition text-white/90 hover:bg-black/5">Home</a>
+        <a href="about.html"
+          class="nav-link px-4 py-2 text-sm rounded-full transition text-white/90 hover:bg-black/5">About</a>
+        <a href="services.html"
+          class="nav-link px-4 py-2 text-sm rounded-full transition text-white/90 hover:bg-black/5 active">Services</a>
+        <a href="booking.html"
+          class="nav-link px-4 py-2 text-sm rounded-full transition text-white/90 hover:bg-black/5">Booking</a>
+      </nav>
+      <div class="flex items-center gap-2">
+        <a href="booking.html"
+          class="hidden sm:inline-flex items-center gap-2 bg-gold text-forest px-4 md:px-5 py-2.5 md:py-3 rounded-full text-xs md:text-sm font-medium hover:scale-105 transition">
+          Book Now <i class="fa-solid fa-arrow-right text-xs"></i>
+        </a>
+        <button onclick="document.getElementById('mob-menu').classList.toggle('hidden')"
+          class="lg:hidden w-10 h-10 rounded-full border border-white/30 text-white flex items-center justify-center"
+          aria-label="Menu">
+          <i class="fa-solid fa-bars text-sm"></i>
+        </button>
+      </div>
+    </div>
+    <div id="mob-menu"
+      class="hidden lg:hidden mx-5 mt-3 bg-white rounded-2xl shadow-lift border border-line p-4 flex flex-col">
+      <a href="index.html" class="px-4 py-3 text-sm text-forest rounded-xl hover:bg-cream">Home</a>
+      <a href="about.html" class="px-4 py-3 text-sm text-forest rounded-xl hover:bg-cream">About</a>
+      <a href="services.html"
+        class="px-4 py-3 text-sm text-forest rounded-xl hover:bg-cream bg-cream font-medium">Services</a>
+      <a href="booking.html" class="px-4 py-3 text-sm text-forest rounded-xl hover:bg-cream">Booking</a>
+      <a href="booking.html"
+        class="sm:hidden mt-2 inline-flex items-center justify-center gap-2 bg-gold text-forest px-5 py-3 rounded-full text-sm font-medium">Book
+        Now <i class="fa-solid fa-arrow-right text-xs"></i></a>
+    </div>
+  </header>
+
+  <section class="relative min-h-[60svh] flex items-center pt-32 overflow-hidden">
+    <img src="assets/spa-hero.jpg" alt="Our Services"
+      class="absolute inset-0 w-full h-full object-cover animate-slow-zoom" />
+    <div class="absolute inset-0 bg-gradient-to-b from-forest/80 via-forest/40 to-forest/90"></div>
+    <div class="relative max-w-7xl mx-auto px-5 md:px-6 w-full text-white text-center">
+      <span class="text-xs uppercase tracking-[0.3em] text-gold mb-5 block">Healing Rituals</span>
+      <h1 class="text-4xl md:text-6xl lg:text-7xl font-display mb-6">Treatments crafted to <br><em
+          class="text-gold not-italic">restore</em> balance</h1>
+    </div>
+  </section>
+
+  <section class="py-20 md:py-28 gradient-soft">
+    <div class="max-w-7xl mx-auto px-5 md:px-6 text-center mb-16">
+      <span class="text-xs uppercase tracking-[0.3em] text-gold">Our Menu</span>
+      <h2 class="font-display text-3xl md:text-5xl mt-4 text-forest">Signature Treatments</h2>
+    </div>
+  </section>
+  <section class="pb-24 md:pb-32">
+    <div class="max-w-7xl mx-auto px-5 md:px-6">
+      <!-- Featured Ritual -->
+      <div class="grid md:grid-cols-2 gap-10 md:gap-20 items-center mb-24 reveal">
+        <div class="relative">
+          <img src="assets/spa-bath.jpg" alt="Signature Ritual"
+            class="rounded-[2.5rem] w-full h-[450px] md:h-[600px] object-cover shadow-lift" />
+          <div
+            class="absolute top-8 left-8 bg-gold text-forest px-4 py-2 rounded-full text-xs font-bold tracking-widest uppercase">
+            Most Immersive</div>
+        </div>
+        <div>
+          <span class="text-xs uppercase tracking-[0.3em] text-gold font-semibold mb-6 block">Signature Ritual</span>
+          <h2 class="font-display text-4xl md:text-6xl text-forest mb-8 leading-[1.1]">Full-Body <em
+              class="text-gold not-italic">Healing</em> Journey</h2>
+          <p class="text-muted text-lg leading-relaxed mb-8">Our most comprehensive treatment. A synchronized four-hand
+            experience that combines volcanic hot stones, deep tissue therapy, and rare botanical oils to reset your
+            entire being.</p>
+          <div class="flex items-center gap-10 mb-10">
+            <div>
+              <p class="text-xs uppercase tracking-widest text-muted mb-1">Duration</p>
+              <p class="font-display text-2xl text-forest">120 Minutes</p>
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-widest text-muted mb-1">Investment</p>
+              <p class="font-display text-2xl text-gold">$280</p>
+            </div>
+          </div>
+          <a href="booking.html"
+            class="inline-flex items-center gap-3 bg-forest text-white px-8 py-4 rounded-full font-medium hover:bg-forest/90 transition shadow-soft">Book
+            this experience <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </div>
+      </div>
+
+      <!-- Other rituals -->
+      <div class="text-center mb-16 reveal">
+        <span class="text-xs uppercase tracking-[0.3em] text-gold font-semibold mb-4 block">Full Menu</span>
+        <h2 class="font-display text-4xl text-forest">Healing Rituals</h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 stagger-reveal">
+
+        <div
+          class="bg-white rounded-3xl p-8 border border-line/60 hover:shadow-lift transition-all duration-500 group relative overflow-hidden">
+          <div
+            class="absolute top-0 right-0 w-24 h-24 bg-cream/50 rounded-bl-full -z-10 group-hover:bg-gold/10 transition-colors">
+          </div>
+          <div
+            class="w-14 h-14 rounded-2xl bg-cream flex items-center justify-center text-forest mb-6 group-hover:bg-gold group-hover:text-white transition-all duration-500">
+            <i class="fa-solid fa-spa text-xl"></i></div>
+          <div class="flex justify-between items-start mb-4">
+            <h3 class="font-display text-2xl text-forest group-hover:text-gold transition-colors">Relaxation Massage
+            </h3>
+            <span class="font-display text-2xl text-forest/40">$120</span>
+          </div>
+          <p class="text-sm text-muted leading-relaxed mb-8">A flowing full-body session that melts deep tension and
+            brings the nervous system into rest.</p>
+          <div class="flex items-center justify-between mt-auto">
+            <span class="text-[10px] uppercase tracking-widest text-muted">90 Minutes</span>
+            <a href="booking.html"
+              class="w-10 h-10 rounded-full border border-line flex items-center justify-center text-forest group-hover:bg-forest group-hover:text-white transition-all"><i
+                class="fa-solid fa-plus text-xs"></i></a>
+          </div>
+        </div>
+
+        <div
+          class="bg-white rounded-3xl p-8 border border-line/60 hover:shadow-lift transition-all duration-500 group relative overflow-hidden">
+          <div
+            class="absolute top-0 right-0 w-24 h-24 bg-cream/50 rounded-bl-full -z-10 group-hover:bg-gold/10 transition-colors">
+          </div>
+          <div
+            class="w-14 h-14 rounded-2xl bg-cream flex items-center justify-center text-forest mb-6 group-hover:bg-gold group-hover:text-white transition-all duration-500">
+            <i class="fa-solid fa-wand-magic-sparkles text-xl"></i></div>
+          <div class="flex justify-between items-start mb-4">
+            <h3 class="font-display text-2xl text-forest group-hover:text-gold transition-colors">Facial Glow</h3>
+            <span class="font-display text-2xl text-forest/40">$95</span>
+          </div>
+          <p class="text-sm text-muted leading-relaxed mb-8">Cleansing, exfoliation and a botanical mask to hydrate,
+            brighten and restore radiance.</p>
+          <div class="flex items-center justify-between mt-auto">
+            <span class="text-[10px] uppercase tracking-widest text-muted">60 Minutes</span>
+            <a href="booking.html"
+              class="w-10 h-10 rounded-full border border-line flex items-center justify-center text-forest group-hover:bg-forest group-hover:text-white transition-all"><i
+                class="fa-solid fa-plus text-xs"></i></a>
+          </div>
+        </div>
+
+        <div
+          class="bg-white rounded-3xl p-8 border border-line/60 hover:shadow-lift transition-all duration-500 group relative overflow-hidden">
+          <div
+            class="absolute top-0 right-0 w-24 h-24 bg-cream/50 rounded-bl-full -z-10 group-hover:bg-gold/10 transition-colors">
+          </div>
+          <div
+            class="w-14 h-14 rounded-2xl bg-cream flex items-center justify-center text-forest mb-6 group-hover:bg-gold group-hover:text-white transition-all duration-500">
+            <i class="fa-solid fa-droplet text-xl"></i></div>
+          <div class="flex justify-between items-start mb-4">
+            <h3 class="font-display text-2xl text-forest group-hover:text-gold transition-colors">Aromatherapy</h3>
+            <span class="font-display text-2xl text-forest/40">$110</span>
+          </div>
+          <p class="text-sm text-muted leading-relaxed mb-8">A calming massage with our signature essential oil blends
+            for emotional balance.</p>
+          <div class="flex items-center justify-between mt-auto">
+            <span class="text-[10px] uppercase tracking-widest text-muted">75 Minutes</span>
+            <a href="booking.html"
+              class="w-10 h-10 rounded-full border border-line flex items-center justify-center text-forest group-hover:bg-forest group-hover:text-white transition-all"><i
+                class="fa-solid fa-plus text-xs"></i></a>
+          </div>
+        </div>
+
+        <div
+          class="bg-white rounded-3xl p-8 border border-line/60 hover:shadow-lift transition-all duration-500 group relative overflow-hidden">
+          <div
+            class="absolute top-0 right-0 w-24 h-24 bg-cream/50 rounded-bl-full -z-10 group-hover:bg-gold/10 transition-colors">
+          </div>
+          <div
+            class="w-14 h-14 rounded-2xl bg-cream flex items-center justify-center text-forest mb-6 group-hover:bg-gold group-hover:text-white transition-all duration-500">
+            <i class="fa-solid fa-wind text-xl"></i></div>
+          <div class="flex justify-between items-start mb-4">
+            <h3 class="font-display text-2xl text-forest group-hover:text-gold transition-colors">Herbal Wrap</h3>
+            <span class="font-display text-2xl text-forest/40">$135</span>
+          </div>
+          <p class="text-sm text-muted leading-relaxed mb-8">A gentle herbal scrub followed by a warm botanical clay
+            wrap. Smooth and renewed.</p>
+          <div class="flex items-center justify-between mt-auto">
+            <span class="text-[10px] uppercase tracking-widest text-muted">90 Minutes</span>
+            <a href="booking.html"
+              class="w-10 h-10 rounded-full border border-line flex items-center justify-center text-forest group-hover:bg-forest group-hover:text-white transition-all"><i
+                class="fa-solid fa-plus text-xs"></i></a>
+          </div>
+        </div>
+
+        <div
+          class="bg-white rounded-3xl p-8 border border-line/60 hover:shadow-lift transition-all duration-500 group relative overflow-hidden">
+          <div
+            class="absolute top-0 right-0 w-24 h-24 bg-cream/50 rounded-bl-full -z-10 group-hover:bg-gold/10 transition-colors">
+          </div>
+          <div
+            class="w-14 h-14 rounded-2xl bg-cream flex items-center justify-center text-forest mb-6 group-hover:bg-gold group-hover:text-white transition-all duration-500">
+            <i class="fa-solid fa-mountain text-xl"></i></div>
+          <div class="flex justify-between items-start mb-4">
+            <h3 class="font-display text-2xl text-forest group-hover:text-gold transition-colors">Hot Stone Healing</h3>
+            <span class="font-display text-2xl text-forest/40">$130</span>
+          </div>
+          <p class="text-sm text-muted leading-relaxed mb-8">Smooth basalt stones gently warm tense muscles for deep
+            release and grounding.</p>
+          <div class="flex items-center justify-between mt-auto">
+            <span class="text-[10px] uppercase tracking-widest text-muted">80 Minutes</span>
+            <a href="booking.html"
+              class="w-10 h-10 rounded-full border border-line flex items-center justify-center text-forest group-hover:bg-forest group-hover:text-white transition-all"><i
+                class="fa-solid fa-plus text-xs"></i></a>
+          </div>
+        </div>
+
+        <div
+          class="bg-white rounded-3xl p-8 border border-line/60 hover:shadow-lift transition-all duration-500 group relative overflow-hidden">
+          <div
+            class="absolute top-0 right-0 w-24 h-24 bg-cream/50 rounded-bl-full -z-10 group-hover:bg-gold/10 transition-colors">
+          </div>
+          <div
+            class="w-14 h-14 rounded-2xl bg-cream flex items-center justify-center text-forest mb-6 group-hover:bg-gold group-hover:text-white transition-all duration-500">
+            <i class="fa-solid fa-moon text-xl"></i></div>
+          <div class="flex justify-between items-start mb-4">
+            <h3 class="font-display text-2xl text-forest group-hover:text-gold transition-colors">Sleep Ritual</h3>
+            <span class="font-display text-2xl text-forest/40">$145</span>
+          </div>
+          <p class="text-sm text-muted leading-relaxed mb-8">A specialized cranial massage designed to treat insomnia
+            and mental fatigue.</p>
+          <div class="flex items-center justify-between mt-auto">
+            <span class="text-[10px] uppercase tracking-widest text-muted">100 Minutes</span>
+            <a href="booking.html"
+              class="w-10 h-10 rounded-full border border-line flex items-center justify-center text-forest group-hover:bg-forest group-hover:text-white transition-all"><i
+                class="fa-solid fa-plus text-xs"></i></a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+  <section class="py-16 md:py-20 bg-cream text-center">
+    <div class="max-w-4xl mx-auto px-5 md:px-6">
+      <h2 class="font-display text-3xl md:text-4xl mb-4 text-forest">Not sure which to choose?</h2>
+      <p class="text-muted mb-8">Our team will recommend a ritual based on what your body needs today.</p>
+      <a href="booking.html"
+        class="inline-flex items-center gap-2 bg-forest text-white px-8 py-4 rounded-full font-medium hover:bg-forest/90 transition">Get
+        a Recommendation <i class="fa-solid fa-arrow-right text-xs"></i></a>
+    </div>
+  </section>
+
+  <footer class="bg-forest text-white pt-16 md:pt-20 pb-8">
+    <div class="max-w-7xl mx-auto px-5 md:px-6">
+      <div class="grid sm:grid-cols-2 md:grid-cols-5 gap-10 pb-12">
+        <div class="md:col-span-2">
+          <div class="flex items-center gap-2 font-display text-xl tracking-widest mb-4">
+            <img src="logo.png" alt="The Green Logo" class="h-8 w-auto object-contain" />
+            THE GREEN
+          </div>
+          <p class="text-white/70 text-sm leading-relaxed max-w-sm mb-6">Healing holistic treatments designed to restore
+            balance, energy and inner peace for every guest.</p>
+          <div class="flex gap-3">
+            <a href="#"
+              class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-gold hover:text-forest hover:border-gold transition"><i
+                class="fa-brands fa-instagram text-sm"></i></a>
+            <a href="#"
+              class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-gold hover:text-forest hover:border-gold transition"><i
+                class="fa-brands fa-facebook text-sm"></i></a>
+            <a href="#"
+              class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-gold hover:text-forest hover:border-gold transition"><i
+                class="fa-brands fa-twitter text-sm"></i></a>
+          </div>
+        </div>
+        <div>
+          <h5 class="font-display text-lg mb-4 text-gold">Explore</h5>
+          <ul class="space-y-2 text-sm text-white/70">
+            <li><a href="index.html" class="hover:text-white">Home</a></li>
+            <li><a href="about.html" class="hover:text-white">About</a></li>
+            <li><a href="services.html" class="hover:text-white">Services</a></li>
+            <li><a href="booking.html" class="hover:text-white">Booking</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5 class="font-display text-lg mb-4 text-gold">Services</h5>
+          <ul class="space-y-2 text-sm text-white/70">
+            <li>Healing Massage</li>
+            <li>Facial Therapy</li>
+            <li>Aromatherapy</li>
+            <li>Body Wrap</li>
+          </ul>
+        </div>
+        <div>
+          <h5 class="font-display text-lg mb-4 text-gold">Visit</h5>
+          <ul class="space-y-2 text-sm text-white/70">
+            <li>Jl. Sanctuary 88, Bali</li>
+            <li>Open 9AM – 9PM</li>
+            <li>hello@thegreen.com</li>
+            <li>+62 812 3456 7890</li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-white/10 pt-6 text-center text-xs text-white/50">© 2026 The Green Wellness Sanctuary.
+        All rights reserved.</div>
+    </div>
+  </footer>
+  <script>
+    const observerOptions = { threshold: 0.1 };
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.reveal, .stagger-reveal').forEach(el => observer.observe(el));
+  </script>
+</body>
+
+</html>

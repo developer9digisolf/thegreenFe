@@ -10,13 +10,17 @@ export const createSignalRConnection = (
   hubUrl: string,
   accessToken?: string,
 ): signalR.HubConnection => {
+  // Check if we should skip negotiation (better for production/proxies)
+  // Skip negotiation ONLY works if transport is restricted to WebSockets
+  const isAbsoluteUrl = hubUrl.startsWith("http");
+  
   const connection = new signalR.HubConnectionBuilder()
     .withUrl(hubUrl, {
       accessTokenFactory: accessToken ? () => accessToken : undefined,
-      skipNegotiation: false,
-      transport:
-        signalR.HttpTransportType.WebSockets |
-        signalR.HttpTransportType.ServerSentEvents,
+      skipNegotiation: isAbsoluteUrl, // Skip negotiation for absolute URLs to bypass proxy issues
+      transport: isAbsoluteUrl 
+        ? signalR.HttpTransportType.WebSockets // Force WebSockets if skipping negotiation
+        : signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.ServerSentEvents,
     })
     .withAutomaticReconnect({
       nextRetryDelayInMilliseconds: (retryContext: {
@@ -55,10 +59,12 @@ export const createSignalRConnection = (
 export const getSignalRHubUrl = (
   hubName: string = "hubs/notifications",
 ): string => {
+  const isLocalhost =
+    typeof window !== "undefined" && window.location.hostname === "localhost";
+
   const baseUrl =
     process.env.NEXT_PUBLIC_SIGNALR_URL ||
-    process.env.API_DESTINATION ||
-    "https://green-api-staging.digisolf.com";
+    (isLocalhost ? "" : "https://green-api-staging.digisolf.com");
 
   // Remove trailing slash from baseUrl and leading slash from hubName
   const cleanBaseUrl = baseUrl.replace(/\/$/, "");

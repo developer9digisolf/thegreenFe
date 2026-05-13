@@ -40,14 +40,15 @@ export const rest = {
   // Packages (Voucher)
   package: "packages",
   packageActive: "packages/active",
+  posServicePackages: "customer/service-packages",
   packageDetail: "packages/:id",
   packageCheckName: "packages/check-name",
 
   // Credit Packages
-  creditPackage: "credit-packages",
-  creditPackageActive: "credit-packages/active",
-  creditPackageDetail: "credit-packages/:id",
-  creditPackageCheckName: "credit-packages/check-name",
+  creditPackage: "master/credit-packages",
+  creditPackageActive: "master/credit-packages/active",
+  creditPackageDetail: "master/credit-packages/:id",
+  creditPackageCheckName: "master/credit-packages/check-name",
 
   // Members
   member: "members",
@@ -76,6 +77,7 @@ export const rest = {
   // Payment Methods
   paymentMethod: "payment-methods",
   paymentMethodActive: "payment-methods/active",
+  posPaymentMethods: "pos/payment-methods",
   paymentMethodDetail: "payment-methods/:id",
   paymentMethodByCode: "payment-methods/code/:code",
   paymentMethodCheckCode: "payment-methods/check-code",
@@ -94,6 +96,7 @@ export const rest = {
 
   // POS
   posInit: "pos/init",
+  posSales: "pos/sales",
   posOrders: "pos/orders",
   posOrdersPending: "pos/orders/pending",
   posOrderDetail: "pos/orders/:id",

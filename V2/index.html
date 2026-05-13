@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Green | Premium Wellness Sanctuary</title>
+<meta name="description" content="Discover serenity at The Green — premium spa & wellness sanctuary." />
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        display: ['"Cormorant Garamond"', 'serif'],
+        sans: ['Inter', 'sans-serif'],
+      },
+      colors: {
+        forest: '#2d4a36',
+        sage:  '#8aa68f',
+        gold:  '#c9a96a',
+        cream: '#f5efe4',
+        bg:    '#fbf9f3',
+        muted: '#7a8478',
+        line:  '#e6dfcf',
+      },
+      boxShadow: {
+        soft: '0 20px 60px -20px rgba(45,74,54,0.18)',
+        lift: '0 30px 80px -30px rgba(45,74,54,0.30)',
+      },
+    }
+  }
+}
+</script>
+<style>
+  body { font-family: 'Inter', sans-serif; background: #fbf9f3; color: #2d4a36; scroll-behavior: smooth; }
+  h1,h2,h3,h4,h5 { font-family: 'Cormorant Garamond', serif; letter-spacing: -0.02em; font-weight: 500; }
+  .gradient-soft { background: linear-gradient(180deg, #fbf9f3 0%, #f5efe4 100%); }
+  .nav-link.active { background:#2d4a36; color:#fff; }
+  
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slowZoom {
+    from { transform: scale(1); }
+    to { transform: scale(1.1); }
+  }
+  .animate-slow-zoom { animation: slowZoom 20s infinite alternate ease-in-out; }
+  .reveal { opacity: 0; transform: translateY(30px); transition: all 1s cubic-bezier(0.22, 1, 0.36, 1); }
+  .reveal.active { opacity: 1; transform: translateY(0); }
+  .stagger-reveal > * { opacity: 0; transform: translateY(20px); transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
+  .stagger-reveal.active > * { opacity: 1; transform: translateY(0); }
+  .stagger-reveal.active > *:nth-child(1) { transition-delay: 0.1s; }
+  .stagger-reveal.active > *:nth-child(2) { transition-delay: 0.2s; }
+  .stagger-reveal.active > *:nth-child(3) { transition-delay: 0.3s; }
+  .stagger-reveal.active > *:nth-child(4) { transition-delay: 0.4s; }
+</style>
+</head>
+<body class="overflow-x-hidden">
+
+<header class="absolute top-0 inset-x-0 z-30 pt-8 md:pt-10">
+  <div class="max-w-7xl mx-auto px-5 md:px-6 flex items-center justify-between gap-4">
+    <a href="index.html" class="flex items-center gap-2 font-display text-lg md:text-xl tracking-widest text-white">
+      <img src="logo.png" alt="The Green Logo" class="h-8 md:h-10 w-auto object-contain" />
+      THE GREEN
+    </a>
+    <nav class="hidden lg:flex items-center gap-1 bg-white/10 backdrop-blur-md border-white/20 border rounded-full px-2 py-2">
+      <a href="index.html" class="nav-link px-4 py-2 text-sm rounded-full transition text-white/90 hover:bg-black/5 active">Home</a>
+<a href="about.html" class="nav-link px-4 py-2 text-sm rounded-full transition text-white/90 hover:bg-black/5">About</a>
+<a href="services.html" class="nav-link px-4 py-2 text-sm rounded-full transition text-white/90 hover:bg-black/5">Services</a>
+<a href="booking.html" class="nav-link px-4 py-2 text-sm rounded-full transition text-white/90 hover:bg-black/5">Booking</a>
+
+    </nav>
+    <div class="flex items-center gap-2">
+      <a href="booking.html" class="hidden sm:inline-flex items-center gap-2 bg-gold text-forest px-4 md:px-5 py-2.5 md:py-3 rounded-full text-xs md:text-sm font-medium hover:scale-105 transition">
+        Book Now <i class="fa-solid fa-arrow-right text-xs"></i>
+      </a>
+      <button onclick="document.getElementById('mob-menu').classList.toggle('hidden')" class="lg:hidden w-10 h-10 rounded-full border border-white/30 text-white flex items-center justify-center" aria-label="Menu">
+        <i class="fa-solid fa-bars text-sm"></i>
+      </button>
+    </div>
+  </div>
+  <div id="mob-menu" class="hidden lg:hidden mx-5 mt-3 bg-white rounded-2xl shadow-lift border border-line p-4 flex flex-col">
+    <a href="index.html" class="px-4 py-3 text-sm text-forest rounded-xl hover:bg-cream bg-cream font-medium">Home</a><a href="about.html" class="px-4 py-3 text-sm text-forest rounded-xl hover:bg-cream ">About</a><a href="services.html" class="px-4 py-3 text-sm text-forest rounded-xl hover:bg-cream ">Services</a><a href="booking.html" class="px-4 py-3 text-sm text-forest rounded-xl hover:bg-cream ">Booking</a>
+    <a href="booking.html" class="sm:hidden mt-2 inline-flex items-center justify-center gap-2 bg-gold text-forest px-5 py-3 rounded-full text-sm font-medium">Book Now <i class="fa-solid fa-arrow-right text-xs"></i></a>
+  </div>
+</header>
+
+<section class="relative min-h-[100svh] flex items-end overflow-hidden">
+  <img src="assets/spa-hero.jpg" alt="Tranquil spa" class="absolute inset-0 w-full h-full object-cover animate-slow-zoom" />
+  <div class="absolute inset-0 bg-gradient-to-b from-forest/70 via-forest/40 to-forest/95"></div>
+  <div class="relative max-w-7xl mx-auto px-5 md:px-6 pb-40 md:pb-32 pt-32 md:pt-40 w-full">
+    <div class="max-w-2xl text-white" style="animation: fadeUp 1.2s ease-out forwards;">
+      <span class="inline-flex items-center gap-2 text-gold uppercase tracking-[0.3em] text-[10px] md:text-xs mb-5"><i class="fa-solid fa-sparkles text-xs"></i> Wellness Sanctuary</span>
+      <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.05] font-display mb-6">Relax Deeply,<br>Renew Fully,<br><em class="text-gold not-italic">Reconnect</em> With Yourself</h1>
+      <p class="text-white/80 text-base md:text-lg max-w-lg mb-8 leading-relaxed">A place of pure serenity where each treatment melts tension, revitalizes your energy, and brings you closer to inner peace.</p>
+      <div class="flex flex-wrap gap-3 md:gap-4">
+        <a href="booking.html" class="inline-flex items-center gap-2 bg-gold text-forest px-6 md:px-7 py-3.5 md:py-4 rounded-full font-medium hover:scale-105 transition text-sm md:text-base">Book Appointment <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        <a href="services.html" class="inline-flex items-center gap-2 border border-white/40 text-white px-6 md:px-7 py-3.5 md:py-4 rounded-full font-medium hover:bg-white/10 transition text-sm md:text-base">Our Services <i class="fa-solid fa-play text-xs"></i></a>
+      </div>
+    </div>
+  </div>
+  <div class="absolute bottom-4 inset-x-4 md:inset-x-auto md:right-8 md:bottom-8 grid grid-cols-2 gap-3 md:max-w-md z-20">
+    <div class="bg-white/95 backdrop-blur rounded-2xl p-4 md:p-5 shadow-soft">
+      <div class="text-gold mb-2"><i class="fa-solid fa-spa"></i></div>
+      <p class="text-[10px] md:text-xs uppercase tracking-wider text-muted mb-1">Personalized</p>
+      <p class="font-display text-base md:text-lg leading-tight text-forest">Relaxation Treatments</p>
+    </div>
+    <div class="bg-white/95 backdrop-blur rounded-2xl p-4 md:p-5 shadow-soft">
+      <div class="text-gold mb-2"><i class="fa-solid fa-heart"></i></div>
+      <p class="text-[10px] md:text-xs uppercase tracking-wider text-muted mb-1">Trusted &amp; Trained</p>
+      <p class="font-display text-base md:text-lg leading-tight text-forest">Wellness Experts</p>
+    </div>
+  </div>
+</section>
+
+<section class="bg-cream py-16 md:py-20">
+  <div class="max-w-7xl mx-auto px-5 md:px-6 grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-10 text-center stagger-reveal">
+<div><div class="font-display text-4xl md:text-6xl text-forest mb-2">10+</div><p class="text-xs md:text-sm text-muted">Years Wellness Expertise</p></div><div><div class="font-display text-4xl md:text-6xl text-forest mb-2">5K+</div><p class="text-xs md:text-sm text-muted">Happy Clients</p></div><div><div class="font-display text-4xl md:text-6xl text-forest mb-2">30+</div><p class="text-xs md:text-sm text-muted">Signature Treatments</p></div><div><div class="font-display text-4xl md:text-6xl text-forest mb-2">95%</div><p class="text-xs md:text-sm text-muted">Satisfaction Rate</p></div>
+  </div>
+</section>
+
+<section class="py-20 md:py-28 overflow-hidden">
+  <div class="max-w-7xl mx-auto px-5 md:px-6 grid md:grid-cols-2 gap-10 md:gap-16 items-center">
+    <div class="relative order-2 md:order-1 reveal">
+      <img src="assets/spa-bath.jpg" alt="Spa bath" loading="lazy" class="rounded-3xl w-full shadow-lift" />
+      <div class="absolute -bottom-6 -right-2 md:right-8 bg-white rounded-2xl p-4 md:p-5 shadow-soft flex items-center gap-3 max-w-[220px]">
+        <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-cream flex items-center justify-center text-forest"><i class="fa-solid fa-leaf"></i></div>
+        <div><p class="font-display text-xl md:text-2xl text-forest leading-none">100%</p><p class="text-xs text-muted mt-1">Natural ingredients</p></div>
+      </div>
+    </div>
+    <div class="order-1 md:order-2 reveal">
+      <span class="text-xs uppercase tracking-[0.3em] text-gold">About Us</span>
+      <h2 class="font-display text-3xl md:text-5xl mt-4 mb-6 text-forest leading-tight">Where Expertise Flows With Intention And Care</h2>
+      <p class="text-muted text-base md:text-lg leading-relaxed mb-8">Every session is crafted with skilled hands, guided by purpose, and fueled by a passion for helping you achieve complete relaxation and clarity.</p>
+      <div class="grid grid-cols-2 gap-6 mb-10">
+        <div class="border-l-2 border-gold pl-4"><p class="font-display text-lg md:text-xl text-forest">Holistic</p><p class="text-xs md:text-sm text-muted">approach to wellness</p></div>
+        <div class="border-l-2 border-gold pl-4"><p class="font-display text-lg md:text-xl text-forest">Certified</p><p class="text-xs md:text-sm text-muted">master therapists</p></div>
+      </div>
+      <a href="about.html" class="inline-flex items-center gap-2 bg-forest text-white px-7 py-4 rounded-full font-medium hover:bg-forest/90 transition">Discover More <i class="fa-solid fa-arrow-right text-xs"></i></a>
+    </div>
+  </div>
+</section>
+
+<section class="py-20 md:py-28 gradient-soft overflow-hidden">
+  <div class="max-w-7xl mx-auto px-5 md:px-6">
+    <div class="text-center max-w-2xl mx-auto mb-12 md:mb-16 reveal">
+      <span class="text-xs uppercase tracking-[0.3em] text-gold">Featured Services</span>
+      <h2 class="font-display text-3xl md:text-5xl mt-4 mb-6 text-forest">Healing Treatments</h2>
+      <p class="text-muted">Step into comfort with selected treatments made to calm the body and refresh the soul.</p>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6 stagger-reveal">
+
+      <a href="services.html" class="bg-white rounded-3xl p-6 md:p-8 hover:shadow-lift transition-all hover:-translate-y-1 border border-line/60 group block">
+        <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-cream flex items-center justify-center text-forest mb-5 md:mb-6 group-hover:bg-gold group-hover:text-white transition"><i class="fa-solid fa-spa"></i></div>
+        <h3 class="font-display text-lg md:text-xl text-forest mb-3 leading-tight">Full-Body Massage</h3>
+        <p class="text-sm text-muted leading-relaxed mb-5">A relaxing full-body massage that eases tension.</p>
+        <span class="text-sm text-forest font-medium inline-flex items-center gap-1 group-hover:text-gold transition">Learn more <i class="fa-solid fa-arrow-right text-xs"></i></span>
+      </a>
+      <a href="services.html" class="bg-white rounded-3xl p-6 md:p-8 hover:shadow-lift transition-all hover:-translate-y-1 border border-line/60 group block">
+        <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-cream flex items-center justify-center text-forest mb-5 md:mb-6 group-hover:bg-gold group-hover:text-white transition"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+        <h3 class="font-display text-lg md:text-xl text-forest mb-3 leading-tight">Facial Glow</h3>
+        <p class="text-sm text-muted leading-relaxed mb-5">Gentle facial that hydrates and restores natural glow.</p>
+        <span class="text-sm text-forest font-medium inline-flex items-center gap-1 group-hover:text-gold transition">Learn more <i class="fa-solid fa-arrow-right text-xs"></i></span>
+      </a>
+      <a href="services.html" class="bg-white rounded-3xl p-6 md:p-8 hover:shadow-lift transition-all hover:-translate-y-1 border border-line/60 group block">
+        <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-cream flex items-center justify-center text-forest mb-5 md:mb-6 group-hover:bg-gold group-hover:text-white transition"><i class="fa-solid fa-droplet"></i></div>
+        <h3 class="font-display text-lg md:text-xl text-forest mb-3 leading-tight">Aromatherapy</h3>
+        <p class="text-sm text-muted leading-relaxed mb-5">Calming session using essential oils for body & mind.</p>
+        <span class="text-sm text-forest font-medium inline-flex items-center gap-1 group-hover:text-gold transition">Learn more <i class="fa-solid fa-arrow-right text-xs"></i></span>
+      </a>
+      <a href="services.html" class="bg-white rounded-3xl p-6 md:p-8 hover:shadow-lift transition-all hover:-translate-y-1 border border-line/60 group block">
+        <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-cream flex items-center justify-center text-forest mb-5 md:mb-6 group-hover:bg-gold group-hover:text-white transition"><i class="fa-solid fa-wind"></i></div>
+        <h3 class="font-display text-lg md:text-xl text-forest mb-3 leading-tight">Herbal Body Wrap</h3>
+        <p class="text-sm text-muted leading-relaxed mb-5">Soft herbal scrub and warm wrap to nourish skin.</p>
+        <span class="text-sm text-forest font-medium inline-flex items-center gap-1 group-hover:text-gold transition">Learn more <i class="fa-solid fa-arrow-right text-xs"></i></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="py-20 md:py-28">
+  <div class="max-w-7xl mx-auto px-5 md:px-6">
+    <div class="flex flex-wrap items-end justify-between gap-6 mb-12 md:mb-16">
+      <div>
+        <span class="text-xs uppercase tracking-[0.3em] text-gold">Our Team</span>
+        <h2 class="font-display text-3xl md:text-5xl mt-4 text-forest">Hands devoted to your wellness</h2>
+      </div>
+      <p class="text-muted max-w-md text-sm md:text-base">A team of certified wellness experts trained in ancient and modern healing traditions.</p>
+    </div>
+    <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
+
+      <div class="group">
+        <div class="relative overflow-hidden rounded-3xl mb-4">
+          <img src="assets/therapist-1.jpg" alt="Clara Jensen" loading="lazy" class="w-full h-[360px] md:h-[440px] object-cover group-hover:scale-105 transition duration-700" />
+        </div>
+        <h4 class="font-display text-xl md:text-2xl text-forest">Clara Jensen</h4>
+        <p class="text-sm text-muted mt-1">Wellness Coordinator</p>
+      </div>
+      <div class="group">
+        <div class="relative overflow-hidden rounded-3xl mb-4">
+          <img src="assets/therapist-2.jpg" alt="Hana Kim" loading="lazy" class="w-full h-[360px] md:h-[440px] object-cover group-hover:scale-105 transition duration-700" />
+        </div>
+        <h4 class="font-display text-xl md:text-2xl text-forest">Hana Kim</h4>
+        <p class="text-sm text-muted mt-1">Lead Healing Therapist</p>
+      </div>
+      <div class="group">
+        <div class="relative overflow-hidden rounded-3xl mb-4">
+          <img src="assets/therapist-3.jpg" alt="Maya Thompson" loading="lazy" class="w-full h-[360px] md:h-[440px] object-cover group-hover:scale-105 transition duration-700" />
+        </div>
+        <h4 class="font-display text-xl md:text-2xl text-forest">Maya Thompson</h4>
+        <p class="text-sm text-muted mt-1">Aromatherapy Specialist</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-20 md:py-28 bg-forest text-white relative overflow-hidden">
+  <div class="absolute -top-20 -right-20 w-96 h-96 rounded-full bg-gold/10 blur-3xl"></div>
+  <div class="absolute -bottom-20 -left-20 w-96 h-96 rounded-full bg-sage/10 blur-3xl"></div>
+  <div class="max-w-7xl mx-auto px-5 md:px-6 relative">
+    <div class="text-center mb-12 md:mb-16">
+      <span class="text-xs uppercase tracking-[0.3em] text-gold">Testimonials</span>
+      <h2 class="font-display text-3xl md:text-5xl mt-4">Stories That Celebrate Inner Strength</h2>
+    </div>
+    <div class="grid md:grid-cols-3 gap-5 md:gap-6">
+
+      <div class="bg-white/5 backdrop-blur border border-white/10 rounded-3xl p-6 md:p-8">
+        <div class="text-gold text-4xl font-display leading-none mb-4">"</div>
+        <p class="text-white/85 leading-relaxed mb-8 text-sm md:text-base">The treatment helped me release years of tension. I feel lighter and more grounded.</p>
+        <div class="flex items-center gap-3 pt-6 border-t border-white/10">
+          <img src="assets/therapist-1.jpg" alt="Michael Turner" loading="lazy" class="w-12 h-12 rounded-full object-cover" />
+          <div><p class="font-medium">Michael Turner</p><p class="text-xs text-white/60">Software Engineer</p></div>
+        </div>
+      </div>
+      <div class="bg-white/5 backdrop-blur border border-white/10 rounded-3xl p-6 md:p-8">
+        <div class="text-gold text-4xl font-display leading-none mb-4">"</div>
+        <p class="text-white/85 leading-relaxed mb-8 text-sm md:text-base">This place became my safe space to breathe and heal. It taught me to listen to my body.</p>
+        <div class="flex items-center gap-3 pt-6 border-t border-white/10">
+          <img src="assets/therapist-2.jpg" alt="Hannah Weiss" loading="lazy" class="w-12 h-12 rounded-full object-cover" />
+          <div><p class="font-medium">Hannah Weiss</p><p class="text-xs text-white/60">Photographer</p></div>
+        </div>
+      </div>
+      <div class="bg-white/5 backdrop-blur border border-white/10 rounded-3xl p-6 md:p-8">
+        <div class="text-gold text-4xl font-display leading-none mb-4">"</div>
+        <p class="text-white/85 leading-relaxed mb-8 text-sm md:text-base">Each visit helps me reconnect and find the balance I've been searching for. Pure harmony.</p>
+        <div class="flex items-center gap-3 pt-6 border-t border-white/10">
+          <img src="assets/therapist-3.jpg" alt="Natalia Cooper" loading="lazy" class="w-12 h-12 rounded-full object-cover" />
+          <div><p class="font-medium">Natalia Cooper</p><p class="text-xs text-white/60">Creative Director</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-20 md:py-28 bg-cream">
+  <div class="max-w-4xl mx-auto px-5 md:px-6 text-center">
+    <span class="text-xs uppercase tracking-[0.3em] text-gold">Ready?</span>
+    <h2 class="font-display text-3xl md:text-5xl mt-4 mb-6 text-forest">Your sanctuary is waiting</h2>
+    <p class="text-muted text-base md:text-lg mb-8 max-w-xl mx-auto">Take a moment for yourself. Book a session and step into pure relaxation.</p>
+    <a href="booking.html" class="inline-flex items-center gap-2 bg-forest text-white px-8 py-4 rounded-full font-medium hover:bg-forest/90 transition">Book Your Session <i class="fa-solid fa-arrow-right text-xs"></i></a>
+  </div>
+</section>
+
+<footer class="bg-forest text-white pt-16 md:pt-20 pb-8">
+  <div class="max-w-7xl mx-auto px-5 md:px-6">
+    <div class="grid sm:grid-cols-2 md:grid-cols-5 gap-10 pb-12">
+      <div class="md:col-span-2">
+        <div class="flex items-center gap-2 font-display text-xl tracking-widest mb-4">
+          <img src="logo.png" alt="The Green Logo" class="h-8 w-auto object-contain" />
+          THE GREEN
+        </div>
+        <p class="text-white/70 text-sm leading-relaxed max-w-sm mb-6">Healing holistic treatments designed to restore balance, energy and inner peace for every guest.</p>
+        <div class="flex gap-3">
+          <a href="#" class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-gold hover:text-forest hover:border-gold transition"><i class="fa-brands fa-instagram text-sm"></i></a>
+          <a href="#" class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-gold hover:text-forest hover:border-gold transition"><i class="fa-brands fa-facebook text-sm"></i></a>
+          <a href="#" class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-gold hover:text-forest hover:border-gold transition"><i class="fa-brands fa-twitter text-sm"></i></a>
+        </div>
+      </div>
+      <div>
+        <h5 class="font-display text-lg mb-4 text-gold">Explore</h5>
+        <ul class="space-y-2 text-sm text-white/70">
+          <li><a href="index.html" class="hover:text-white">Home</a></li>
+          <li><a href="about.html" class="hover:text-white">About</a></li>
+          <li><a href="services.html" class="hover:text-white">Services</a></li>
+          <li><a href="booking.html" class="hover:text-white">Booking</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5 class="font-display text-lg mb-4 text-gold">Services</h5>
+        <ul class="space-y-2 text-sm text-white/70">
+          <li>Healing Massage</li><li>Facial Therapy</li><li>Aromatherapy</li><li>Body Wrap</li>
+        </ul>
+      </div>
+      <div>
+        <h5 class="font-display text-lg mb-4 text-gold">Visit</h5>
+        <ul class="space-y-2 text-sm text-white/70">
+          <li>Jl. Sanctuary 88, Bali</li><li>Open 9AM – 9PM</li><li>hello@thegreen.com</li><li>+62 812 3456 7890</li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-white/10 pt-6 text-center text-xs text-white/50">© 2026 The Green Wellness Sanctuary. All rights reserved.</div>
+  </div>
+</footer>
+<script>
+  const observerOptions = { threshold: 0.1 };
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('active');
+      }
+    });
+  }, observerOptions);
+
+  document.querySelectorAll('.reveal, .stagger-reveal').forEach(el => observer.observe(el));
+</script>
+</body></html>

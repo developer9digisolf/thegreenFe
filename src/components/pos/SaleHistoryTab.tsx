@@ -37,21 +37,30 @@
     // 2. CONSTANTS & STYLE HELPERS
     // ============================================
     const SALE_TYPE_STYLE: Record<string | number, { bg: string; color: string; label: string }> = {
-        0: { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6", label: "Service" },
-        "walkIn": { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6", label: "Service" },
-        "service": { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6", label: "Service" },
-        1: { bg: "rgba(245,158,11,0.1)", color: "#d97706", label: "Voucher" },
-        "voucher": { bg: "rgba(245,158,11,0.1)", color: "#d97706", label: "Voucher" },
-        2: { bg: "rgba(59,130,246,0.1)", color: "#2563eb", label: "Kredit" },
-        "credit": { bg: "rgba(59,130,246,0.1)", color: "#2563eb", label: "Kredit" },
+        0: { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6", label: "Walk-in" },
+        "walkIn": { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6", label: "Walk-in" },
+        1: { bg: "rgba(245,158,11,0.1)", color: "#d97706", label: "Paket" },
+        "package": { bg: "rgba(245,158,11,0.1)", color: "#d97706", label: "Paket" },
+        2: { bg: "rgba(16,185,129,0.1)", color: "#059669", label: "Top-up Kredit" },
+        "creditPurchase": { bg: "rgba(16,185,129,0.1)", color: "#059669", label: "Top-up Kredit" },
+        "credit": { bg: "rgba(16,185,129,0.1)", color: "#059669", label: "Top-up Kredit" },
+        3: { bg: "rgba(59,130,246,0.1)", color: "#2563eb", label: "Booking" },
+        "booking": { bg: "rgba(59,130,246,0.1)", color: "#2563eb", label: "Booking" },
     };
-    const PAYMENT_STATUS_STYLE: Record<string | number, { bg: string; color: string }> = {
-        1: { bg: "rgba(16,185,129,0.1)", color: "#059669" },
-        "Paid": { bg: "rgba(16,185,129,0.1)", color: "#059669" },
-        "Lunas": { bg: "rgba(16,185,129,0.1)", color: "#059669" },
-        0: { bg: "rgba(239,68,68,0.1)", color: "#dc2626" },
-        "Pending": { bg: "rgba(239,68,68,0.1)", color: "#dc2626" },
-        "Unpaid": { bg: "rgba(239,68,68,0.1)", color: "#dc2626" },
+    const PAYMENT_STATUS_STYLE: Record<string | number, { bg: string; color: string; label: string }> = {
+        0: { bg: "rgba(239,68,68,0.1)", color: "#dc2626", label: "Belum Lunas" },
+        "Pending": { bg: "rgba(239,68,68,0.1)", color: "#dc2626", label: "Belum Lunas" },
+        1: { bg: "rgba(245,158,11,0.1)", color: "#d97706", label: "Partial" },
+        "Partial": { bg: "rgba(245,158,11,0.1)", color: "#d97706", label: "Partial" },
+        2: { bg: "rgba(16,185,129,0.1)", color: "#059669", label: "Lunas" },
+        "Paid": { bg: "rgba(16,185,129,0.1)", color: "#059669", label: "Lunas" },
+        "Lunas": { bg: "rgba(16,185,129,0.1)", color: "#059669", label: "Lunas" },
+        3: { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6", label: "Refunded" },
+        "Refunded": { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6", label: "Refunded" },
+        4: { bg: "rgba(100,116,139,0.1)", color: "#64748b", label: "Dibatalkan" },
+        "Cancelled": { bg: "rgba(100,116,139,0.1)", color: "#64748b", label: "Dibatalkan" },
+        5: { bg: "rgba(100,116,139,0.1)", color: "#64748b", label: "Expired" },
+        "Expired": { bg: "rgba(100,116,139,0.1)", color: "#64748b", label: "Expired" },
     };
 
     function Pill({ label, bg, color }: { label: string; bg: string; color: string }) {
@@ -60,16 +69,34 @@
 
     function SessionStatus({ hasSession, sessionStatus }: { hasSession?: boolean; sessionStatus?: string }) {
         if (!hasSession) return <span style={{ fontSize: "11px", color: "var(--text-muted)", fontStyle: "italic" }}>Belum ada sesi</span>;
-        const isActive = sessionStatus === "InProgress" || sessionStatus === "InSession";
+        
+        const status = sessionStatus?.toLowerCase() || "";
+        let label = "Selesai";
+        let color = "#64748b";
+        let bg = "rgba(100,116,139,0.1)";
+        let dot = "#94a3b8";
+
+        if (status === "claimed") {
+            label = "Diklaim"; color = "#3b82f6"; bg = "rgba(59,130,246,0.1)"; dot = "#3b82f6";
+        } else if (status === "inprogress" || status === "insession") {
+            label = "Sesi Berjalan"; color = "#059669"; bg = "rgba(16,185,129,0.1)"; dot = "#22c55e";
+        } else if (status === "paused") {
+            label = "Tertunda"; color = "#d97706"; bg = "rgba(245,158,11,0.1)"; dot = "#f59e0b";
+        } else if (status === "pending") {
+            label = "Menunggu"; color = "#64748b"; bg = "rgba(100,116,139,0.1)"; dot = "#94a3b8";
+        } else if (status === "completed" || status === "finished") {
+            label = "Selesai"; color = "#64748b"; bg = "rgba(100,116,139,0.1)"; dot = "#94a3b8";
+        }
+
         return (
             <span style={{
                 display: "inline-flex", alignItems: "center", gap: "5px",
-                background: isActive ? "rgba(16,185,129,0.1)" : "rgba(100,116,139,0.1)",
-                color: isActive ? "#059669" : "#64748b",
+                background: bg,
+                color: color,
                 padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700,
             }}>
-                <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: isActive ? "#22c55e" : "#94a3b8" }} />
-                {isActive ? "Sesi Berjalan" : (sessionStatus ?? "Selesai")}
+                <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: dot }} />
+                {label}
             </span>
         );
     }
@@ -94,7 +121,16 @@
                         <label style={{ display: "block", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", marginBottom: "4px" }}>Cari Member / Kode</label>
                         <div className="search-input-wrapper">
                             <i className="fa-solid fa-magnifying-glass" />
-                            <input type="text" className="search-input" placeholder="Nama atau kode..." value={filter.search} onChange={(e) => setFilter((f: any) => ({ ...f, search: e.target.value }))} />
+                            <input 
+                                type="text" 
+                                className="search-input" 
+                                placeholder="Nama atau kode..." 
+                                value={filter.search} 
+                                onChange={(e) => setFilter((f: any) => ({ ...f, search: e.target.value }))}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") onSearch();
+                                }}
+                            />
                         </div>
                     </div>
                     <div style={{ flex: "0 1 155px" }}>
@@ -104,6 +140,7 @@
                             <option value={0}>Service</option>
                             <option value={1}>Voucher</option>
                             <option value={2}>Kredit</option>
+                            <option value={3}>Booking</option>
                         </select>
                     </div>
                     <div style={{ flex: "0 1 145px" }}>
@@ -113,6 +150,16 @@
                     <div style={{ flex: "0 1 145px" }}>
                         <label style={{ display: "block", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", marginBottom: "4px" }}>Sampai</label>
                         <input type="date" className="search-input" value={filter.endDate} onChange={(e) => setFilter((f: any) => ({ ...f, endDate: e.target.value }))} style={{ width: "100%", padding: "9px 12px" }} />
+                    </div>
+                    <div style={{ flex: 0, minWidth: "120px" }}>
+                        <label style={{ display: "block", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", marginBottom: "4px" }}>Status</label>
+                        <select value={filter.statuses} onChange={(e) => setFilter((f: any) => ({ ...f, statuses: e.target.value }))} className="search-input" style={{ width: "100%", padding: "9px 12px", cursor: "pointer" }}>
+                            <option value="">Semua Status</option>
+                            <option value="2">Lunas</option>
+                            <option value="0">Belum Lunas</option>
+                            <option value="1">Partial / Cicil</option>
+                            <option value="4">Dibatalkan</option>
+                        </select>
                     </div>
                     <div style={{ display: "flex", gap: "8px", alignItems: "flex-end" }}>
                         <button className="action-btn primary" onClick={onSearch} disabled={loading} style={{ padding: "9px 20px", fontSize: "13px", height: "38px" }}>
@@ -225,15 +272,25 @@
                             </div>
                         ) : !sale ? null : (
                             <>
-                                <div style={{ background: "var(--bg-main)", borderRadius: "12px", padding: "16px", marginBottom: "20px", display: "flex", gap: "20px", flexWrap: "wrap" }}>
-                                    <div>
+                                <div style={{ background: "var(--bg-main)", borderRadius: "12px", padding: "16px", marginBottom: "20px", display: "flex", gap: "20px", flexWrap: "wrap", alignItems: "center" }}>
+                                    <div style={{ flex: 1 }}>
                                         <div style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>TOTAL</div>
                                         <div style={{ fontSize: "20px", fontWeight: 800, color: "var(--spa-green)" }}>{formatCurrency(sale.grandTotal)}</div>
+                                        {sale.discountAmount > 0 && (
+                                            <div style={{ marginTop: "4px" }}>
+                                                <div style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>DISKON</div>
+                                                <div style={{ fontSize: "16px", fontWeight: 700, color: "var(--accent-red)" }}>- {formatCurrency(sale.discountAmount)}</div>
+                                            </div>
+                                        )}
                                     </div>
-                                    {sale.discountAmount > 0 && (
-                                        <div>
-                                            <div style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>DISKON</div>
-                                            <div style={{ fontSize: "16px", fontWeight: 700, color: "var(--accent-red)" }}>- {formatCurrency(sale.discountAmount)}</div>
+                                    {sale.sessionCode && (
+                                        <div style={{ textAlign: "center", background: "#fff", padding: "8px", borderRadius: "12px", border: "1px solid var(--border-color)" }}>
+                                            <img 
+                                                src={`https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(sale.sessionCode)}&scale=2&backgroundcolor=ffffff`}
+                                                alt="Session QR"
+                                                style={{ width: "80px", height: "80px" }}
+                                            />
+                                            <div style={{ fontSize: "10px", fontWeight: 700, marginTop: "4px", color: "var(--text-muted)", fontFamily: "monospace" }}>{sale.sessionCode}</div>
                                         </div>
                                     )}
                                 </div>
@@ -261,16 +318,27 @@
                                                             ×{item.quantity} • <span style={{ color: "var(--spa-green)", fontWeight: 600 }}>{formatCurrency(item.subtotal)}</span>
                                                         </div>
                                                         <div style={{ marginTop: "6px" }}>
-                                                            <SessionStatus hasSession={item.hasSession} sessionStatus={item.sessionStatus} />
+                                                            <SessionStatus hasSession={item.hasSession} sessionStatus={item.session?.status ?? item.sessionStatus} />
                                                         </div>
                                                     </div>
-                                                    {!item.hasSession && (
+                                                    {!item.hasSession ? (
                                                         <button
                                                             onClick={() => onOpenAssign({ type: "item", saleItemId: item.id, label: item.itemName })}
                                                             style={{ padding: "7px 14px", fontSize: "12px", fontWeight: 700, background: "var(--spa-green-bg)", color: "var(--spa-green)", border: "1px solid var(--spa-green-border)", borderRadius: "8px", cursor: "pointer", whiteSpace: "nowrap" }}
                                                         >
                                                             <i className="fa-solid fa-play" /> Buat Sesi
                                                         </button>
+                                                    ) : (
+                                                        item.session?.sessionCode && (
+                                                            <div style={{ textAlign: "center", background: "#fff", padding: "4px", borderRadius: "8px", border: "1px solid var(--border-color)", flexShrink: 0 }}>
+                                                                <img 
+                                                                    src={`https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(item.session.sessionCode)}&scale=1&backgroundcolor=ffffff`}
+                                                                    alt="Item Session QR"
+                                                                    style={{ width: "48px", height: "48px" }}
+                                                                />
+                                                                <div style={{ fontSize: "8px", fontWeight: 700, marginTop: "2px", color: "var(--text-muted)", fontFamily: "monospace" }}>{item.session.sessionCode}</div>
+                                                            </div>
+                                                        )
                                                     )}
                                                 </div>
                                             ))}
@@ -290,16 +358,27 @@
                                                         <div style={{ fontWeight: 700, fontSize: "14px" }}>{bk.serviceName}</div>
                                                         <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>{bk.bookingCode}</div>
                                                         <div style={{ marginTop: "6px" }}>
-                                                            <SessionStatus hasSession={bk.hasSession} sessionStatus={bk.sessionStatus} />
+                                                            <SessionStatus hasSession={bk.hasSession} sessionStatus={bk.session?.status ?? bk.sessionStatus} />
                                                         </div>
                                                     </div>
-                                                    {(bk.status === "Pending" || bk.status === "InProgress" || !bk.hasSession) && (
+                                                    {!bk.hasSession ? (
                                                         <button
                                                             onClick={() => onOpenAssign({ type: "booking", bookingCode: bk.code, label: bk.serviceName || `Booking ${bk.code}` })}
                                                             style={{ padding: "7px 14px", fontSize: "12px", fontWeight: 700, background: "rgba(59,130,246,0.08)", color: "#2563eb", border: "1px solid rgba(59,130,246,0.3)", borderRadius: "8px", cursor: "pointer", whiteSpace: "nowrap" }}
                                                         >
                                                             <i className="fa-solid fa-user-plus" /> Assign
                                                         </button>
+                                                    ) : (
+                                                        bk.session?.sessionCode && (
+                                                            <div style={{ textAlign: "center", background: "#fff", padding: "4px", borderRadius: "8px", border: "1px solid var(--border-color)", flexShrink: 0 }}>
+                                                                <img 
+                                                                    src={`https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(bk.session.sessionCode)}&scale=1&backgroundcolor=ffffff`}
+                                                                    alt="Booking Session QR"
+                                                                    style={{ width: "48px", height: "48px" }}
+                                                                />
+                                                                <div style={{ fontSize: "8px", fontWeight: 700, marginTop: "2px", color: "var(--text-muted)", fontFamily: "monospace" }}>{bk.session.sessionCode}</div>
+                                                            </div>
+                                                        )
                                                     )}
                                                 </div>
                                             ))}
@@ -344,7 +423,6 @@
                         </button>
                     </div>
 
-                    {/* FIX: Tampilkan loading saat master data masih di-fetch */}
                     {masterLoading ? (
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "32px", gap: "10px", color: "var(--text-muted)" }}>
                             <i className="fa-solid fa-spinner fa-spin" style={{ color: "var(--spa-green)" }} />
@@ -352,7 +430,6 @@
                         </div>
                     ) : (
                         <>
-                            {/* Dropdown Therapist */}
                             <div style={{ marginBottom: "14px" }}>
                                 <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", marginBottom: "6px" }}>
                                     Therapist * {therapists.length === 0 && <span style={{ color: "var(--accent-red)", fontWeight: 400 }}>(tidak ada data)</span>}
@@ -367,14 +444,12 @@
                                     <option value="">— Pilih Therapist —</option>
                                     {therapists.map((t: any) => (
                                         <option key={t.id} value={t.id}>
-                                            {/* FIX: fallback field name — coba employeeName, name, therapistName */}
                                             {t.employeeName ?? t.name ?? t.therapistName ?? `Therapist #${t.id}`}
                                         </option>
                                     ))}
                                 </select>
                             </div>
 
-                            {/* Dropdown Room */}
                             <div style={{ marginBottom: "14px" }}>
                                 <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", marginBottom: "6px" }}>
                                     Ruangan * {rooms.length === 0 && <span style={{ color: "var(--accent-red)", fontWeight: 400 }}>(tidak ada data)</span>}
@@ -389,7 +464,6 @@
                                     <option value="">— Pilih Ruangan —</option>
                                     {rooms.map((r: any) => (
                                         <option key={r.id} value={r.id}>
-                                            {/* FIX: fallback field name — coba name, roomName */}
                                             {r.name ?? r.roomName ?? `Ruangan #${r.id}`}
                                             {r.statusDisplay ? ` (${r.statusDisplay})` : ""}
                                         </option>
@@ -397,7 +471,6 @@
                                 </select>
                             </div>
 
-                            {/* Notes */}
                             <div style={{ marginBottom: "20px" }}>
                                 <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", marginBottom: "6px" }}>Catatan</label>
                                 <textarea
@@ -429,13 +502,76 @@
         );
     }
 
+    function SessionSuccessModal({ session, onClose }: { session: any; onClose: () => void }) {
+        if (!session) return null;
+        
+        const barcodeUrl = `https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(session.sessionCode)}&scale=3&rotate=N&includetext&backgroundcolor=ffffff`;
+
+        return (
+            <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1400, backdropFilter: "blur(10px)" }}>
+                <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--bg-card)", borderRadius: "32px", padding: "40px", width: "min(420px, 92vw)", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)", textAlign: "center", animation: "modalScale 0.3s ease-out" }}>
+                    <div style={{ width: "72px", height: "72px", background: "var(--spa-green-bg)", color: "var(--spa-green)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", margin: "0 auto 24px" }}>
+                        <i className="fa-solid fa-circle-check" />
+                    </div>
+                    
+                    <h2 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "var(--text-primary)" }}>Sesi Berhasil Dibuat!</h2>
+                    <p style={{ margin: "8px 0 28px", color: "var(--text-muted)", fontSize: "14px" }}>Gunakan barcode di bawah untuk memulai sesi</p>
+                    
+                    <div style={{ background: "#fff", padding: "24px", borderRadius: "20px", border: "1px solid var(--border-color)", marginBottom: "28px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+                        <img 
+                            src={barcodeUrl} 
+                            alt={session.sessionCode} 
+                            style={{ maxWidth: "100%", height: "auto" }} 
+                            onError={(e) => {
+                                (e.target as any).src = "https://via.placeholder.com/300x100?text=Barcode+Error";
+                            }}
+                        />
+                        <div style={{ fontFamily: "monospace", fontSize: "16px", fontWeight: 700, color: "var(--spa-green)", letterSpacing: "1px" }}>
+                            {session.sessionCode}
+                        </div>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "28px", textAlign: "left" }}>
+                        <div style={{ background: "var(--bg-main)", padding: "12px 16px", borderRadius: "14px" }}>
+                            <div style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase" }}>Terapis</div>
+                            <div style={{ fontSize: "13px", fontWeight: 700 }}>{session.therapistName}</div>
+                        </div>
+                        <div style={{ background: "var(--bg-main)", padding: "12px 16px", borderRadius: "14px" }}>
+                            <div style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase" }}>Ruangan</div>
+                            <div style={{ fontSize: "13px", fontWeight: 700 }}>{session.roomName}</div>
+                        </div>
+                    </div>
+
+                    <button 
+                        className="action-btn primary" 
+                        onClick={onClose}
+                        style={{ width: "100%", padding: "16px", fontSize: "15px", fontWeight: 700, borderRadius: "16px" }}
+                    >
+                        Tutup & Selesai
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     // ============================================
     // 4. MAIN ORCHESTRATOR COMPONENT
     // ============================================
     export default function SaleHistoryTab({ branchId, onToast }: Props) {
         const { post } = useApi();
 
-        const [filter, setFilter] = useState({ search: "", SaleType: -1, startDate: "", endDate: "" });
+        const getDefaultDates = () => {
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(now.getDate() + 1); // Tambah 1 hari agar inclusive hari ini
+            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+            
+            const formatDate = (date: Date) => date.toISOString().split("T")[0];
+            return { start: formatDate(lastMonth), end: formatDate(tomorrow) };
+        };
+
+        const { start, end } = getDefaultDates();
+        const [filter, setFilter] = useState({ search: "", SaleType: -1, startDate: start, endDate: end, statuses: "" });
         const [sales, setSales] = useState<SaleRow[]>([]);
         const [loading, setLoading] = useState(false);
 
@@ -447,23 +583,37 @@
 
         const [therapists, setTherapists] = useState<any[]>([]);
         const [rooms, setRooms] = useState<any[]>([]);
+        const [createdSession, setCreatedSession] = useState<any | null>(null);
 
         // ── Fetch list transaksi ───────────────────────────────────────────────────
-        const fetchSales = useCallback(async () => {
+        const fetchSales = useCallback(async (overrideFilter?: any) => {
+            const f = (overrideFilter && !overrideFilter.nativeEvent) ? overrideFilter : filter;
             setLoading(true);
+            
+            console.log("SaleHistoryTab: fetching with branchId:", branchId, "and filter:", f);
+
             try {
+                // Jika sedang melakukan pencarian (search), abaikan filter lain agar lebih global
+                const isSearching = !!f.search?.trim();
+
                 const res = await GetSalesService({
-                    branchId,
+                    branchId: branchId || undefined,
                     page: 1,
-                    pageSize: 50,
-                    search: filter.search || undefined,
-                    SaleType: filter.SaleType >= 0 ? filter.SaleType : undefined,
-                    startDate: filter.startDate || undefined,
-                    endDate: filter.endDate || undefined,
+                    pageSize: 100, // perbesar limit agar lebih banyak data muncul
+                    search: f.search || undefined,
+                    SaleType: isSearching ? undefined : (f.SaleType >= 0 ? f.SaleType : undefined),
+                    startDate: isSearching ? undefined : (f.startDate || undefined),
+                    endDate: isSearching ? undefined : (f.endDate || undefined),
+                    statuses: isSearching ? undefined : (f.statuses || undefined),
                 });
-                if (res.success) setSales(res.data?.items ?? res.data ?? []);
-                else onToast(res.message ?? "Gagal memuat data", "error");
-            } catch {
+                
+                if (res.success) {
+                    setSales(res.data?.items ?? res.data ?? []);
+                } else {
+                    onToast(res.message ?? "Gagal memuat data", "error");
+                }
+            } catch (err) {
+                console.error("SaleHistoryTab Error:", err);
                 onToast("Gagal memuat riwayat", "error");
             } finally {
                 setLoading(false);
@@ -516,13 +666,16 @@
                     Notes: form.notes || null,
                 };
                 const res = assignTarget.type === "item"
-                        ? await post("/pos/sessions/create-from-sale-item", { ...payload, SaleItemId: assignTarget.saleItemId })
-                        : await post("/pos/bookings/create-session", { ...payload, BookingCode: assignTarget.bookingCode });
+                        ? await post("pos/sessions/create-from-sale-item", { ...payload, SaleItemId: assignTarget.saleItemId })
+                        : await post("pos/bookings/create-session", { ...payload, BookingCode: assignTarget.bookingCode });
 
                 if (res?.success || res?.meta?.success) {
                     onToast("Sesi berhasil dibuat!", "success");
                     setAssignTarget(null);
                     fetchMasterData();
+                    
+                    // Ambil data sesi dari response untuk ditampilkan di modal barcode
+                    if (res.data) setCreatedSession(res.data);
 
                     // Update status item/booking di drawer tanpa fetch ulang
                     setSelectedSale((prev) => {
@@ -549,7 +702,12 @@
                     filter={filter}
                     setFilter={setFilter}
                     onSearch={fetchSales}
-                    onReset={() => setFilter({ search: "", SaleType: -1, startDate: "", endDate: "" })}
+                    onReset={() => {
+                        const { start, end } = getDefaultDates();
+                        const newFilter = { search: "", SaleType: -1, startDate: start, endDate: end, statuses: "" };
+                        setFilter(newFilter);
+                        fetchSales(newFilter);
+                    }}
                     loading={loading}
                 />
                 <SaleTable
@@ -573,6 +731,10 @@
                     masterLoading={masterLoading}
                     onClose={() => setAssignTarget(null)}
                     onSubmit={handleAssignSubmit}
+                />
+                <SessionSuccessModal
+                    session={createdSession}
+                    onClose={() => setCreatedSession(null)}
                 />
             </div>
         );

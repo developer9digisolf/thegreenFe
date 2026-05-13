@@ -56,7 +56,7 @@ export default function TherapistSlide() {
   const { token } = useAuth();
 
   // Initialize SignalR connection for real-time updates
-  const { on: signalROn } = useSignalR({
+  const { on: signalROn, off: signalROff } = useSignalR({
     hubName: "hubs/notification",
     accessToken: token || undefined, // Pass authentication token
     autoConnect: true,
@@ -163,13 +163,14 @@ export default function TherapistSlide() {
 
   // Listen for SessionCreated event from backend
   useEffect(() => {
-    signalROn("SessionCreated", (data: any) => {
+    const handleSessionCreated = (data: any) => {
       console.log("[TherapistSlide] SessionCreated event received:", data);
 
-      // Play text-to-speech if textToSpeach is provided
-      const textToSpeach = data?.textToSpeach ?? "Hidup Jokowi...............";
+      // Play text-to-speech
+      const textToSpeechText =
+        data?.textToSpeech ?? data?.textToSpeach ?? "Ada notifikasi baru";
 
-      TextToSpeechAndPlay({ text: textToSpeach, language: "id" }).catch(
+      TextToSpeechAndPlay({ text: textToSpeechText, language: "id" }).catch(
         (error) => {
           console.error(
             "[TherapistSlide] Failed to play text-to-speech:",
@@ -188,33 +189,16 @@ export default function TherapistSlide() {
 
       // Auto-slide to first card after data refresh
       setCurrent(0);
-
-      // Reset progress bar
       setProgress(0);
-    });
+    };
 
-    // Listen for RefreshQueueTherapist event from backend
-    signalROn("RefreshQueueTherapist", (data: any) => {
-      console.log(
-        "[TherapistSlide] RefreshQueueTherapist event received:",
-        data,
-      );
+    signalROn("SessionCreated", handleSessionCreated);
 
-      // Fetch therapists again to get updated data
-      if (selectedBranch) {
-        console.log(
-          "[TherapistSlide] Refreshing therapists after RefreshQueueTherapist...",
-        );
-        fetchTherapists(selectedBranch);
-      }
-
-      // Auto-slide to first card after data refresh
-      setCurrent(0);
-
-      // Reset progress bar
-      setProgress(0);
-    });
-  }, [signalROn, selectedBranch, fetchTherapists]);
+    return () => {
+      // Cleanup listener on unmount or re-run
+      signalROff("SessionCreated", handleSessionCreated);
+    };
+  }, [signalROn, signalROff, selectedBranch, fetchTherapists]);
 
   // Handle branch search
   const handleBranchSearch = (searchTerm: string) => {

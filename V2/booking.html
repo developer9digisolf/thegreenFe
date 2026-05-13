@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Book a Session — The Green</title>
+<meta name="description" content="Reserve your spa appointment at The Green online." />
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        display: ['"Cormorant Garamond"', 'serif'],
+        sans: ['Inter', 'sans-serif'],
+      },
+      colors: {
+        forest: '#2d4a36',
+        sage:  '#8aa68f',
+        gold:  '#c9a96a',
+        cream: '#f5efe4',
+        bg:    '#fbf9f3',
+        muted: '#7a8478',
+        line:  '#e6dfcf',
+      },
+      boxShadow: {
+        soft: '0 20px 60px -20px rgba(45,74,54,0.18)',
+        lift: '0 30px 80px -30px rgba(45,74,54,0.30)',
+      },
+    }
+  }
+}
+</script>
+<style>
+  body { font-family: 'Inter', sans-serif; background: #fbf9f3; color: #2d4a36; scroll-behavior: smooth; }
+  h1,h2,h3,h4,h5 { font-family: 'Cormorant Garamond', serif; letter-spacing: -0.02em; font-weight: 500; }
+  .gradient-soft { background: linear-gradient(180deg, #fbf9f3 0%, #f5efe4 100%); }
+  .nav-link.active { background:#2d4a36; color:#fff; }
+  
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slowZoom {
+    from { transform: scale(1); }
+    to { transform: scale(1.1); }
+  }
+  .animate-slow-zoom { animation: slowZoom 20s infinite alternate ease-in-out; }
+  .reveal { opacity: 0; transform: translateY(30px); transition: all 1s cubic-bezier(0.22, 1, 0.36, 1); }
+  .reveal.active { opacity: 1; transform: translateY(0); }
+  .stagger-reveal > * { opacity: 0; transform: translateY(20px); transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
+  .stagger-reveal.active > * { opacity: 1; transform: translateY(0); }
+  .stagger-reveal.active > *:nth-child(1) { transition-delay: 0.1s; }
+  .stagger-reveal.active > *:nth-child(2) { transition-delay: 0.2s; }
+  .stagger-reveal.active > *:nth-child(3) { transition-delay: 0.3s; }
+  .stagger-reveal.active > *:nth-child(4) { transition-delay: 0.4s; }
+</style>
+</head>
+<body class="overflow-x-hidden">
+
+<header class="absolute top-0 inset-x-0 z-30 pt-8 md:pt-10">
+  <div class="max-w-7xl mx-auto px-5 md:px-6 flex items-center justify-between gap-4">
+    <a href="index.html" class="flex items-center gap-2 font-display text-lg md:text-xl tracking-widest text-white">
+      <img src="logo.png" alt="The Green Logo" class="h-8 md:h-10 w-auto object-contain" />
+      THE GREEN
+    </a>
+    <nav class="hidden lg:flex items-center gap-1 bg-white/10 backdrop-blur-md border-white/20 border rounded-full px-2 py-2">
+      <a href="index.html" class="nav-link px-4 py-2 text-sm rounded-full transition text-white/90 hover:bg-black/5">Home</a>
+      <a href="about.html" class="nav-link px-4 py-2 text-sm rounded-full transition text-white/90 hover:bg-black/5">About</a>
+      <a href="services.html" class="nav-link px-4 py-2 text-sm rounded-full transition text-white/90 hover:bg-black/5">Services</a>
+      <a href="booking.html" class="nav-link px-4 py-2 text-sm rounded-full transition text-white/90 hover:bg-black/5 active">Booking</a>
+    </nav>
+    <div class="flex items-center gap-2">
+      <a href="booking.html" class="hidden sm:inline-flex items-center gap-2 bg-gold text-forest px-4 md:px-5 py-2.5 md:py-3 rounded-full text-xs md:text-sm font-medium hover:scale-105 transition">
+        Book Now <i class="fa-solid fa-arrow-right text-xs"></i>
+      </a>
+      <button onclick="document.getElementById('mob-menu').classList.toggle('hidden')" class="lg:hidden w-10 h-10 rounded-full border border-white/30 text-white flex items-center justify-center" aria-label="Menu">
+        <i class="fa-solid fa-bars text-sm"></i>
+      </button>
+    </div>
+  </div>
+  <div id="mob-menu" class="hidden lg:hidden mx-5 mt-3 bg-white rounded-2xl shadow-lift border border-line p-4 flex flex-col">
+    <a href="index.html" class="px-4 py-3 text-sm text-forest rounded-xl hover:bg-cream">Home</a>
+    <a href="about.html" class="px-4 py-3 text-sm text-forest rounded-xl hover:bg-cream">About</a>
+    <a href="services.html" class="px-4 py-3 text-sm text-forest rounded-xl hover:bg-cream">Services</a>
+    <a href="booking.html" class="px-4 py-3 text-sm text-forest rounded-xl hover:bg-cream bg-cream font-medium">Booking</a>
+    <a href="booking.html" class="sm:hidden mt-2 inline-flex items-center justify-center gap-2 bg-gold text-forest px-5 py-3 rounded-full text-sm font-medium">Book Now <i class="fa-solid fa-arrow-right text-xs"></i></a>
+  </div>
+</header>
+
+<section class="relative min-h-[50svh] flex items-center pt-32 overflow-hidden">
+  <img src="assets/spa-booking.jpg" alt="Book Appointment" class="absolute inset-0 w-full h-full object-cover animate-slow-zoom" />
+  <div class="absolute inset-0 bg-gradient-to-b from-forest/80 via-forest/40 to-forest/90"></div>
+  <div class="relative max-w-7xl mx-auto px-5 md:px-6 w-full text-white text-center">
+    <span class="text-xs uppercase tracking-[0.3em] text-gold mb-5 block">Reservation</span>
+    <h1 class="text-4xl md:text-6xl lg:text-7xl font-display mb-6">Book your <br><em class="text-gold not-italic">sanctuary</em> moment</h1>
+  </div>
+</section>
+
+<div class="bg-cream min-h-screen">
+<section class="py-12 md:py-20">
+  <div class="max-w-6xl mx-auto px-5 md:px-6">
+    
+    <!-- Step Indicator -->
+    <div class="flex items-center justify-center gap-4 md:gap-10 mb-16 reveal">
+      <div class="flex flex-col items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-forest text-white flex items-center justify-center font-bold shadow-soft">1</div>
+        <span class="text-[10px] uppercase tracking-widest text-forest font-bold">Selection</span>
+      </div>
+      <div class="w-12 h-px bg-line"></div>
+      <div class="flex flex-col items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-white border border-line text-muted flex items-center justify-center font-bold">2</div>
+        <span class="text-[10px] uppercase tracking-widest text-muted">Details</span>
+      </div>
+      <div class="w-12 h-px bg-line"></div>
+      <div class="flex flex-col items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-white border border-line text-muted flex items-center justify-center font-bold">3</div>
+        <span class="text-[10px] uppercase tracking-widest text-muted">Confirm</span>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-[1fr_400px] gap-10 items-start">
+      <div class="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-lift reveal">
+        <div id="success" class="hidden text-center py-12">
+          <div class="w-20 h-20 mx-auto rounded-full bg-cream flex items-center justify-center text-forest mb-8"><i class="fa-solid fa-check text-3xl text-gold"></i></div>
+          <h2 class="font-display text-4xl text-forest mb-4">Awaiting your arrival</h2>
+          <p class="text-muted max-w-md mx-auto mb-10 text-lg">Your ritual has been scheduled. A confirmation has been sent to your digital sanctuary (email).</p>
+          <button onclick="location.reload()" class="bg-forest text-white px-8 py-4 rounded-full font-medium hover:bg-forest/90 transition">Make another booking</button>
+        </div>
+
+        <form id="book-form" onsubmit="event.preventDefault();this.classList.add('hidden');document.getElementById('success').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'});" class="space-y-10">
+          <div class="space-y-6">
+            <div class="flex items-center gap-4 mb-2">
+              <span class="w-8 h-8 rounded-full bg-cream text-gold flex items-center justify-center text-sm font-bold">1</span>
+              <h3 class="font-display text-2xl text-forest">Choose Your Ritual</h3>
+            </div>
+            <div class="grid gap-4">
+              <label class="block relative group">
+                <i class="fa-solid fa-spa absolute left-5 top-1/2 -translate-y-1/2 text-gold opacity-50 group-focus-within:opacity-100 transition-opacity"></i>
+                <select required class="w-full border border-line bg-bg rounded-2xl pl-12 pr-5 py-4 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-gold/20 transition-all cursor-pointer">
+                  <option value="" disabled selected>Select treatment</option>
+                  <option>Full-Body Healing Journey — 120 min ($280)</option>
+                  <option>Relaxation Massage — 90 min ($120)</option>
+                  <option>Facial Glow — 60 min ($95)</option>
+                  <option>Aromatherapy — 75 min ($110)</option>
+                  <option>Herbal Wrap — 90 min ($135)</option>
+                  <option>Hot Stone Healing — 80 min ($130)</option>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-muted pointer-events-none text-xs"></i>
+              </label>
+              <div class="grid sm:grid-cols-2 gap-4">
+                <label class="relative group">
+                  <i class="fa-solid fa-calendar-day absolute left-5 top-1/2 -translate-y-1/2 text-gold opacity-50 group-focus-within:opacity-100 transition-opacity"></i>
+                  <input required type="date" class="w-full border border-line bg-bg rounded-2xl pl-12 pr-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-gold/20 transition-all" />
+                </label>
+                <label class="relative group">
+                  <i class="fa-solid fa-clock absolute left-5 top-1/2 -translate-y-1/2 text-gold opacity-50 group-focus-within:opacity-100 transition-opacity"></i>
+                  <select required class="w-full border border-line bg-bg rounded-2xl pl-12 pr-10 py-4 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-gold/20 transition-all cursor-pointer">
+                    <option value="" disabled selected>Time</option><option>09:00 AM</option><option>11:00 AM</option><option>01:00 PM</option><option>03:00 PM</option><option>05:00 PM</option><option>07:00 PM</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-muted pointer-events-none text-xs"></i>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <div class="flex items-center gap-4 mb-2">
+              <span class="w-8 h-8 rounded-full bg-cream text-gold flex items-center justify-center text-sm font-bold">2</span>
+              <h3 class="font-display text-2xl text-forest">Personal Information</h3>
+            </div>
+            <div class="grid sm:grid-cols-2 gap-4">
+              <input required type="text" placeholder="First Name" class="w-full border border-line bg-bg rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-gold/20 transition-all" />
+              <input required type="text" placeholder="Last Name" class="w-full border border-line bg-bg rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-gold/20 transition-all" />
+              <input required type="email" placeholder="Email Address" class="w-full border border-line bg-bg rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-gold/20 transition-all" />
+              <input required type="tel" placeholder="Phone Number" class="w-full border border-line bg-bg rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-gold/20 transition-all" />
+            </div>
+            <textarea rows="4" placeholder="Any special requests or health considerations?" class="w-full border border-line bg-bg rounded-2xl px-6 py-4 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gold/20 transition-all"></textarea>
+          </div>
+
+          <button type="submit" class="w-full bg-forest text-white py-5 rounded-2xl font-bold tracking-widest uppercase text-sm hover:bg-forest/90 transition-all shadow-lift transform hover:-translate-y-1">
+            Complete Reservation
+          </button>
+        </form>
+      </div>
+
+      <!-- Contact Sidebar -->
+      <div class="space-y-8 reveal" style="transition-delay: 0.2s">
+        <div class="bg-forest text-white rounded-[2.5rem] p-10 relative overflow-hidden">
+          <img src="assets/spa-booking.jpg" alt="" class="absolute inset-0 w-full h-full object-cover opacity-10" />
+          <div class="relative z-10">
+            <h3 class="font-display text-3xl mb-6">Need assistance?</h3>
+            <p class="text-white/70 text-sm mb-8 leading-relaxed">Our concierge team is available from 9AM to 9PM for specialized requests.</p>
+            <div class="space-y-4">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gold"><i class="fa-solid fa-phone-volume text-sm"></i></div>
+                <p class="text-sm font-medium">+62 812 3456 7890</p>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gold"><i class="fa-solid fa-envelope text-sm"></i></div>
+                <p class="text-sm font-medium">hello@thegreen.com</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-white border border-line rounded-[2.5rem] p-10">
+          <h4 class="font-display text-xl text-forest mb-4">Our Policy</h4>
+          <ul class="space-y-3 text-sm text-muted">
+            <li class="flex gap-3"><i class="fa-solid fa-circle-check text-gold mt-1"></i> Free cancellation 24h before</li>
+            <li class="flex gap-3"><i class="fa-solid fa-circle-check text-gold mt-1"></i> Arrive 15 mins early</li>
+            <li class="flex gap-3"><i class="fa-solid fa-circle-check text-gold mt-1"></i> Private treatment rooms</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<footer class="bg-forest text-white pt-16 md:pt-20 pb-8">
+  <div class="max-w-7xl mx-auto px-5 md:px-6">
+    <div class="grid sm:grid-cols-2 md:grid-cols-5 gap-10 pb-12">
+      <div class="md:col-span-2">
+        <div class="flex items-center gap-2 font-display text-xl tracking-widest mb-4">
+          <img src="logo.png" alt="The Green Logo" class="h-8 w-auto object-contain" />
+          THE GREEN
+        </div>
+        <p class="text-white/70 text-sm leading-relaxed max-w-sm mb-6">Healing holistic treatments designed to restore balance, energy and inner peace for every guest.</p>
+        <div class="flex gap-3">
+          <a href="#" class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-gold hover:text-forest hover:border-gold transition"><i class="fa-brands fa-instagram text-sm"></i></a>
+          <a href="#" class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-gold hover:text-forest hover:border-gold transition"><i class="fa-brands fa-facebook text-sm"></i></a>
+          <a href="#" class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-gold hover:text-forest hover:border-gold transition"><i class="fa-brands fa-twitter text-sm"></i></a>
+        </div>
+      </div>
+      <div>
+        <h5 class="font-display text-lg mb-4 text-gold">Explore</h5>
+        <ul class="space-y-2 text-sm text-white/70">
+          <li><a href="index.html" class="hover:text-white">Home</a></li>
+          <li><a href="about.html" class="hover:text-white">About</a></li>
+          <li><a href="services.html" class="hover:text-white">Services</a></li>
+          <li><a href="booking.html" class="hover:text-white">Booking</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5 class="font-display text-lg mb-4 text-gold">Services</h5>
+        <ul class="space-y-2 text-sm text-white/70">
+          <li>Healing Massage</li><li>Facial Therapy</li><li>Aromatherapy</li><li>Body Wrap</li>
+        </ul>
+      </div>
+      <div>
+        <h5 class="font-display text-lg mb-4 text-gold">Visit</h5>
+        <ul class="space-y-2 text-sm text-white/70">
+          <li>Jl. Sanctuary 88, Bali</li><li>Open 9AM – 9PM</li><li>hello@thegreen.com</li><li>+62 812 3456 7890</li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-white/10 pt-6 text-center text-xs text-white/50">© 2026 The Green Wellness Sanctuary. All rights reserved.</div>
+  </div>
+</footer>
+<script>
+  const observerOptions = { threshold: 0.1 };
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('active');
+      }
+    });
+  }, observerOptions);
+
+  document.querySelectorAll('.reveal, .stagger-reveal').forEach(el => observer.observe(el));
+</script>
+</body></html>

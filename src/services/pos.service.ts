@@ -10,9 +10,11 @@ import type {
 // Backend menyimpan pesan di: error.response.data.meta.message
 // ============================================
 function extractErrorMessage(error: any, fallback = "Terjadi kesalahan"): string {
+    // Prioritaskan struktur backend: meta.message
     return (
-        error?.response?.data?.meta?.message ||   // ← struktur backend TheGreenSpa
+        error?.response?.data?.meta?.message ||   
         error?.response?.data?.message        ||
+        error?.data?.meta?.message             || // jika response mentah di-passing
         error?.message                         ||
         fallback
     );
@@ -21,8 +23,9 @@ function extractErrorMessage(error: any, fallback = "Terjadi kesalahan"): string
 // ============================================
 // Init & Data Master Khusus POS
 // ============================================
-export function GetPosInitService() {
-    return request<PosInitData>({ url: rest.posInit, method: 'GET' });
+export function GetPosInitService(branchId?: number) {
+    const url = branchId ? `${rest.posInit}?branchId=${branchId}` : rest.posInit;
+    return request<PosInitData>({ url, method: 'GET' });
 }
 
 export function GetBranchServicesService(branchId: number, categoryId?: number) {
@@ -33,12 +36,20 @@ export function GetBranchServicesService(branchId: number, categoryId?: number) 
     return request<any[]>({ url, method: 'GET' });
 }
 
-export function GetActivePaymentMethodsService() {
-    return request<PaymentMethod[]>({ url: rest.paymentMethodActive, method: 'GET' });
+export function GetActivePaymentMethodsService(branchId?: number) {
+    const url = (branchId !== undefined && branchId !== null) 
+        ? `${rest.posPaymentMethods}?branchId=${branchId}` 
+        : rest.posPaymentMethods;
+    return request<PaymentMethod[]>({ url, method: 'GET' });
 }
 
 export function GetAvailableTherapistsService() {
     return request<Therapist[]>({ url: rest.therapistAvailable, method: 'GET' });
+}
+
+export function GetPosServicePackagesService(branchId?: number) {
+    const url = branchId ? `${rest.posServicePackages}?branchId=${branchId}` : rest.posServicePackages;
+    return request<any>({ url, method: 'GET' });
 }
 
 // ============================================
@@ -124,9 +135,43 @@ export const GetServiceCategoriesService = async (
 // Member Search
 // ============================================
 export function SearchMembersPosService(query: string) {
+    console.log("SearchMembersPosService CALLED with query:", query);
     return request<{ items: Member[] }>({
-        url: `${rest.member}?search=${encodeURIComponent(query)}&pageSize=5`,
+        url: `${rest.member}?search=${encodeURIComponent(query)}&pageSize=10`,
         method: 'GET'
+    });
+}
+
+export function CreateMemberPosService(data: any) {
+    console.log("CreateMemberPosService CALLED with data:", data);
+    return request<Member>({
+        url: rest.member,
+        method: 'POST',
+        data
+    });
+}
+
+export function UpdateMemberPosService(id: number, data: any) {
+    return request<Member>({
+        url: rest.memberDetail.replace(':id', String(id)),
+        method: 'PUT',
+        data
+    });
+}
+
+export function CheckMemberPhonePosService(phone: string, excludeId?: number) {
+    return request<{ exists: boolean }>({
+        url: rest.memberCheckPhone,
+        method: 'GET',
+        data: { phone, excludeId }
+    });
+}
+
+export function CheckMemberEmailPosService(email: string, excludeId?: number) {
+    return request<{ exists: boolean }>({
+        url: rest.memberCheckEmail,
+        method: 'GET',
+        data: { email, excludeId }
     });
 }
 

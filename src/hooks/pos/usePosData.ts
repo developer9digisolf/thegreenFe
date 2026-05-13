@@ -8,8 +8,12 @@ import {
     GetActivePaymentMethodsService,
     GetAvailableTherapistsService,
     SearchMembersPosService,
+    CreateMemberPosService,
+    UpdateMemberPosService,
     GetServiceCategoriesService,
+    GetPosServicePackagesService,
 } from "@afx/services/pos.service";
+import { CreditPackageGetActiveService } from "@afx/services/credit-package.service";
 
 // ============================================
 // TYPES
@@ -49,6 +53,7 @@ export interface UsePosDataReturn {
     memberResults:        Member[];
     showMemberDropdown:   boolean;
     setShowMemberDropdown:(v: boolean) => void;
+    createMember:         (data: any) => Promise<any>;
 
     // Therapist
     selectedTherapist:    number | null;
@@ -162,17 +167,66 @@ export function usePosData(
         }
     }, [showToast]);
 
+    const loadInitialMembers = useCallback(async () => {
+        try {
+            const res = await SearchMembersPosService("");
+            const items = res.data?.pageData || (res.data as any)?.items || (Array.isArray(res.data) ? res.data : []);
+            if (res.success && Array.isArray(items)) {
+                setMemberResults(items);
+            }
+        } catch {}
+    }, []);
+
     // ── Load init data ─────────────────────────────────────────────────────────
     const loadInitData = useCallback(async (branchId?: number) => {
         setLoading(true);
+        loadInitialMembers();
         try {
-            const initRes = await GetPosInitService().catch(() => ({ success: false, data: null }));
+            const [initRes, creditPackagesRes, servicePackagesRes, paymentMethodsRes] = await Promise.all([
+                GetPosInitService(branchId).catch((err) => ({ success: false, data: null, message: err.message })),
+                CreditPackageGetActiveService().catch((err) => ({ success: false, data: [], message: err.message })),
+                GetPosServicePackagesService(branchId).catch((err) => ({ success: false, data: { pageData: [] }, message: err.message })),
+                GetActivePaymentMethodsService(branchId).catch((err) => ({ success: false, data: [], message: err.message })),
+            ]);
+
             let combinedData: PosInitData = initRes.success && initRes.data
                 ? initRes.data
                 : {
                     hasOpenSession: true, categories: [], packages: [],
                     creditPackages: [], paymentMethods: [], pendingOrders: [], therapists: [],
                   };
+
+            if ((creditPackagesRes as any).success && Array.isArray((creditPackagesRes as any).data)) {
+                combinedData.creditPackages = (creditPackagesRes as any).data;
+            } else if (Array.isArray(creditPackagesRes)) {
+                combinedData.creditPackages = creditPackagesRes;
+            }
+
+            // Override paymentMethods from POS API if successful
+            if ((paymentMethodsRes as any).success && Array.isArray((paymentMethodsRes as any).data)) {
+                combinedData.paymentMethods = (paymentMethodsRes as any).data;
+            } else if (Array.isArray(paymentMethodsRes)) {
+                combinedData.paymentMethods = paymentMethodsRes;
+            }
+
+            // Map Service Packages (Vouchers) from new API
+            const servicePackagesData = (servicePackagesRes as any).data?.pageData || servicePackagesRes?.data || [];
+            if (Array.isArray(servicePackagesData)) {
+                combinedData.packages = servicePackagesData.map((pkg: any) => ({
+                    id: pkg.id,
+                    code: pkg.code,
+                    name: pkg.name,
+                    description: pkg.description,
+                    totalSessions: pkg.quantity, // map quantity to totalSessions
+                    price: pkg.price,
+                    validityDays: pkg.durationExpired, // map durationExpired to validityDays
+                    duration: pkg.duration,
+                    pricePerSession: pkg.basicPrice / (pkg.quantity || 1),
+                    savings: (pkg.basicPrice || 0) - (pkg.price || 0),
+                    quantity: pkg.quantity,
+                    durationExpired: pkg.durationExpired
+                }));
+            }
 
             const bId = branchId ?? (combinedData.currentSession as any)?.branchId;
 
@@ -196,12 +250,8 @@ export function usePosData(
             }
 
             if (!initRes.success) {
-                const [payRes, therapistRes] = await Promise.all([
-                    GetActivePaymentMethodsService().catch(() => ({ data: [] })),
-                    GetAvailableTherapistsService().catch(() => ({ data: [] })),
-                ]);
-                combinedData.paymentMethods = payRes.data     ?? [];
-                combinedData.therapists     = therapistRes.data ?? [];
+                // If init failed, we already have partial data from other parallel calls
+                // No need to re-fetch without parameters
             }
 
             setInitData(combinedData);
@@ -217,15 +267,46 @@ export function usePosData(
         if (query.length < 2) { setMemberResults([]); return; }
         try {
             const res = await SearchMembersPosService(query);
-            if (res.success && res.data?.items) setMemberResults(res.data.items);
-        } catch {}
-    }, []);
+            console.log("Member Search Response:", res);
+            if (res.success && Array.isArray(res.data)) {
+                setMemberResults(res.data);
+            } else if (res.success && (res.data as any)?.items) {
+                setMemberResults((res.data as any).items);
+            }
+        } catch (error: any) {
+            console.error("Member Search Error:", error);
+            showToast(error.message || "Gagal mencari member", "error");
+        }
+    }, [showToast]);
 
     const handleSetMemberSearch = useCallback((v: string) => {
+        console.log("handleSetMemberSearch TRIGGERED:", v);
         setMemberSearch(v);
-        searchMembers(v);
-        setShowMemberDropdown(true);
-    }, [searchMembers]);
+        if (!v.trim()) {
+            loadInitialMembers();
+            setShowMemberDropdown(false);
+        } else {
+            searchMembers(v);
+            setShowMemberDropdown(true);
+        }
+    }, [searchMembers, loadInitialMembers]);
+
+    const createMember = useCallback(async (data: any) => {
+        console.log("Creating Member Payload:", data);
+        try {
+            const res = await CreateMemberPosService(data);
+            console.log("Create Member Response:", res);
+            if (res.success && res.data) {
+                setSelectedMember(res.data);
+                return res.data;
+            }
+            return null;
+        } catch (error: any) {
+            console.error("Gagal membuat member - FULL ERROR:", error);
+            showToast(error.message || "Gagal membuat member", "error");
+            return null;
+        }
+    }, [showToast]);
 
     // ── Cart handlers ──────────────────────────────────────────────────────────
     const addServiceToCart = useCallback((variant: ServiceVariant) => {
@@ -311,6 +392,7 @@ export function usePosData(
         selectedMember, setSelectedMember,
         memberSearch, setMemberSearch: handleSetMemberSearch,
         memberResults, showMemberDropdown, setShowMemberDropdown,
+        createMember,
         selectedTherapist, setSelectedTherapist,
         cartItems, cartSubtotal, cartDiscount, setCartDiscount,
         cartGrandTotal, cartTotalDuration,

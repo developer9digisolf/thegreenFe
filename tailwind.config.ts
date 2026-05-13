@@ -15,6 +15,13 @@ const config: Config = {
         dark: '#2B4448', // Dark teal background from logo
         darker: '#1E3236', // Darker teal
         sand: '#F4F1ED',
+        forest: '#2d4a36',
+        sage:  '#8aa68f',
+        gold:  '#c9a96a',
+        cream: '#f5efe4',
+        bg:    '#fbf9f3',
+        muted: '#7a8478',
+        line:  '#e6dfcf',
         emerald: {
           50: '#f4f6f5',
           100: '#e9eeec',
@@ -27,6 +34,14 @@ const config: Config = {
           800: '#254039',
           900: '#1e352f',
         }
+      },
+      fontFamily: {
+        display: ['"Cormorant Garamond"', 'serif'],
+        sans: ['Inter', 'sans-serif'],
+      },
+      boxShadow: {
+        soft: '0 20px 60px -20px rgba(45,74,54,0.18)',
+        lift: '0 30px 80px -30px rgba(45,74,54,0.30)',
       },
       animation: {
         'subtle-zoom': 'subtle-zoom 20s infinite alternate',
