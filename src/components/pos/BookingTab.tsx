@@ -30,6 +30,17 @@ export interface BookingRow {
     isPaid: boolean;
     notes: string | null;
     createdAt?: string;
+    // Fields for session tracking
+    sessionCode?: string | null;
+    sessionStatus?: string | null;
+    session?: {
+        id: number;
+        sessionCode: string;
+        status: string;
+        statusName: string;
+        therapistName?: string | null;
+        roomName?: string | null;
+    } | null;
 }
 
 interface Props {
@@ -50,6 +61,14 @@ const BOOKING_STATUS_STYLE: Record<string, { bg: string; color: string; label: s
 
 function Pill({ label, bg, color }: { label: string; bg: string; color: string }) {
     return <span style={{ background: bg, color, padding: "3px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 700 }}>{label}</span>;
+}
+
+function SessionStatus({ hasSession, sessionStatus }: { hasSession: boolean; sessionStatus?: string }) {
+    if (!hasSession) return <span style={{ color: "var(--text-muted)", fontSize: "11px", fontWeight: 600 }}>BELUM DIMULAI</span>;
+    if (sessionStatus === "pending" || sessionStatus === "Pending") {
+        return <span style={{ color: "var(--accent-red)", background: "rgba(239,68,68,0.1)", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: 700 }}>PENDING</span>;
+    }
+    return <span style={{ color: "var(--spa-green)", background: "var(--spa-green-bg)", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: 700 }}>BERLANGSUNG</span>;
 }
 
 // ============================================
@@ -115,7 +134,7 @@ function BookingFilterBar({ filter, setFilter, onSearch, onReset, loading }: any
     );
 }
 
-function BookingTable({ bookings, loading, onOpenAssign }: any) {
+function BookingTable({ bookings, loading, onOpenAssign, onRowClick, selectedBookingId }: any) {
     if (loading) return (
         <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
             <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: 24, color: "var(--spa-green)" }} />
@@ -137,7 +156,7 @@ function BookingTable({ bookings, loading, onOpenAssign }: any) {
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px", textAlign: "left" }}>
                     <thead>
                         <tr style={{ borderBottom: "1px solid var(--border-color)", background: "var(--bg-main)" }}>
-                            {["Kode / Waktu", "Pelanggan", "Terapis & Ruangan", "Total", "Status", "Aksi"].map((h) => (
+                            {["Kode / Waktu", "Pelanggan", "Terapis & Ruangan", "Total", "Pembayaran", "Status", "Aksi"].map((h) => (
                                 <th key={h} style={{ padding: "12px 16px", color: "var(--text-muted)", fontWeight: 600, fontSize: "11px", textTransform: "uppercase" }}>{h}</th>
                             ))}
                         </tr>
@@ -145,10 +164,17 @@ function BookingTable({ bookings, loading, onOpenAssign }: any) {
                     <tbody>
                         {bookings.map((bk: BookingRow) => {
                             const pStyle = BOOKING_STATUS_STYLE[bk.status] || { bg: "#f1f5f9", color: "#64748b", label: bk.statusDisplay || bk.status };
+                            const isSelected = selectedBookingId === bk.id;
                             return (
-                                <tr key={bk.id} style={{ borderBottom: "1px solid var(--border-color)", background: "transparent" }}>
+                                <tr 
+                                    key={bk.id} 
+                                    onClick={() => onRowClick(bk)}
+                                    style={{ borderBottom: "1px solid var(--border-color)", cursor: "pointer", background: isSelected ? "var(--spa-green-bg)" : "transparent" }}
+                                    onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "var(--bg-main)"; }}
+                                    onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
+                                >
                                     <td style={{ padding: "14px 16px" }}>
-                                        <div style={{ fontWeight: 700, fontSize: "13px", fontFamily: "monospace", color: "var(--text-primary)" }}>{bk.code}</div>
+                                        <div style={{ fontWeight: 700, fontSize: "13px", fontFamily: "monospace", color: isSelected ? "var(--spa-green)" : "var(--text-primary)" }}>{bk.code}</div>
                                         <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "3px" }}>
                                             {bk.date ? new Date(bk.date).toLocaleDateString("id-ID", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : "—"} • <b>{bk.startTime} - {bk.endTime}</b>
                                         </div>
@@ -175,11 +201,26 @@ function BookingTable({ bookings, loading, onOpenAssign }: any) {
                                         )}
                                     </td>
                                     <td style={{ padding: "14px 16px", fontWeight: 700, color: "var(--spa-green)" }}>{formatCurrency(bk.totalAmount)}</td>
+                                    <td style={{ padding: "14px 16px" }}>
+                                        <span style={{ 
+                                            background: bk.isPaid ? "var(--spa-green-bg)" : "rgba(239,68,68,0.1)", 
+                                            color: bk.isPaid ? "var(--spa-green)" : "#dc2626", 
+                                            padding: "3px 10px", 
+                                            borderRadius: "6px", 
+                                            fontSize: "11px", 
+                                            fontWeight: 700 
+                                        }}>
+                                            {bk.isPaid ? "Lunas" : "Belum Lunas"}
+                                        </span>
+                                    </td>
                                     <td style={{ padding: "14px 16px" }}><Pill label={pStyle.label} bg={pStyle.bg} color={pStyle.color} /></td>
                                     <td style={{ padding: "14px 16px" }}>
-                                        {bk.status === "Confirmed" && (
+                                        {bk.status === "Confirmed" && bk.isPaid && (
                                             <button
-                                                onClick={() => onOpenAssign(bk)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onOpenAssign(bk);
+                                                }}
                                                 style={{ padding: "7px 14px", fontSize: "12px", fontWeight: 700, background: "var(--spa-green-bg)", color: "var(--spa-green)", border: "1px solid var(--spa-green-border)", borderRadius: "8px", cursor: "pointer", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: "6px" }}
                                             >
                                                 <i className="fa-solid fa-play" /> Buat Sesi
@@ -193,6 +234,158 @@ function BookingTable({ bookings, loading, onOpenAssign }: any) {
                 </table>
             </div>
         </div>
+    );
+}
+
+function BookingDetailDrawer({ isOpen, onClose, booking, loading, onOpenAssign }: any) {
+    if (!isOpen) return null;
+    
+    // Check if session already exists
+    const hasSession = !!(booking.sessionCode || booking.session?.sessionCode || booking.status === "InProgress" || booking.status === "Completed");
+    const sessionCode = booking.sessionCode || booking.session?.sessionCode || "";
+    
+    // Check if booking is paid
+    const isPaid = !!booking.isPaid;
+    const canCreateSession = isPaid && !hasSession && (booking.status === "Confirmed" || booking.status === "Pending");
+
+    return (
+        <>
+            <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.25)", zIndex: 1100, backdropFilter: "blur(2px)" }} />
+            <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(480px, 95vw)", background: "var(--bg-card)", boxShadow: "-8px 0 40px rgba(0,0,0,0.15)", zIndex: 1200, display: "flex", flexDirection: "column" }}>
+                <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--border-color)", display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
+                    <button onClick={onClose} style={{ background: "var(--bg-main)", border: "none", borderRadius: "10px", width: "36px", height: "36px", cursor: "pointer", color: "var(--text-muted)", fontSize: "16px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <i className="fa-solid fa-xmark" />
+                    </button>
+                    <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: "16px", fontFamily: "monospace", color: "var(--spa-green)" }}>{booking?.code ?? "—"}</div>
+                        <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>{booking?.memberName ?? "Guest"}</div>
+                    </div>
+                </div>
+                
+                <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
+                    {loading ? (
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", gap: "12px", color: "var(--text-muted)" }}>
+                            <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: 28, color: "var(--spa-green)" }} />
+                            <span style={{ fontSize: "13px" }}>Memuat detail booking...</span>
+                        </div>
+                    ) : !booking ? null : (
+                        <>
+                            <div style={{ background: "var(--bg-main)", borderRadius: "12px", padding: "16px", marginBottom: "20px", display: "flex", gap: "20px", flexWrap: "wrap", alignItems: "center" }}>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>TOTAL BAYAR</div>
+                                    <div style={{ fontSize: "20px", fontWeight: 800, color: "var(--spa-green)" }}>{formatCurrency(booking.totalAmount)}</div>
+                                    <div style={{ marginTop: "4px", display: "flex", gap: "6px" }}>
+                                        <span style={{ background: isPaid ? "var(--spa-green-bg)" : "rgba(239,68,68,0.1)", color: isPaid ? "var(--spa-green)" : "#dc2626", padding: "3px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 700 }}>
+                                            {isPaid ? "Lunas" : "Belum Lunas"}
+                                        </span>
+                                        <span style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", color: "var(--text-muted)", padding: "2px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 600 }}>
+                                            {booking.statusDisplay ?? booking.status}
+                                        </span>
+                                    </div>
+                                </div>
+                                {sessionCode && (
+                                    <div style={{ textAlign: "center", background: "#fff", padding: "8px", borderRadius: "12px", border: "1px solid var(--border-color)" }}>
+                                        <img 
+                                            src={`https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(sessionCode)}&scale=2&backgroundcolor=ffffff`}
+                                            alt="Session QR"
+                                            style={{ width: "80px", height: "80px" }}
+                                        />
+                                        <div style={{ fontSize: "10px", fontWeight: 700, marginTop: "4px", color: "var(--text-muted)", fontFamily: "monospace" }}>{sessionCode}</div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Info Detail Booking */}
+                            <section style={{ marginBottom: "24px" }}>
+                                <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "12px" }}>
+                                    <i className="fa-solid fa-circle-info" style={{ color: "var(--spa-green)", marginRight: "6px" }} /> Detail Booking
+                                </div>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                                    <div style={{ background: "var(--bg-main)", borderRadius: "12px", padding: "14px 16px", border: "1px solid var(--border-color)" }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                                            <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>Tanggal & Waktu</span>
+                                            <span style={{ fontWeight: 700, fontSize: "13px", textAlign: "right" }}>
+                                                {booking.date ? new Date(booking.date).toLocaleDateString("id-ID", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : "—"}
+                                                <br />
+                                                <span style={{ color: "var(--spa-green)" }}>{booking.startTime} - {booking.endTime}</span>
+                                            </span>
+                                        </div>
+                                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                                            <span style={{ color: "var(--text-muted)", fontSize: "13px" }}>Layanan</span>
+                                            <span style={{ fontWeight: 700, fontSize: "13px" }}>{booking.serviceName ?? "Standard Layanan"}</span>
+                                        </div>
+                                        {booking.notes && (
+                                            <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "8px", marginTop: "8px" }}>
+                                                <span style={{ color: "var(--text-muted)", fontSize: "12px", display: "block", marginBottom: "3px" }}>Catatan Klien:</span>
+                                                <span style={{ fontSize: "12px", fontStyle: "italic" }}>"{booking.notes}"</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* Info Pelanggan */}
+                            <section style={{ marginBottom: "24px" }}>
+                                <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "12px" }}>
+                                    <i className="fa-solid fa-user" style={{ color: "var(--spa-green)", marginRight: "6px" }} /> Pelanggan
+                                </div>
+                                <div style={{ background: "var(--bg-main)", borderRadius: "12px", padding: "14px 16px", border: "1px solid var(--border-color)", display: "flex", alignItems: "center", gap: "12px" }}>
+                                    <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "var(--spa-green-bg)", color: "var(--spa-green)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700 }}>
+                                        {(booking.memberName ?? "G").charAt(0).toUpperCase()}
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontWeight: 700, fontSize: "14px" }}>{booking.memberName ?? "Guest"}</div>
+                                        {booking.memberPhone && <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}><i className="fa-solid fa-phone" style={{ marginRight: "5px", fontSize: "11px" }} />{booking.memberPhone}</div>}
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* Status Sesi & Penugasan */}
+                            <section style={{ marginBottom: "24px" }}>
+                                <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "12px" }}>
+                                    <i className="fa-solid fa-spa" style={{ color: "var(--spa-green)", marginRight: "6px" }} /> Sesi Terapi
+                                </div>
+                                
+                                <div style={{ background: "var(--bg-main)", borderRadius: "12px", padding: "14px 16px", border: "1px solid var(--border-color)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+                                    <div style={{ flex: 1 }}>
+                                        {hasSession ? (
+                                            <div>
+                                                {booking.therapistName && <div style={{ fontSize: "13px", fontWeight: 600 }}><i className="fa-solid fa-user-md" style={{ color: "var(--spa-green)", marginRight: "6px" }} />Terapis: {booking.therapistName}</div>}
+                                                {booking.roomName && <div style={{ fontSize: "13px", fontWeight: 600, marginTop: "4px" }}><i className="fa-solid fa-door-open" style={{ color: "#d97706", marginRight: "6px" }} />Ruangan: {booking.roomName}</div>}
+                                                <div style={{ marginTop: "8px" }}>
+                                                    <SessionStatus hasSession={true} sessionStatus={booking.sessionStatus ?? booking.session?.status} />
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <span style={{ fontSize: "13px", fontStyle: "italic", color: "var(--text-muted)" }}>Sesi belum dibuat</span>
+                                                {!isPaid && (
+                                                    <div style={{ color: "#dc2626", fontSize: "11px", fontWeight: 600, marginTop: "4px" }}>
+                                                        <i className="fa-solid fa-triangle-exclamation" style={{ marginRight: "4px" }} /> Booking harus dilunasi untuk membuat sesi.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    {canCreateSession && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onOpenAssign(booking);
+                                            }}
+                                            style={{ padding: "8px 16px", fontSize: "12px", fontWeight: 700, background: "var(--spa-green-bg)", color: "var(--spa-green)", border: "1px solid var(--spa-green-border)", borderRadius: "8px", cursor: "pointer", whiteSpace: "nowrap" }}
+                                        >
+                                            <i className="fa-solid fa-play" style={{ marginRight: "4px" }} /> Buat Sesi
+                                        </button>
+                                    )}
+                                </div>
+                            </section>
+                        </>
+                    )}
+                </div>
+            </div>
+        </>
     );
 }
 
@@ -384,6 +577,10 @@ export default function BookingTab({ branchId, onToast, onBookingCountChange }: 
     const [bookings, setBookings] = useState<BookingRow[]>([]);
     const [loading, setLoading] = useState(false);
 
+    const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [drawerLoading, setDrawerLoading] = useState(false);
+
     const [assignTarget, setAssignTarget] = useState<BookingRow | null>(null);
     const [masterLoading, setMasterLoading] = useState(false);
 
@@ -450,6 +647,11 @@ export default function BookingTab({ branchId, onToast, onBookingCountChange }: 
         await fetchMasterData();
     }, [fetchMasterData]);
 
+    const handleRowClick = (bk: BookingRow) => {
+        setSelectedBooking(bk);
+        setIsDrawerOpen(true);
+    };
+
     // ── Submit assign ─────────────────────────────────────────────────────────
     const handleAssignSubmit = async (form: any) => {
         if (!assignTarget) return;
@@ -467,7 +669,22 @@ export default function BookingTab({ branchId, onToast, onBookingCountChange }: 
                 setAssignTarget(null);
                 fetchMasterData();
                 
-                if (res.data) setCreatedSession(res.data);
+                if (res.data) {
+                    setCreatedSession(res.data);
+                    
+                    // Update active selected booking so barcode is shown instantly in the open drawer
+                    if (selectedBooking && selectedBooking.code === assignTarget.code) {
+                        setSelectedBooking({
+                            ...selectedBooking,
+                            sessionCode: res.data.sessionCode,
+                            sessionStatus: "pending",
+                            therapistName: res.data.therapistName,
+                            roomName: res.data.roomName,
+                            status: "InProgress",
+                            statusDisplay: "Berlangsung"
+                        });
+                    }
+                }
 
                 // Refresh bookings list
                 fetchBookings();
@@ -509,6 +726,8 @@ export default function BookingTab({ branchId, onToast, onBookingCountChange }: 
                 bookings={bookings}
                 loading={loading}
                 onOpenAssign={handleOpenAssign}
+                onRowClick={handleRowClick}
+                selectedBookingId={selectedBooking?.id}
             />
             <BookingAssignModal
                 target={assignTarget}
@@ -521,6 +740,16 @@ export default function BookingTab({ branchId, onToast, onBookingCountChange }: 
             <SessionSuccessModal
                 session={createdSession}
                 onClose={() => setCreatedSession(null)}
+            />
+            <BookingDetailDrawer
+                isOpen={isDrawerOpen}
+                onClose={() => {
+                    setIsDrawerOpen(false);
+                    setSelectedBooking(null);
+                }}
+                booking={selectedBooking}
+                loading={drawerLoading}
+                onOpenAssign={handleOpenAssign}
             />
         </div>
     );
