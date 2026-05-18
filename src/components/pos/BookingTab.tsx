@@ -564,12 +564,12 @@ export default function BookingTab({ branchId, onToast, onBookingCountChange }: 
 
     const getDefaultDates = () => {
         const now = new Date();
-        const tomorrow = new Date(now);
-        tomorrow.setDate(now.getDate() + 7); // Default load 1 week ahead
+        const future = new Date(now);
+        future.setMonth(now.getMonth() + 3); // Default load 3 months ahead
         const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
         
         const formatDate = (date: Date) => date.toISOString().split("T")[0];
-        return { start: formatDate(lastMonth), end: formatDate(tomorrow) };
+        return { start: formatDate(lastMonth), end: formatDate(future) };
     };
 
     const { start, end } = getDefaultDates();
@@ -590,16 +590,25 @@ export default function BookingTab({ branchId, onToast, onBookingCountChange }: 
 
     // ── Fetch list booking ───────────────────────────────────────────────────────
     const fetchBookings = useCallback(async (overrideFilter?: any) => {
-        if (!branchId) return;
         const f = overrideFilter || filter;
+        console.log("[BookingTab] fetchBookings START - Input branchId:", branchId, "Filter:", f);
+        if (!branchId) {
+            console.warn("[BookingTab] Cannot fetch bookings: branchId is missing or empty!");
+            return;
+        }
         setLoading(true);
-        
         try {
-            const url = `pos/bookings?StartDate=${f.startDate}&EndDate=${f.endDate}&BranchId=${branchId}&Statuses=${f.statuses}`;
+            let url = `pos/bookings?StartDate=${f.startDate}&EndDate=${f.endDate}&BranchId=${branchId}`;
+            if (f.statuses) {
+                url += `&Statuses=${f.statuses}`;
+            }
+            console.log("[BookingTab] Built API URL:", url);
             const res = await get(url);
+            console.log("[BookingTab] API Raw Response:", res);
             
             if (res.success || res.meta?.success) {
                 const list = res.data?.pageData ?? res.data ?? [];
+                console.log("[BookingTab] Successfully fetched list (length:", list.length, "):", list);
                 
                 // If searching locally by search input
                 if (f.search?.trim()) {
@@ -608,18 +617,21 @@ export default function BookingTab({ branchId, onToast, onBookingCountChange }: 
                         bk.code?.toLowerCase().includes(term) || 
                         bk.memberName?.toLowerCase().includes(term)
                     );
+                    console.log("[BookingTab] Filtered list by local search term '" + term + "' (length:", filtered.length, "):", filtered);
                     setBookings(filtered);
                 } else {
                     setBookings(list);
                 }
             } else {
+                console.error("[BookingTab] API returned success=false. Message:", res.message, "Meta:", res.meta);
                 onToast(res.message ?? "Gagal memuat data booking", "error");
             }
         } catch (err) {
-            console.error("BookingTab Fetch Error:", err);
+            console.error("[BookingTab] Catch Error during fetchBookings:", err);
             onToast("Gagal memuat data booking", "error");
         } finally {
             setLoading(false);
+            console.log("[BookingTab] fetchBookings FINISHED");
         }
     }, [branchId, filter, onToast, get]);
 
