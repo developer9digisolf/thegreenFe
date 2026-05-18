@@ -55,11 +55,24 @@ const menuConfig: MenuSection[] = [
         roles: ["Owner", "Admin", "Office"],
       },
       {
-        key: "attendance-qr",
-        label: "Attendance QR",
-        icon: "fa-solid fa-qrcode",
-        path: "/dashboard/attendance-qr",
+        key: "attendance",
+        label: "Attendance",
+        icon: "fa-solid fa-clock",
         roles: ["Owner", "Admin"],
+        subItems: [
+          {
+            key: "attendance-qr",
+            label: "Attendance QR",
+            icon: "fa-solid fa-qrcode",
+            path: "/dashboard/attendance-qr",
+          },
+          {
+            key: "timesheet",
+            label: "Timesheet",
+            icon: "fa-solid fa-table",
+            path: "/dashboard/attendance/timesheet",
+          },
+        ],
       },
       {
         key: "queue",
@@ -137,7 +150,7 @@ const menuConfig: MenuSection[] = [
             icon: "fa-solid fa-box-archive",
             path: "/dashboard/master/service-packages",
           },
-            {
+          {
             key: "credit-package",
             label: "Paket Kredit",
             icon: "fa-solid fa-coins",
@@ -194,7 +207,7 @@ const menuConfig: MenuSection[] = [
             label: "Service Variant",
             icon: "fa-solid fa-tags",
             path: "/dashboard/master/service-variants",
-          }   
+          },
         ],
       },
       {

@@ -11,7 +11,6 @@ export const rest = {
   imageUpload: "images/upload",
   imageUploadMultiple: "images/upload-multiple",
 
-
   // Therapist Auth (Portal Terapis)
   therapistAuthLogin: "therapist-auth/login",
   therapistAuthLogout: "therapist-auth/logout",
@@ -240,6 +239,9 @@ export const rest = {
       byEmployee: "master/commissions/by-employee",
       sessions: "master/commissions/sessions",
       export: "export/excel/commissions",
+    },
+    attendance: {
+      timesheets: "attendance/timesheets",
     },
   },
 };
