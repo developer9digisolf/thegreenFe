@@ -180,9 +180,9 @@ export default function TimesheetPage() {
       width: 150,
       render: (_: any, record: ITimesheetRecord) => (
         <div>
-          <div>{formatTime(record.scheduledStartTime)}</div>
+          <div>{record.scheduledStartTime || "-"}</div>
           <div style={{ fontSize: "12px", color: "#888" }}>
-            to {formatTime(record.scheduledEndTime)}
+            to {record.scheduledEndTime || "-"}
           </div>
         </div>
       ),
