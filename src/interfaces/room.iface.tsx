@@ -22,6 +22,10 @@ export interface IRoom {
     status: RoomStatus;
     statusDisplay?: string;
     isActive: boolean;
+    branchId?: number;
+    BranchId?: number;
+    branchName?: string;
+    BranchName?: string;
     createdAt: string;
     updatedAt?: string;
 }
@@ -36,6 +40,8 @@ export interface ICreateRoomRequest {
     name: string;
     capacity?: number;
     description?: string;
+    branchId?: number;
+    BranchId?: number;
 }
 
 export interface IUpdateRoomRequest {
@@ -44,6 +50,8 @@ export interface IUpdateRoomRequest {
     description?: string;
     status?: number;
     isActive?: boolean;
+    branchId?: number;
+    BranchId?: number;
 }
 
 export interface IRoomPaginationRequest {
@@ -51,6 +59,8 @@ export interface IRoomPaginationRequest {
     pageSize?: number;
     search?: string;
     status?: string;
+    branchId?: number;
+    BranchId?: number;
     sortColumn?: string;
     sortDirection?: string;
 }

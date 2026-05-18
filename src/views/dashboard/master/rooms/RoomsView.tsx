@@ -31,6 +31,7 @@ import {
     UpdateRoomService, 
     DeleteRoomService 
 } from "@afx/services/room.service";
+import { useAuth } from "@afx/contexts/AuthContext";
 import { 
     IRoom, 
     ICreateRoomRequest, 
@@ -49,9 +50,12 @@ const itemLayouts = {
 };
 
 export default function RoomsView() {
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [rooms, setRooms] = useState<IRoom[]>([]);
+    const [branches, setBranches] = useState<any[]>([]);
+    const [branchFilter, setBranchFilter] = useState<number | undefined>(undefined);
     const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
     const [searchText, setSearchText] = useState("");
     const [tempSearch, setTempSearch] = useState("");
@@ -68,12 +72,32 @@ export default function RoomsView() {
         name: ""
     });
 
-    const fetchData = async (page = pagination.current, pageSize = pagination.pageSize, search = searchText, status = statusFilter) => {
+    useEffect(() => {
+        if (user) {
+            const userBranches = (user as any).branches || [];
+            setBranches(userBranches.map((b: any) => ({
+                id: b.branchId,
+                name: b.branchName
+            })));
+        }
+    }, [user]);
+
+    const fetchData = async (
+        page = pagination.current, 
+        pageSize = pagination.pageSize, 
+        search = searchText, 
+        status = statusFilter,
+        branch = branchFilter
+    ) => {
         setLoading(true);
         try {
             const params: any = { page, pageSize };
             if (search) params.search = search;
             if (status) params.status = status;
+            if (branch !== undefined) {
+                params.branchId = branch;
+                params.BranchId = branch;
+            }
             
             const res = await GetRoomsService(params);
             if (res.success) {
@@ -97,7 +121,7 @@ export default function RoomsView() {
 
     useEffect(() => {
         fetchData();
-    }, [pagination.current, pagination.pageSize, searchText, statusFilter]);
+    }, [pagination.current, pagination.pageSize, searchText, statusFilter, branchFilter]);
 
     const handleSearch = () => {
         setSearchText(tempSearch);
@@ -107,18 +131,28 @@ export default function RoomsView() {
     const handleOpenCreate = () => {
         setFormType("create");
         setSelectedRoom(null);
+        forms.resetFields();
+        forms.setFieldsValue({ status: 0, capacity: 1, isActive: true });
         setOpenForm(true);
     };
 
     const handleOpenEdit = (room: IRoom) => {
         setFormType("update");
         setSelectedRoom(room);
+        forms.setFieldsValue({
+            ...room,
+            branchId: room.branchId || room.BranchId
+        });
         setOpenForm(true);
     };
 
     const handleOpenDetail = (room: IRoom) => {
         setFormType("detail");
         setSelectedRoom(room);
+        forms.setFieldsValue({
+            ...room,
+            branchId: room.branchId || room.BranchId
+        });
         setOpenForm(true);
     };
 
@@ -127,8 +161,14 @@ export default function RoomsView() {
             const values = await forms.validateFields();
             setSaving(true);
 
+            const payload = {
+                ...values,
+                BranchId: values.branchId,
+                branchId: values.branchId
+            };
+
             if (formType === "create") {
-                const res = await CreateRoomService(values as ICreateRoomRequest);
+                const res = await CreateRoomService(payload as ICreateRoomRequest);
                 if (res.success) {
                     notification.success({ message: "Ruangan berhasil ditambahkan" });
                     setOpenForm(false);
@@ -137,7 +177,7 @@ export default function RoomsView() {
                     notification.error({ message: "Gagal Menyimpan", description: res.message });
                 }
             } else if (selectedRoom) {
-                const res = await UpdateRoomService(selectedRoom.id, values as IUpdateRoomRequest);
+                const res = await UpdateRoomService(selectedRoom.id, payload as IUpdateRoomRequest);
                 if (res.success) {
                     notification.success({ message: "Ruangan berhasil diperbarui" });
                     setOpenForm(false);
@@ -220,6 +260,16 @@ export default function RoomsView() {
             )
         },
         {
+            key: "branchName",
+            title: "Cabang",
+            width: "150px",
+            render: (_: any, record: IRoom) => (
+                <span className="font-bold text-slate-600">
+                    {record.branchName || record.BranchName || "Global / Semua Cabang"}
+                </span>
+            )
+        },
+        {
             key: "capacity",
             title: "Kapasitas",
             width: "120px",
@@ -293,21 +343,35 @@ export default function RoomsView() {
                     onSearch={handleSearch}
                     searchPlaceholder="Cari nama ruangan..."
                     filters={
-                        <div className="flex items-center gap-3">
-                            <Typography.Text className="text-slate-400 font-medium whitespace-nowrap">Filter by:</Typography.Text>
-                            <Select
-                                placeholder="Semua Status"
-                                style={{ width: 180 }}
-                                className="custom-select-large"
-                                allowClear
-                                value={statusFilter}
-                                onChange={(val) => { setStatusFilter(val || ""); setPagination(prev => ({ ...prev, current: 1 })); }}
-                                options={[
-                                    { label: "Available", value: "Available" },
-                                    { label: "Occupied", value: "Occupied" },
-                                    { label: "Maintenance", value: "Maintenance" }
-                                ]}
-                            />
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <Typography.Text className="text-slate-400 font-medium whitespace-nowrap">Status:</Typography.Text>
+                                <Select
+                                    placeholder="Semua Status"
+                                    style={{ width: 140 }}
+                                    className="custom-select-large"
+                                    allowClear
+                                    value={statusFilter}
+                                    onChange={(val) => { setStatusFilter(val || ""); setPagination(prev => ({ ...prev, current: 1 })); }}
+                                    options={[
+                                        { label: "Available", value: "Available" },
+                                        { label: "Occupied", value: "Occupied" },
+                                        { label: "Maintenance", value: "Maintenance" }
+                                    ]}
+                                />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Typography.Text className="text-slate-400 font-medium whitespace-nowrap">Cabang:</Typography.Text>
+                                <Select
+                                    placeholder="Semua Cabang"
+                                    style={{ width: 180 }}
+                                    className="custom-select-large"
+                                    allowClear
+                                    value={branchFilter}
+                                    onChange={(val) => { setBranchFilter(val); setPagination(prev => ({ ...prev, current: 1 })); }}
+                                    options={branches.map(b => ({ label: b.name, value: b.id }))}
+                                />
+                            </div>
                         </div>
                     }
                 />
@@ -339,6 +403,16 @@ export default function RoomsView() {
                             <Col span={24}>
                                 <UseFormItem name="name" label="Nama Ruangan" {...itemLayouts} rules={[{ required: true, message: "Nama wajib diisi" }]}>
                                     <UseInput placeholder="Contoh: VIP Room 01, Treatment Room A" disabled={formType === "detail"} />
+                                </UseFormItem>
+                            </Col>
+                            <Col span={24}>
+                                <UseFormItem name="branchId" label="Cabang" {...itemLayouts} rules={[{ required: true, message: "Cabang wajib dipilih" }]}>
+                                    <Select 
+                                        placeholder="Pilih Cabang" 
+                                        className="w-full h-[46px] custom-select" 
+                                        disabled={formType === "detail"} 
+                                        options={branches.map(b => ({ label: b.name, value: b.id }))}
+                                    />
                                 </UseFormItem>
                             </Col>
                             <Col span={24} md={12}>

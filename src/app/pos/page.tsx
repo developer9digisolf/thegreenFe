@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useApi } from "@afx/utils/useApi";
 import { formatCurrency } from "@afx/utils/format";
@@ -11,13 +11,14 @@ import { usePosData, CartItem } from "@afx/hooks/pos/usePosData";
 import { usePayment } from "@afx/hooks/pos/usePayment";
 import GatekeeperScreen from "@afx/components/pos/GatekeeperScreen";
 import SaleHistoryTab from "@afx/components/pos/SaleHistoryTab";
+import BookingTab from "@afx/components/pos/BookingTab";
 import ModalPayment from "@afx/components/pos/ModalPayment";
 import ModalMemberAdd from "@afx/components/pos/ModalMemberAdd";
 import { CloseCashierSessionService } from "@afx/services/pos.service";
 
 
 export default function POSPage() {
-    const { post } = useApi();
+    const { get, post } = useApi();
 
     // ── Toast ──────────────────────────────────────────────────────────────
     const [toast, setToast] = useState<Toast | null>(null);
@@ -35,7 +36,7 @@ export default function POSPage() {
     const payment = usePayment(showToast);
 
     // ── Local UI state ─────────────────────────────────────────────────────
-    const [mode, setMode] = useState<"session" | "voucher" | "credit" | "redeem" | "sale">("session");
+    const [mode, setMode] = useState<"session" | "voucher" | "credit" | "redeem" | "sale" | "booking">("session");
     const [selectedCategory, setSelectedCategory]   = useState<number | null>(null);
     const [serviceSearch, setServiceSearch]         = useState("");
     const [selectedPackage, setSelectedPackage]     = useState<number | null>(null);
@@ -50,7 +51,6 @@ export default function POSPage() {
     const [isCheckoutProcessing, setIsCheckoutProcessing]   = useState(false);
     const [showMemberModal, setShowMemberModal] = useState(false);
     const [saleRefreshKey, setSaleRefreshKey] = useState(0);
-
     // ── Computed Variables ─────────────────────────────────────────────────
     const activeBranchId = useMemo<number | null>(
         () => session.activeSession?.branchId ?? session.selectedBranch?.branchId ?? (session.selectedBranch as any)?.id ?? pos.initData?.currentSession?.branchId ?? null,
@@ -70,6 +70,36 @@ export default function POSPage() {
     const hasOpenSession = !!currentActiveSession;
     const filteredServices = pos.getFilteredServices(null, serviceSearch);
     const hasCartItems = pos.cartItems && pos.cartItems.length > 0;
+
+    const [bookingCount, setBookingCount] = useState<number>(0);
+
+    const fetchBookingCount = useCallback(async () => {
+        const bId = activeBranchId ?? currentActiveSession?.branchId ?? null;
+        if (!bId) {
+            setBookingCount(0);
+            return;
+        }
+        try {
+            const now = new Date();
+            const year = now.getFullYear();
+            const startDate = `${year}-01-01`;
+            const endDate = `${year}-12-31`;
+            const res = await get(`pos/bookings?StartDate=${startDate}&EndDate=${endDate}&BranchId=${bId}&Statuses=Confirmed`);
+            if (res?.success || res?.meta?.success) {
+                const list = res.data?.pageData ?? res.data ?? [];
+                const pendingCount = list.filter((bk: any) => bk.status === "Confirmed").length;
+                setBookingCount(pendingCount);
+            }
+        } catch (err) {
+            console.error("fetchBookingCount error:", err);
+        }
+    }, [activeBranchId, currentActiveSession, get]);
+
+    useEffect(() => {
+        if (activeBranchId) {
+            fetchBookingCount();
+        }
+    }, [activeBranchId, fetchBookingCount]);
 
     // ── Handlers ───────────────────────────────────────────────────────────
     const handleContinueSession = useCallback(() => {
@@ -289,7 +319,9 @@ export default function POSPage() {
                 {/* ── HEADER ────────────────────────────────────────────────── */}
                 <header className="pos-header">
                     <Link href="/dashboard" className="pos-logo">
-                        <div className="pos-logo-icon"><i className="fa-solid fa-spa" /></div>
+                        <div className="pos-logo-icon1">
+                            <img src="/logo.png" alt="Logo" style={{ width: "40px", height: "40px", objectFit: "contain" }} />
+                        </div>
                         <div className="pos-logo-text">The <span>Green</span> Spa</div>
                     </Link>
 
@@ -452,13 +484,14 @@ export default function POSPage() {
                     {/* CENTER: Service / Voucher / Credit / Redeem / Sale */}
                     <div className="service-area">
                         <div className="service-categories" style={{ gap: "8px" }}>
-                            {(["session", "voucher", "credit", "redeem", "sale"] as const).map((m) => {
+                            {(["session", "voucher", "credit", "redeem", "sale", "booking"] as const).map((m) => {
                                 const labels: Record<string, { icon: string; label: string }> = {
                                     session: { icon: "fa-spa",              label: "Layanan"       },
                                     voucher: { icon: "fa-ticket",           label: "Paket Voucher" },
                                     credit:  { icon: "fa-wallet",           label: "Top Up Kredit" },
                                     redeem:  { icon: "fa-qrcode",           label: "Redeem"        },
-                                    sale:    { icon: "fa-tag",              label: "Penjualan"          },
+                                    sale:    { icon: "fa-tag",              label: "Penjualan"     },
+                                    booking: { icon: "fa-calendar-days",    label: "Booking"       },
                                 };
                                 const { icon, label } = labels[m];
                                 return (
@@ -466,9 +499,29 @@ export default function POSPage() {
                                         key={m}
                                         className={`pos-tab ${mode === m ? "active" : ""}`}
                                         onClick={() => setMode(m)}
-                                        style={{ padding: "10px 20px" }}
+                                        style={{ padding: "10px 20px", position: "relative", display: "flex", alignItems: "center", gap: "6px" }}
                                     >
-                                        <i className={`fa-solid ${icon}`} /> {label}
+                                        <i className={`fa-solid ${icon}`} /> 
+                                        <span>{label}</span>
+                                        {m === "booking" && bookingCount > 0 && (
+                                            <span style={{
+                                                background: "var(--accent-red)",
+                                                color: "white",
+                                                fontSize: "10px",
+                                                fontWeight: 700,
+                                                borderRadius: "10px",
+                                                padding: "2px 6px",
+                                                minWidth: "18px",
+                                                height: "18px",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                lineHeight: 1,
+                                                boxShadow: "0 2px 5px rgba(239,68,68,0.3)",
+                                            }}>
+                                                {bookingCount}
+                                            </span>
+                                        )}
                                     </button>
                                 );
                             })}
@@ -593,7 +646,7 @@ export default function POSPage() {
                                             className={`package-card ${idx === 0 ? "hemat" : "premium"} ${selectedPackage === pkg.id ? "selected" : ""}`}
                                             onClick={() => { setSelectedPackage(pkg.id); pos.addPackageToCart(pkg); }}
                                         >
-                                            {pkg.savings && pkg.savings > 0 && (
+                                            {(pkg.savings ?? 0) > 0 && (
                                                 <div className="package-badge">Hemat {formatCurrency(pkg.savings)}</div>
                                             )}
                                             <div className="package-name">{pkg.name}</div>
@@ -646,6 +699,22 @@ export default function POSPage() {
                                         null
                                     } 
                                     onToast={showToast} 
+                                    onBookingCountChange={fetchBookingCount}
+                                />
+                            </div>
+                        )}
+
+                        {mode === "booking" && (
+                            <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+                                <BookingTab 
+                                    branchId={
+                                        activeBranchId ??
+                                        session.selectedBranch?.branchId ??
+                                        currentActiveSession?.branchId ??
+                                        null
+                                    } 
+                                    onToast={showToast} 
+                                    onBookingCountChange={fetchBookingCount}
                                 />
                             </div>
                         )}
