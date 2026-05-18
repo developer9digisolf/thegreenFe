@@ -47,6 +47,10 @@ export default function BranchView() {
     name: "",
   });
 
+  const getPathFromUrl = (url: any) => {
+    return typeof url === "string" ? url : (url?.imageUrl || "");
+  };
+
   const handleSearch = () => {
     setKeywords(tempSearch);
     setPage(1);
@@ -77,11 +81,22 @@ export default function BranchView() {
     return forms
       .validateFields()
       .then((val) => {
+        const payload = {
+          ...val,
+          imageUrl: val.imageUrl ? getPathFromUrl(val.imageUrl) : val.imageUrl,
+          ImageGaleries: val.imageGaleries ? val.imageGaleries.map((url: any) => getPathFromUrl(url)) : [],
+        };
+        
+        // Remove lowercase imageGaleries to match backend casing expectation
+        delete (payload as any).imageGaleries;
+
+        console.log("🚀 [Branch Submit Payload]:", JSON.stringify(payload, null, 2));
+
         if (formType === "create") {
           useActions<"createBranch">(
             "createBranch",
             [
-              val,
+              payload,
               (code: any) => {
                 const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
                 if (isSuccess) {
@@ -100,7 +115,7 @@ export default function BranchView() {
             "updateBranch",
             [
               branch?.id,
-              val,
+              payload,
               (code: any) => {
                 const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
                 if (isSuccess) {
@@ -125,6 +140,35 @@ export default function BranchView() {
           key: "FUNC-CREATE-BRANCH",
         });
       });
+  };
+
+  const handleUpdateGallery = (values: Partial<IReqFormBranch>) => {
+    if (branch?.id) {
+      const galleryUrls = values.imageGaleries || forms.getFieldValue('imageGaleries') || [];
+      
+      // Send ONLY ImageGaleries for the gallery update request
+      const payload = {
+        ImageGaleries: galleryUrls.map((url: any) => getPathFromUrl(url)),
+      };
+      
+      console.log("📸 [Branch Gallery Update Payload]:", JSON.stringify(payload, null, 2));
+      
+      useActions<"updateBranch">(
+        "updateBranch",
+        [
+          branch.id,
+          payload,
+          (code: any) => {
+            const isSuccess = !code || String(code) === "20000" || String(code).startsWith("2");
+            if (isSuccess) {
+              useActions<"getBranch">("getBranch", [branch.id], true);
+              getBranches();
+            }
+          },
+        ],
+        true,
+      );
+    }
   };
 
   const handleDelete = (id: number) => {
@@ -186,6 +230,7 @@ export default function BranchView() {
           }}
           setFormType={(v: any) => setFormType(v)}
           handleSubmit={handleSubmit}
+          handleUpdateGallery={handleUpdateGallery}
         />
       )}
 

@@ -54,11 +54,9 @@ export default async function request<T = any, R = any>({
       .request({
         url: `${baseUrl.replace(/\/$/, '')}/${url.replace(/^\//, '')}`,
         headers: {
-          "Content-Type":
-            bodyType === "formData" ?
-              "multipart/form-data"
-            : "application/json;charset=UTF-8",
+          ...(bodyType !== "formData" ? { "Content-Type": "application/json;charset=UTF-8" } : {}),
           "ngrok-skip-browser-warning": "true",
+          ...headers,
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         method,

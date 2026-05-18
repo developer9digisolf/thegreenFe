@@ -7,6 +7,10 @@ export const rest = {
   authLogout: "auth/logout",
   authSwitchCompany: "auth/switch-company",
 
+  // Images
+  imageUpload: "images/upload",
+  imageUploadMultiple: "images/upload-multiple",
+
 
   // Therapist Auth (Portal Terapis)
   therapistAuthLogin: "therapist-auth/login",

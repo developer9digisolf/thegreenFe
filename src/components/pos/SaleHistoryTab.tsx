@@ -398,8 +398,15 @@
         const [loading, setLoading] = useState(false);
 
         useEffect(() => {
-            if (target) setForm({ therapistId: "", roomId: "", notes: "" });
-        }, [target]);
+            if (target) {
+                // Pre-select index 0 for therapist and room if they are available
+                setForm({ 
+                    therapistId: therapists?.[0]?.id?.toString() || "", 
+                    roomId: rooms?.[0]?.id?.toString() || "", 
+                    notes: "" 
+                });
+            }
+        }, [target, therapists, rooms]);
 
         const handleSubmit = async () => {
             if (!form.therapistId || !form.roomId) return;

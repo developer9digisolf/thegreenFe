@@ -17,6 +17,8 @@ export interface IResBranch {
   latitude: number;
   longitude: number;
   isMainBranch: boolean;
+  imageUrl: string;
+  imageGaleries: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -34,6 +36,8 @@ export interface IReqFormBranch {
   latitude: number;
   longitude: number;
   isMainBranch: boolean;
+  imageUrl: string;
+  ImageGaleries: string[];
 }
 
 export interface IPropsBranch {
@@ -57,4 +61,5 @@ export interface IPropsFormBranch {
   onCancel: () => void;
   setFormType: (type: string) => void;
   handleSubmit: (values: IReqFormBranch) => void;
+  handleUpdateGallery?: (values: Partial<IReqFormBranch>) => void;
 }
