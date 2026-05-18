@@ -310,7 +310,7 @@ export default function TherapistSlide() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-slate-800">
-            Antrian Therapist
+           Kehadiran Therapist
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
             {currentTime.toLocaleDateString("id-ID", {

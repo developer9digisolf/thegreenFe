@@ -12,7 +12,9 @@ import {
 } from "@afx/models/dashboard/master/branches.model";
 import { useStore } from "@afx/store/core";
 import { Col, Modal, Row, Spin, Typography, Switch, Form, Card, Button, Input, Tabs, Tag, Space, Table, Popconfirm, Select, notification as antdNotification } from "antd";
-import { ArrowLeft, Trash2, ListChecks, Info, CreditCard, Edit3 } from "lucide-react";
+import { ArrowLeft, Trash2, ListChecks, Info, CreditCard, Edit3, Image as ImageIcon, Upload } from "lucide-react";
+import { Upload as AntUpload, Modal as AntModal } from "antd";
+import { UploadImageService, UploadMultipleImageService } from "@afx/services/image.service";
 
 import dynamic from "next/dynamic";
 import { 
@@ -61,7 +63,9 @@ export function FormBranch(props: IPropsFormBranch) {
       if (props?.formType === "create") {
         // Reset untuk create
         props.forms.resetFields();
+        props.forms.setFieldsValue({ imageGaleries: [], imageUrl: null });
         setMapPosition(null);
+        setFileList([]);
       } else if (props?.formType === "update" || props?.formType === "detail") {
         // Set data branch ke form
         if (branch && branch.id) {
@@ -81,6 +85,8 @@ export function FormBranch(props: IPropsFormBranch) {
             longitude: branch.longitude,
             isMainBranch: branch.isMainBranch,
             description: branch.description,
+            imageUrl: branch.imageUrl,
+            imageGaleries: branch.imageGaleries || [],
           });
           
           // Set map position
@@ -166,6 +172,82 @@ export function FormBranch(props: IPropsFormBranch) {
   const [modalPMMode, setModalPMMode] = useState<"create" | "update">("create");
   const [selectedBPM, setSelectedBPM] = useState<IBranchPaymentMethod | null>(null);
   const [addPMForm] = Form.useForm();
+
+  const [fileList, setFileList] = useState<any[]>([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState("");
+  const [previewTitle, setPreviewTitle] = useState("");
+
+  useEffect(() => {
+    if (branch?.imageGaleries) {
+      setFileList(branch.imageGaleries.map((item: any, index: number) => {
+        const urlStr = typeof item === 'string' ? item : (item?.imageUrl || '');
+        return {
+          uid: `-${index}`,
+          name: typeof urlStr === 'string' ? (urlStr.split('/').pop() || `image-${index}`) : `image-${index}`,
+          status: 'done',
+          url: urlStr,
+        };
+      }));
+    } else {
+      setFileList([]);
+    }
+  }, [branch?.imageGaleries, props.open]);
+
+  const handlePreview = async (file: any) => {
+    setPreviewImage(file.url || file.preview);
+    setPreviewOpen(true);
+    setPreviewTitle(file.name || file.url.substring(file.url.lastIndexOf('/') + 1));
+  };
+
+  const handleChangeUpload = ({ fileList: newFileList }: any) => {
+    setFileList(newFileList);
+    
+    // Update form values with successful uploads
+    const urls = newFileList
+      .filter((f: any) => f.status === 'done')
+      .map((f: any) => f.url || f.response?.data?.[0]?.url)
+      .filter((url: string) => !!url);
+    
+    props.forms.setFieldsValue({ 
+      imageGaleries: urls,
+      imageUrl: urls.length > 0 ? urls[0] : props.forms.getFieldValue('imageUrl')
+    });
+
+    // Auto-update if in detail/update mode and a new file just finished uploading
+    if (props.handleUpdateGallery && (props.formType === "detail" || props.formType === "update")) {
+      const isAnyUploading = newFileList.some((f: any) => f.status === 'uploading');
+      if (!isAnyUploading && urls.length > 0) {
+        props.handleUpdateGallery({
+          imageGaleries: urls,
+          imageUrl: urls.length > 0 ? urls[0] : props.forms.getFieldValue('imageUrl')
+        });
+      }
+    }
+  };
+
+  const customRequest = async (options: any) => {
+    const { file, onSuccess, onError, onProgress } = options;
+    
+    try {
+      // Create a fake progress
+      onProgress({ percent: 50 });
+      
+      const res = await UploadMultipleImageService([file as File]);
+      if (res.success) {
+        onProgress({ percent: 100 });
+        onSuccess(res);
+        
+        // We don't update form here because handleChangeUpload will catch it when status is 'done'
+      } else {
+        onError(new Error(res.message || "Upload failed"));
+        antdNotification.error({ message: res.message || "Gagal mengunggah gambar" });
+      }
+    } catch (err: any) {
+      onError(err);
+      antdNotification.error({ message: err?.message || "Terjadi kesalahan saat mengunggah" });
+    }
+  };
 
   const fetchBranchPaymentMethods = useCallback(async () => {
     if (branch?.id) {
@@ -465,6 +547,72 @@ export function FormBranch(props: IPropsFormBranch) {
     </div>
   );
 
+  const renderGallery = () => (
+    <div className="flex flex-col gap-6">
+      <div className="bg-emerald-50/50 p-6 rounded-2xl border border-emerald-100/50">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            <ImageIcon size={20} />
+          </div>
+          <div>
+            <Typography.Title level={5} className="!m-0 text-slate-800">Galeri Foto Cabang</Typography.Title>
+            <Typography.Text className="text-slate-500 text-xs font-medium">Unggah foto-foto interior, eksterior, atau fasilitas cabang</Typography.Text>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-4 bg-white rounded-2xl border border-slate-100">
+        <AntUpload
+          listType="picture-card"
+          fileList={fileList}
+          onPreview={handlePreview}
+          onChange={handleChangeUpload}
+          customRequest={customRequest}
+          multiple={true}
+          className="branch-gallery-upload"
+        >
+          <div className="flex flex-col items-center justify-center gap-2">
+            <Plus size={20} className="text-emerald-500" />
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Unggah Foto</div>
+          </div>
+        </AntUpload>
+        
+        <AntModal
+          open={previewOpen}
+          title={previewTitle}
+          footer={null}
+          onCancel={() => setPreviewOpen(false)}
+          centered
+          className="preview-modal"
+        >
+          <img alt="preview" style={{ width: '100%', borderRadius: '12px' }} src={previewImage} />
+        </AntModal>
+
+        {fileList.length === 0 && props.formType === "detail" && (
+          <div className="py-12 flex flex-col items-center justify-center gap-3 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-100">
+            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-300">
+              <ImageIcon size={32} />
+            </div>
+            <Typography.Text className="text-slate-400 font-medium">Belum ada foto galeri untuk cabang ini</Typography.Text>
+          </div>
+        )}
+      </div>
+
+      <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-start gap-3">
+        <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center shrink-0">
+          <Info size={16} className="text-blue-600" />
+        </div>
+        <div>
+          <Typography.Text className="text-blue-800 font-bold block">Informasi</Typography.Text>
+          <Typography.Text className="text-blue-700 text-xs">
+            Format file yang didukung: JPG, PNG, WEBP. Maksimal ukuran file 5MB per gambar.
+            Gambar yang diunggah akan otomatis tersimpan saat Anda menekan tombol "Simpan Cabang" atau "Simpan Perubahan".
+          </Typography.Text>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderHeader = () => (
     <div className="flex items-center gap-3 p-2">
       <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-500/20">
@@ -490,6 +638,8 @@ export function FormBranch(props: IPropsFormBranch) {
         form={props?.forms}
         onFinish={props.handleSubmit}
       >
+        <Form.Item name="imageUrl" noStyle><Input type="hidden" /></Form.Item>
+        <Form.Item name="imageGaleries" noStyle><Input type="hidden" /></Form.Item>
         <Row gutter={[16, 8]}>
           <Col span={12}>
             <UseFormItem
@@ -681,6 +831,28 @@ export function FormBranch(props: IPropsFormBranch) {
             </UseFormItem>
           </Col>
 
+          {props.formType === "detail" && fileList.length > 0 && (
+            <Col span={24} className="mb-8 mt-4">
+              <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100">
+                <div className="flex items-center gap-2 mb-4">
+                  <ImageIcon size={18} className="text-emerald-500" />
+                  <Typography.Text className="font-bold text-slate-700">Pratinjau Galeri Cabang</Typography.Text>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {fileList.map((file, idx) => (
+                    <div 
+                      key={idx} 
+                      className="aspect-square rounded-xl overflow-hidden border-2 border-white shadow-sm cursor-pointer hover:scale-105 transition-transform"
+                      onClick={() => handlePreview(file)}
+                    >
+                      <img src={file.url} alt={`gallery-${idx}`} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Col>
+          )}
+
           <Col span={24}>
             {props?.formType === "create" && (
               <div className="flex justify-end mt-6 border-t border-slate-100 pt-6">
@@ -758,6 +930,16 @@ export function FormBranch(props: IPropsFormBranch) {
       ),
       children: <div className="max-w-[900px] mx-auto py-4">{renderPaymentMethods()}</div>,
     },
+    {
+      key: "gallery",
+      label: (
+        <div className="flex items-center gap-2">
+          <ImageIcon size={16} />
+          Galeri Foto
+        </div>
+      ),
+      children: <div className="max-w-[900px] mx-auto py-4">{renderGallery()}</div>,
+    },
   ];
 
   return (
@@ -778,18 +960,15 @@ export function FormBranch(props: IPropsFormBranch) {
           </div>
         }
       >
-        {(props.formType === "detail" || props.formType === "update") ? (
-          <Tabs 
-            activeKey={activeTab} 
-            onChange={setActiveTab} 
-            items={tabsItems}
-            className="premium-tabs"
-          />
-        ) : (
-          <div className="max-w-[800px] mx-auto">
-            {renderFormContent()}
-          </div>
-        )}
+        <Tabs 
+          activeKey={activeTab} 
+          onChange={setActiveTab} 
+          items={tabsItems.filter(item => {
+            if (props.formType === "create" && item.key === "payment") return false;
+            return true;
+          })}
+          className="premium-tabs"
+        />
       </Card>
       <style jsx global>{`
         .premium-tabs .ant-tabs-nav {

@@ -72,15 +72,6 @@ export function UseSelect(props: IAutoCompleteCustom): React.JSX.Element {
       suffixIcon={props?.surfixIcon === "hide" ? null : undefined}
       allowClear={props.allowClear}
       onClear={props.onClear}
-      styles={{
-        popup: {
-          root: {
-            maxHeight: 200,
-            overflow: "scroll",
-            overflowX: "hidden",
-          },
-        },
-      }}
       removeIcon={props?.removeIcon}
     />
   );

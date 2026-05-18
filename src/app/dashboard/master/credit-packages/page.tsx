@@ -5,6 +5,7 @@ import { Select, InputNumber } from "antd";
 import { message } from "@afx/utils/antd-global";
 import { ICreditPackage, ICreateCreditPackageRequest, IUpdateCreditPackageRequest } from "@afx/interfaces/credit-package.iface";
 import { CreditPackageGetAllService, CreditPackageCreateService, CreditPackageUpdateService, CreditPackageDeleteService } from "@afx/services/credit-package.service";
+import { ConfirmActionModal, ActionPresets } from "@afx/components/modals/ConfirmActionModal.layout";
 
 export default function MasterCreditPackages() {
     const [packages, setPackages] = useState<ICreditPackage[]>([]);
@@ -38,6 +39,11 @@ export default function MasterCreditPackages() {
         isActive: true
     });
     const [saving, setSaving] = useState(false);
+    const [deleteModal, setDeleteModal] = useState<{ open: boolean; id: number | null; name: string }>({
+        open: false,
+        id: null,
+        name: ""
+    });
 
     // Fetch Data
     const fetchData = async (page = 1, search?: string) => {
@@ -184,13 +190,19 @@ export default function MasterCreditPackages() {
         }
     };
 
-    const handleDelete = async (id: number, name: string) => {
-        if (!confirm(`Apakah Anda yakin ingin menghapus paket kredit "${name}"?`)) return;
+    const handleDelete = (id: number, name: string) => {
+        setDeleteModal({ open: true, id, name });
+    };
 
+    const handleDeleteConfirm = async () => {
+        if (!deleteModal.id) return;
+        
+        setLoading(true);
         try {
-            const res = await CreditPackageDeleteService(id);
+            const res = await CreditPackageDeleteService(deleteModal.id);
             if (res.success) {
                 message.success("Paket kredit berhasil dihapus");
+                setDeleteModal({ open: false, id: null, name: "" });
                 fetchData(pagination.current, searchText);
             } else {
                 message.error(res.message || "Gagal menghapus paket kredit");
@@ -198,6 +210,8 @@ export default function MasterCreditPackages() {
         } catch (error: any) {
             console.error(error);
             message.error(error.message || "Terjadi kesalahan saat menghapus");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -595,6 +609,15 @@ export default function MasterCreditPackages() {
                     </div>
                 </div>
             </div>
+
+            {deleteModal.open && (
+                <ConfirmActionModal
+                    config={ActionPresets.delete(deleteModal.name)}
+                    onConfirm={handleDeleteConfirm}
+                    onClose={() => setDeleteModal({ open: false, id: null, name: "" })}
+                    loading={loading}
+                />
+            )}
         </>
     );
 }
