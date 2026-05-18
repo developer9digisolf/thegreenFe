@@ -5,7 +5,10 @@ import { Card, Spin, Button, App, Typography, Space, Badge, Divider } from 'antd
 import QRCode from 'qrcode';
 import { GenerateDevicePairingCodeService, IDevicePairingResponse } from '@afx/services/master/device-pairing.service';
 import dayjs from 'dayjs';
-import { ReloadOutlined, QrcodeOutlined, ClockCircleOutlined, TabletOutlined, MobileOutlined, LinkOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
+import { ReloadOutlined, QrcodeOutlined, ClockCircleOutlined, TabletOutlined, MobileOutlined, LinkOutlined, SafetyCertificateOutlined, SoundOutlined } from '@ant-design/icons';
+import { useSignalR } from "@/hooks/useSignalR";
+import { useAuth } from "@/contexts/AuthContext";
+import { TextToSpeechAndPlay, InitTTSAutoplayUnlock } from "@/services/text-to-speech.service";
 
 const { Title, Text } = Typography;
 
@@ -17,7 +20,22 @@ export default function DevicePairingPage() {
     const [timeLeft, setTimeLeft] = useState<number>(0);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-    const generatePairingCode = async () => {
+    const { token } = useAuth();
+
+    // Initialize SignalR connection for real-time updates
+    const { on: signalROn, off: signalROff } = useSignalR({
+        hubName: "hubs/notification",
+        accessToken: token || undefined,
+        autoConnect: true,
+        onConnected: () => {
+            console.log("[DevicePairing] SignalR connected - listening for DeviceRepaired");
+        },
+        onError: (error) => {
+            console.error("[DevicePairing] SignalR error:", error);
+        }
+    });
+
+    const generatePairingCode = async (silent = false) => {
         setLoading(true);
         try {
             const res = await GenerateDevicePairingCodeService({
@@ -39,7 +57,9 @@ export default function DevicePairingPage() {
                 });
                 setQrImageUrl(url);
 
-                message.success("Pairing code berhasil diperbarui.");
+                if (!silent) {
+                    message.success("Pairing code berhasil diperbarui.");
+                }
                 
                 const expiredAt = dayjs(res.data.expiresAt);
                 const seconds = expiredAt.diff(dayjs(), 'second');
@@ -54,9 +74,58 @@ export default function DevicePairingPage() {
         }
     };
 
+    const [audioNeedsUnlock, setAudioNeedsUnlock] = useState(true);
+
     useEffect(() => {
-        generatePairingCode();
+        const handleInteraction = () => {
+            setAudioNeedsUnlock(false);
+            InitTTSAutoplayUnlock();
+        };
+
+        // Listen for any interaction to unlock audio
+        window.addEventListener('click', handleInteraction);
+        window.addEventListener('touchstart', handleInteraction);
+        window.addEventListener('keydown', handleInteraction);
+
+        return () => {
+            window.removeEventListener('click', handleInteraction);
+            window.removeEventListener('touchstart', handleInteraction);
+            window.removeEventListener('keydown', handleInteraction);
+        };
     }, []);
+
+    useEffect(() => {
+        generatePairingCode(true); // Silent on initial load to avoid double toasts in dev/Strict Mode
+        InitTTSAutoplayUnlock();
+    }, []);
+
+    // Listen for DeviceRepaired and DevicePaired events from backend via SignalR
+    useEffect(() => {
+        const handleDeviceRepaired = (data: any) => {
+            console.log("[DevicePairing] DevicePaired/DeviceRepaired event received:", data);
+            
+            // Show success notification
+            const successMsg = data?.message || "Perangkat berhasil dipasangkan!";
+            message.success(successMsg);
+
+            // Play voice notification (TTS)
+            const speechText = data?.textToSpeech ?? data?.textToSpeach ?? "Perangkat berhasil dipasangkan";
+            TextToSpeechAndPlay({ text: speechText, language: "id" }).catch(err => {
+                console.error("[DevicePairing] TTS play failed:", err);
+            });
+
+            // Regenerate pairing code silently for the next device
+            generatePairingCode(true);
+        };
+
+        signalROn("DeviceRepaired", handleDeviceRepaired);
+        signalROn("DevicePaired", handleDeviceRepaired);
+
+        return () => {
+            signalROff("DeviceRepaired", handleDeviceRepaired);
+            signalROff("DevicePaired", handleDeviceRepaired);
+        };
+    }, [signalROn, signalROff, message]);
 
     useEffect(() => {
         if (timeLeft > 0) {
@@ -78,7 +147,7 @@ export default function DevicePairingPage() {
 
     useEffect(() => {
         if (timeLeft === 0 && pairingData && !loading) {
-            generatePairingCode();
+            generatePairingCode(true); // Silent on timer expiration
         }
     }, [timeLeft, pairingData, loading]);
 
@@ -90,6 +159,24 @@ export default function DevicePairingPage() {
 
     return (
         <div className="max-w-4xl mx-auto p-4 md:p-8">
+            {audioNeedsUnlock && (
+                <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between shadow-sm animate-pulse">
+                    <div className="flex items-center gap-3">
+                        <SoundOutlined className="text-amber-500 text-lg animate-bounce" />
+                        <Text className="text-amber-700 text-xs font-semibold">
+                            Klik di mana saja pada layar ini untuk mengaktifkan notifikasi suara pairing.
+                        </Text>
+                    </div>
+                    <Button 
+                        size="small" 
+                        type="link" 
+                        className="text-amber-600 hover:text-amber-800 font-bold text-xs"
+                        onClick={() => setAudioNeedsUnlock(false)}
+                    >
+                        Aktifkan
+                    </Button>
+                </div>
+            )}
             <div className="mb-10 text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-600 text-white mb-6 shadow-lg shadow-emerald-500/20">
                     <LinkOutlined className="text-3xl" />
@@ -172,7 +259,7 @@ export default function DevicePairingPage() {
                         </div>
                     </div>
 
-                    <div className="mt-8">
+                    <div className="mt-8 space-y-3">
                         <Button 
                             type="primary" 
                             size="large" 
@@ -183,6 +270,24 @@ export default function DevicePairingPage() {
                             block
                         >
                             Refresh Code
+                        </Button>
+                        
+                        <Button 
+                            size="large" 
+                            icon={<SoundOutlined />} 
+                            onClick={() => {
+                                console.log("[DevicePairing] Test Sound button clicked!");
+                                TextToSpeechAndPlay({ text: "Tes koneksi suara berhasil diputar", language: "id" })
+                                    .then(() => message.success("Suara berhasil dipicu!"))
+                                    .catch(err => {
+                                        console.error("[DevicePairing] Test TTS failed:", err);
+                                        message.error("Gagal memutar suara, periksa konsol log!");
+                                    });
+                            }}
+                            className="h-14 rounded-2xl border-2 border-emerald-100 hover:border-emerald-500 text-emerald-600 hover:text-emerald-700 font-bold text-base bg-white"
+                            block
+                        >
+                            Test Sound
                         </Button>
                     </div>
                 </Card>

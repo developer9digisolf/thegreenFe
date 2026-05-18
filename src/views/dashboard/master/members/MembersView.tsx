@@ -51,6 +51,28 @@ const itemLayouts = {
   labelCol: { span: 24 },
 };
 
+export function normalizePhoneNumber(phone: string): string {
+    if (!phone) return "";
+    let cleaned = phone.trim().replace(/[^\d+]/g, '');
+    
+    if (cleaned.startsWith('+')) {
+        if (cleaned.startsWith('+62')) {
+            return cleaned;
+        }
+        return cleaned;
+    }
+    
+    if (cleaned.startsWith('62')) {
+        return '+' + cleaned;
+    }
+    
+    if (cleaned.startsWith('0')) {
+        return '+62' + cleaned.slice(1);
+    }
+    
+    return '+62' + cleaned;
+}
+
 export default function MembersView() {
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -63,6 +85,7 @@ export default function MembersView() {
         if (!selectedMember) return { isActive: true, status: 1 }; // Default to Active
         return {
             ...selectedMember,
+            phone: normalizePhoneNumber(selectedMember.phone),
             birthDate: selectedMember.birthDate ? dayjs(selectedMember.birthDate) : null
         };
     }, [selectedMember]);
@@ -111,6 +134,30 @@ export default function MembersView() {
         fetchData();
     }, [pagination.current, pagination.pageSize, searchText, statusFilter]);
 
+    useEffect(() => {
+        if (openForm) {
+            if (formType === "create") {
+                forms.resetFields();
+                forms.setFieldsValue({
+                    name: "",
+                    phone: "",
+                    email: "",
+                    gender: 0,
+                    birthDate: null,
+                    status: 1,
+                    address: "",
+                    notes: ""
+                });
+            } else if (selectedMember) {
+                forms.setFieldsValue({
+                    ...selectedMember,
+                    phone: normalizePhoneNumber(selectedMember.phone),
+                    birthDate: selectedMember.birthDate ? dayjs(selectedMember.birthDate) : null
+                });
+            }
+        }
+    }, [openForm, formType, selectedMember, forms]);
+
     const handleSearch = () => {
         setSearchText(tempSearch);
         setPagination(prev => ({ ...prev, current: 1 }));
@@ -124,13 +171,19 @@ export default function MembersView() {
 
     const handleOpenEdit = (member: IMember) => {
         setFormType("update");
-        setSelectedMember(member);
+        setSelectedMember({
+            ...member,
+            phone: normalizePhoneNumber(member.phone)
+        });
         setOpenForm(true);
     };
 
     const handleOpenDetail = (member: IMember) => {
         setFormType("detail");
-        setSelectedMember(member);
+        setSelectedMember({
+            ...member,
+            phone: normalizePhoneNumber(member.phone)
+        });
         setOpenForm(true);
     };
 
@@ -141,6 +194,7 @@ export default function MembersView() {
 
             const payload = {
                 ...values,
+                phone: normalizePhoneNumber(values.phone),
                 birthDate: values.birthDate ? values.birthDate.format('YYYY-MM-DD') : undefined
             };
 
@@ -253,7 +307,7 @@ export default function MembersView() {
             render: (_: any, record: IMember) => (
                 <div className="flex flex-col gap-0.5">
                     <div className="text-xs text-slate-600 flex items-center gap-1.5">
-                        <PhoneOutlined className="text-slate-400" /> {record.phone}
+                        <PhoneOutlined className="text-slate-400" /> {normalizePhoneNumber(record.phone)}
                     </div>
                     {record.email && (
                         <div className="text-[10px] text-slate-400 flex items-center gap-1.5">
@@ -392,7 +446,25 @@ export default function MembersView() {
                                 </UseFormItem>
                             </Col>
                             <Col span={24} md={12}>
-                                <UseFormItem name="phone" label="Nomor Telepon / WA" {...itemLayouts} rules={[{ required: true, message: "Nomor HP wajib diisi" }]}>
+                                <UseFormItem 
+                                    name="phone" 
+                                    label="Nomor Telepon / WA" 
+                                    {...itemLayouts} 
+                                    rules={[
+                                        { required: true, message: "Nomor HP wajib diisi" },
+                                        {
+                                            validator: (_, value) => {
+                                                if (!value) return Promise.resolve();
+                                                const normalized = normalizePhoneNumber(value);
+                                                const indonesianPhoneRegex = /^\+628\d{8,11}$/;
+                                                if (!indonesianPhoneRegex.test(normalized)) {
+                                                    return Promise.reject(new Error("Format nomor HP tidak valid. Masukkan nomor HP Indonesia yang benar (min 10 digit, cth: 0812xxx)"));
+                                                }
+                                                return Promise.resolve();
+                                            }
+                                        }
+                                    ]}
+                                >
                                     <UseInput prefix={<PhoneOutlined className="text-slate-300" />} placeholder="08xxxxxxxxxx" disabled={formType === "detail"} />
                                 </UseFormItem>
                             </Col>

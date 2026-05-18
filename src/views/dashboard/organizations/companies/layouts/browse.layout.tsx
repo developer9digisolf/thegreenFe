@@ -203,6 +203,7 @@ export function BrowseCompany(props: IPropsCompany & { handleEdit: (id: number) 
         <Table
           columns={columns}
           dataSource={companies || []}
+          scroll={{ x: 1000 }}
           pagination={{
             current: pageInfo?.currentPage || 1,
             total: pageInfo?.total || 0,

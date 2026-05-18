@@ -31,6 +31,7 @@
     interface Props {
         branchId?: number | null;
         onToast: (msg: string, type?: "success" | "error" | "info") => void;
+        onBookingCountChange?: () => void;
     }
 
     // ============================================
@@ -140,7 +141,6 @@
                             <option value={0}>Service</option>
                             <option value={1}>Voucher</option>
                             <option value={2}>Kredit</option>
-                            <option value={3}>Booking</option>
                         </select>
                     </div>
                     <div style={{ flex: "0 1 145px" }}>
@@ -211,6 +211,8 @@
                             {sales.map((sale: any) => {
                                 const tStyle = SALE_TYPE_STYLE[sale.saleType as any] || { bg: "#f1f5f9", color: "#64748b", label: sale.saleTypeDisplay || sale.saleType || "Lainnya" };
                                 const pStyle = PAYMENT_STATUS_STYLE[sale.paymentStatus as any] || { bg: "#f1f5f9", color: "#64748b" };
+                                const rawStatusLabel = sale.paymentStatusDisplay ?? sale.paymentStatusName ?? String(sale.paymentStatus ?? "Unknown");
+                                const paymentStatusLabel = rawStatusLabel === "Belum Dibayar" ? "Belum Lunas" : (pStyle.label ?? rawStatusLabel);
                                 const isSelected = selectedSaleId === sale.id && isPanelOpen;
                                 return (
                                     <tr
@@ -237,7 +239,7 @@
                                         </td>
                                         <td style={{ padding: "14px 16px", fontWeight: 700, color: "var(--spa-green)" }}>{formatCurrency(sale.grandTotal)}</td>
                                         <td style={{ padding: "14px 16px" }}><Pill label={sale.saleTypeDisplay ?? sale.saleTypeName ?? tStyle.label} bg={tStyle.bg} color={tStyle.color} /></td>
-                                        <td style={{ padding: "14px 16px" }}><Pill label={sale.paymentStatusDisplay ?? sale.paymentStatusName ?? String(sale.paymentStatus ?? "Unknown")} bg={pStyle.bg} color={pStyle.color} /></td>
+                                        <td style={{ padding: "14px 16px" }}><Pill label={paymentStatusLabel} bg={pStyle.bg} color={pStyle.color} /></td>
                                     </tr>
                                 );
                             })}
@@ -564,7 +566,7 @@
     // ============================================
     // 4. MAIN ORCHESTRATOR COMPONENT
     // ============================================
-    export default function SaleHistoryTab({ branchId, onToast }: Props) {
+    export default function SaleHistoryTab({ branchId, onToast, onBookingCountChange }: Props) {
         const { post } = useApi();
 
         const getDefaultDates = () => {
@@ -691,8 +693,15 @@
                             ? { ...prev, items: prev.items?.map((it) => it.id === assignTarget.saleItemId ? { ...it, hasSession: true, sessionStatus: "InProgress" } : it) }
                             : { ...prev, bookings: prev.bookings?.map((bk) => bk.bookingCode === assignTarget.bookingCode ? { ...bk, hasSession: true, sessionStatus: "InProgress" } : bk) };
                     });
+
+                    // Trigger badge refresh
+                    if (onBookingCountChange) onBookingCountChange();
                 } else {
-                    onToast("Gagal membuat sesi", "error");
+                    const backendMsg = res?.message || res?.meta?.message;
+                    const errorMsg = backendMsg && backendMsg !== "Request failed"
+                        ? backendMsg 
+                        : "Therapist yang dipilih sedang melayani treatment lain atau tidak tersedia. Silakan pilih therapist lainnya.";
+                    onToast(errorMsg, "error");
                 }
             } catch {
                 onToast("Kesalahan jaringan", "error");
