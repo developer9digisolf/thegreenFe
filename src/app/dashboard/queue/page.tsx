@@ -973,7 +973,7 @@ export default function TherapistSlide() {
                                 style={{
                                   width: "10px",
                                   height: "10px",
-                                  fill: i < (t.averageRating || 5) ? "#eab308" : "none",
+                                  fill: i < (t.averageRating ?? 0) ? "#eab308" : "none",
                                   stroke: "#eab308",
                                   strokeWidth: 1.5,
                                 }}

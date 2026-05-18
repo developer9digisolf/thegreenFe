@@ -18,7 +18,7 @@ import { useStore } from "@afx/store/core";
 import { useAuth } from "@afx/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { ServiceCategoryGetActiveService } from "@afx/services/service-category.service";
-import { ServiceGetActiveService } from "@afx/services/service.service";
+import { ServiceGetActiveService, VariantGetAllActiveService } from "@afx/services/service.service";
 import { GetBranchesService } from "@afx/services/master/branches.service";
 import { IStateServicePackage, IActionServicePackage } from "@afx/models/dashboard/master/service-packages.model";
 import { UseFormItem } from "@afx/components/form/form.layout";
@@ -37,6 +37,7 @@ export const FormServicePackagePage = ({ formType, id }: { formType: "create" | 
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
+  const [allVariants, setAllVariants] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
   const [forms] = Form.useForm();
   
@@ -47,14 +48,18 @@ export const FormServicePackagePage = ({ formType, id }: { formType: "create" | 
   // Watch fields for reactive UI updates
   const currentIcon = Form.useWatch("icon", forms);
   const currentColor = Form.useWatch("color", forms);
+  const selectedServiceId = Form.useWatch("serviceId", forms);
+
+  const filteredVariants = allVariants.filter(v => v.serviceId === selectedServiceId);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [catRes, svcRes, branchRes] = await Promise.all([
+      const [catRes, svcRes, branchRes, variantRes] = await Promise.all([
         ServiceCategoryGetActiveService(),
         ServiceGetActiveService(),
-        GetBranchesService({ Page: 1, PageSize: 100 })
+        GetBranchesService({ Page: 1, PageSize: 100 }),
+        VariantGetAllActiveService()
       ]);
 
       if (catRes.success) setCategories(catRes.data);
@@ -66,6 +71,7 @@ export const FormServicePackagePage = ({ formType, id }: { formType: "create" | 
           name: b.name
         })));
       }
+      if (variantRes.success) setAllVariants(variantRes.data);
       
       if (formType === "update" && id) {
         usePackageActions<"getServicePackage">("getServicePackage", [id], true);
@@ -80,6 +86,22 @@ export const FormServicePackagePage = ({ formType, id }: { formType: "create" | 
   useEffect(() => {
     fetchData();
   }, [id, user]);
+
+  useEffect(() => {
+    if (selectedServiceId && allVariants.length > 0) {
+      const filtered = allVariants.filter(v => v.serviceId === selectedServiceId);
+      if (filtered.length > 0) {
+        const currentVariantId = forms.getFieldValue("serviceVariantId");
+        if (!currentVariantId || !filtered.some(v => v.id === currentVariantId)) {
+          forms.setFieldValue("serviceVariantId", filtered[0].id);
+        }
+      } else {
+        forms.setFieldValue("serviceVariantId", undefined);
+      }
+    } else {
+      forms.setFieldValue("serviceVariantId", undefined);
+    }
+  }, [selectedServiceId, allVariants]);
 
   useEffect(() => {
     if (formType === "update" && packageState?.servicePackage && id) {
@@ -226,7 +248,7 @@ export const FormServicePackagePage = ({ formType, id }: { formType: "create" | 
                       <UseInput placeholder="Contoh: PKG" />
                     </UseFormItem>
                   </Col>
-                  <Col span={12}>
+                  <Col span={8}>
                     <UseFormItem name="categoryId" label="Kategori Master" rules={[{ required: true, message: 'Pilih kategori' }]}>
                       <Select 
                         placeholder="Pilih Kategori" 
@@ -235,12 +257,25 @@ export const FormServicePackagePage = ({ formType, id }: { formType: "create" | 
                       />
                     </UseFormItem>
                   </Col>
-                  <Col span={12}>
+                  <Col span={8}>
                     <UseFormItem name="serviceId" label="Layanan Terkait" rules={[{ required: true, message: 'Pilih layanan' }]}>
                       <Select 
                         placeholder="Pilih Layanan" 
                         className="h-11 rounded-xl w-full custom-page-select" 
                         options={services.map(s => ({ label: s.name, value: s.id }))} 
+                      />
+                    </UseFormItem>
+                  </Col>
+                  <Col span={8}>
+                    <UseFormItem name="serviceVariantId" label="Variasi Layanan" rules={[{ required: true, message: 'Pilih variasi' }]}>
+                      <Select 
+                        placeholder="Pilih Variasi" 
+                        className="h-11 rounded-xl w-full custom-page-select" 
+                        disabled={!selectedServiceId}
+                        options={filteredVariants.map(v => ({ 
+                          label: v.label ? `${v.label} (${v.duration}m - Rp ${v.price.toLocaleString('id-ID')})` : `${v.duration}m - Rp ${v.price.toLocaleString('id-ID')}`, 
+                          value: v.id 
+                        }))} 
                       />
                     </UseFormItem>
                   </Col>
