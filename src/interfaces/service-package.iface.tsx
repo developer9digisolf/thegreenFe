@@ -31,6 +31,8 @@ export interface IServicePackage {
     maxUsagePerUser?: number | null;
     usedCount: number;
     serviceId: number;
+    serviceVariantId?: number;
+    branchServiceVariantId?: number;
     quantity: number;
     servicePackageRules: IServicePackageRule[];
     category?: IServiceCategory;
@@ -57,13 +59,13 @@ export interface ICreateServicePackageRequest {
     maxUsage?: number | null;
     maxUsagePerUser?: number | null;
     serviceId: number;
+    serviceVariantId?: number;
+    branchServiceVariantId?: number;
     quantity: number;
     servicePackageRules: IServicePackageRule[];
 }
 
-export interface IUpdateServicePackageRequest extends ICreateServicePackageRequest {
-    branchServiceVariantId?: number;
-}
+export interface IUpdateServicePackageRequest extends ICreateServicePackageRequest {}
 
 export interface IReqServicePackage {
     Page?: number;

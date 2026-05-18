@@ -117,8 +117,13 @@ export const FormServicePackagePage = ({ formType, id }: { formType: "create" | 
       });
 
       // Clean up payload
-      const { branchIds: _, branchServiceVariantId: __, ...payload } = values;
-      const finalPayload = { ...payload, servicePackageRules: rules };
+      const { branchIds: _, ...payload } = values;
+      const finalPayload = { 
+        ...payload, 
+        servicePackageRules: rules,
+        maxUsage: payload.maxUsage !== undefined && payload.maxUsage !== "" ? payload.maxUsage : null,
+        maxUsagePerUser: payload.maxUsagePerUser !== undefined && payload.maxUsagePerUser !== "" ? payload.maxUsagePerUser : null,
+      };
 
       const callback = (code: any) => {
         setSaving(false);
@@ -346,16 +351,18 @@ export const FormServicePackagePage = ({ formType, id }: { formType: "create" | 
                     <span className="font-bold text-slate-800 text-base tracking-tight">Pengaturan Komersial</span>
                 </div>
                 
-                <UseFormItem name="quantity" label="Jumlah Sesi Voucher" rules={[{ required: true }]}>
+                <UseFormItem label="Jumlah Sesi Voucher">
                   <Space.Compact className="w-full">
                     <div className="bg-slate-200/50 border border-slate-200 px-4 flex items-center justify-center text-xs font-bold text-slate-500 rounded-l-2xl border-r-0">
                         SESI
                     </div>
-                    <InputNumber 
-                        min={1} 
-                        className="flex-1 h-11 rounded-r-2xl border-slate-200 font-bold" 
-                        placeholder="1"
-                    />
+                    <Form.Item name="quantity" noStyle rules={[{ required: true, message: "Jumlah sesi wajib diisi" }]}>
+                      <InputNumber 
+                          min={1} 
+                          className="flex-1 h-11 rounded-r-2xl border-slate-200 font-bold" 
+                          placeholder="1"
+                      />
+                    </Form.Item>
                   </Space.Compact>
                 </UseFormItem>
 
@@ -380,22 +387,50 @@ export const FormServicePackagePage = ({ formType, id }: { formType: "create" | 
                 </UseFormItem>
 
                 <div className="mt-6 pt-6 border-t border-slate-200">
-                    <UseFormItem name="sortOrder" label="Urutan Tampil (Priority)">
+                    <UseFormItem label="Urutan Tampil (Priority)">
                         <Space.Compact className="w-full">
                             <div className="bg-slate-50 border border-slate-200 px-3 flex items-center justify-center text-slate-400 rounded-l-2xl border-r-0">
                                 <UnorderedListOutlined />
                             </div>
-                            <InputNumber 
-                                min={0} 
-                                className="flex-1 h-11 rounded-r-2xl border-slate-200" 
-                                placeholder="0"
-                            />
+                            <Form.Item name="sortOrder" noStyle>
+                                <InputNumber 
+                                    min={0} 
+                                    className="flex-1 h-11 rounded-r-2xl border-slate-200" 
+                                    placeholder="0"
+                                />
+                            </Form.Item>
                         </Space.Compact>
                     </UseFormItem>
                     <p className="text-[10px] text-slate-400 font-medium m-0 mt-1 italic leading-relaxed">
                         * Angka lebih kecil akan muncul lebih awal di daftar menu.
                     </p>
                 </div>
+              </div>
+
+              {/* Batasan Penggunaan Section */}
+              <div className="premium-page-section bg-slate-50/50 border-slate-200 mb-8 !p-6">
+                <div className="section-header mb-8">
+                    <div className="icon-badge bg-rose-500">
+                        <ShoppingOutlined className="text-white" />
+                    </div>
+                    <span className="font-bold text-slate-800 text-base tracking-tight">Batasan Penggunaan</span>
+                </div>
+                
+                <UseFormItem name="maxUsage" label="Maksimal Penggunaan Global">
+                  <InputNumber 
+                    min={1} 
+                    className="w-full h-11 rounded-xl border-slate-200 bg-white" 
+                    placeholder="Contoh: 100 (Kosongkan jika tidak terbatas)" 
+                  />
+                </UseFormItem>
+
+                <UseFormItem name="maxUsagePerUser" label="Maksimal Penggunaan per User">
+                  <InputNumber 
+                    min={1} 
+                    className="w-full h-11 rounded-xl border-slate-200 bg-white" 
+                    placeholder="Contoh: 1 (Kosongkan jika tidak terbatas)" 
+                  />
+                </UseFormItem>
               </div>
 
               {/* Validity Section */}

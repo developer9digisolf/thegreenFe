@@ -29,9 +29,8 @@ export default function UseInputArea(props: IInput): React.JSX.Element {
   const { standart, ...others } = props;
 
   const standartLayouts = {
-    className:
-      "form-input text-white bg-white/20 placeholder:text-white max-w-xs ml-3 gap-x-1.5 ",
-    style: { border: "1px solid #fefefe" },
+    className: `form-input !bg-[#FAFAFA] hover:!bg-[#FAFAFA] text-slate-800 placeholder:text-slate-400 w-full rounded-xl border-2 border-slate-100 hover:border-slate-300 focus:border-slate-300 transition-all ${props.className || ""}`,
+    style: { fontSize: "15px", padding: "12px" },
   };
 
   return (

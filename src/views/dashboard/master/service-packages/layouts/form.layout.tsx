@@ -116,7 +116,15 @@ export const FormServicePackage = ({
       };
     });
 
-    forms.setFieldsValue({ servicePackageRules: rules });
+    const { branchIds: _, ...payload } = values;
+    const finalPayload = { 
+      ...payload, 
+      servicePackageRules: rules,
+      maxUsage: payload.maxUsage !== undefined && payload.maxUsage !== "" ? payload.maxUsage : null,
+      maxUsagePerUser: payload.maxUsagePerUser !== undefined && payload.maxUsagePerUser !== "" ? payload.maxUsagePerUser : null,
+    };
+
+    forms.setFieldsValue(finalPayload);
     handleSubmit();
   };
 
@@ -322,16 +330,18 @@ export const FormServicePackage = ({
                     <span className="font-bold text-slate-800">Komersial</span>
                 </div>
                 
-                <UseFormItem name="quantity" label="Jumlah Sesi / Item" rules={[{ required: true }]}>
+                <UseFormItem label="Jumlah Sesi / Item">
                   <Space.Compact className="w-full">
                     <div className="bg-slate-100 border border-slate-200 px-3 flex items-center justify-center text-[10px] font-bold text-slate-500 rounded-l-xl border-r-0">
                         QTY
                     </div>
-                    <InputNumber 
-                        min={1} 
-                        className="flex-1 h-11 rounded-r-xl border-slate-200" 
-                        placeholder="Contoh: 10"
-                    />
+                    <Form.Item name="quantity" noStyle rules={[{ required: true, message: "Jumlah sesi/item wajib diisi" }]}>
+                      <InputNumber 
+                          min={1} 
+                          className="flex-1 h-11 rounded-r-xl border-slate-200" 
+                          placeholder="Contoh: 10"
+                      />
+                    </Form.Item>
                   </Space.Compact>
                 </UseFormItem>
 
@@ -352,6 +362,32 @@ export const FormServicePackage = ({
                     placeholder="0"
                     formatter={v => `Rp ${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
                     parser={v => v!.replace(/Rp\s?|(\.*)/g, '') as any}
+                  />
+                </UseFormItem>
+              </div>
+
+              {/* Batasan Penggunaan Section */}
+              <div className="premium-section bg-slate-50/50 border-slate-200 mb-6 !p-5">
+                <div className="section-header mb-6">
+                    <div className="icon-box bg-rose-500 shadow-lg shadow-rose-500/20 flex items-center justify-center">
+                        <ShoppingOutlined className="text-white" />
+                    </div>
+                    <span className="font-bold text-slate-800">Batasan Penggunaan</span>
+                </div>
+                
+                <UseFormItem name="maxUsage" label="Maksimal Penggunaan Global">
+                  <InputNumber 
+                    min={1} 
+                    className="w-full h-11 rounded-xl flex items-center border-slate-200 bg-white" 
+                    placeholder="Contoh: 100" 
+                  />
+                </UseFormItem>
+
+                <UseFormItem name="maxUsagePerUser" label="Maksimal Penggunaan per User">
+                  <InputNumber 
+                    min={1} 
+                    className="w-full h-11 rounded-xl flex items-center border-slate-200 bg-white" 
+                    placeholder="Contoh: 1" 
                   />
                 </UseFormItem>
               </div>
