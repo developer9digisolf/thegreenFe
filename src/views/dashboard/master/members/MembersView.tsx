@@ -134,6 +134,30 @@ export default function MembersView() {
         fetchData();
     }, [pagination.current, pagination.pageSize, searchText, statusFilter]);
 
+    useEffect(() => {
+        if (openForm) {
+            if (formType === "create") {
+                forms.resetFields();
+                forms.setFieldsValue({
+                    name: "",
+                    phone: "",
+                    email: "",
+                    gender: 0,
+                    birthDate: null,
+                    status: 1,
+                    address: "",
+                    notes: ""
+                });
+            } else if (selectedMember) {
+                forms.setFieldsValue({
+                    ...selectedMember,
+                    phone: normalizePhoneNumber(selectedMember.phone),
+                    birthDate: selectedMember.birthDate ? dayjs(selectedMember.birthDate) : null
+                });
+            }
+        }
+    }, [openForm, formType, selectedMember, forms]);
+
     const handleSearch = () => {
         setSearchText(tempSearch);
         setPagination(prev => ({ ...prev, current: 1 }));
