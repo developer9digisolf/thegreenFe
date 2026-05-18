@@ -96,18 +96,20 @@ export default function CompanyView() {
           }
 
           // Check for "Perusahaan Utama" selection or promotion to Root by "Anak Perusahaan"
-          const targetParent = allCompaniesFlat.find(c => c.id === val.parentId);
-          const isTargetMaster = targetParent && !targetParent.parentId;
-          const isBecomingRoot = !val.parentId;
-          const isUpdatingChild = !!company?.parentId;
+          if (val.parentId !== company?.parentId) {
+            const targetParent = allCompaniesFlat.find(c => c.id === val.parentId);
+            const isTargetMaster = targetParent && !targetParent.parentId;
+            const isBecomingRoot = !val.parentId;
+            const isUpdatingChild = !!company?.parentId;
 
-          if (isUpdatingChild && (isBecomingRoot || isTargetMaster)) {
-            notification.warning({
-              message: "Validasi Struktur Gagal",
-              description: "Anak perusahaan tidak boleh diubah menjadi Perusahaan Utama atau memilih Perusahaan Utama sebagai induk langsung.",
-              duration: 4,
-            });
-            return;
+            if (isUpdatingChild && (isBecomingRoot || isTargetMaster)) {
+              notification.warning({
+                message: "Validasi Struktur Gagal",
+                description: "Anak perusahaan tidak boleh diubah menjadi Perusahaan Utama atau memilih Perusahaan Utama sebagai induk langsung.",
+                duration: 4,
+              });
+              return;
+            }
           }
 
           useActions<"updateCompany">(

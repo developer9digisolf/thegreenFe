@@ -242,7 +242,6 @@ export default function RoomsView() {
     };
 
     const columns: Column[] = [
-        { key: "id", title: "ID", width: "70px", align: "center" },
         {
             key: "name",
             title: "Ruangan",

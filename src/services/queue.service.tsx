@@ -43,3 +43,14 @@ export function transformTherapistData(
 ): TherapistAPIResponse[] {
   return apiData;
 }
+
+/**
+ * Get leaderboard today
+ */
+export function GetLeaderboardTodayService(branchId?: number) {
+  const url = branchId ? `leaderboard/today?branchId=${branchId}` : "leaderboard/today";
+  return request<any>({
+    url,
+    method: "GET",
+  });
+}
