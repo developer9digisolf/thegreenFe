@@ -15,6 +15,7 @@ interface IResponsePayloads<T = any> {
   data: T;
   pagination?: any;
   meta?: any;
+  rawData?: any;
 }
 
 // Get token directly from localStorage
@@ -52,9 +53,11 @@ export default async function request<T = any, R = any>({
   return new Promise((resolve, reject) =>
     axios
       .request({
-        url: `${baseUrl.replace(/\/$/, '')}/${url.replace(/^\//, '')}`,
+        url: `${baseUrl.replace(/\/$/, "")}/${url.replace(/^\//, "")}`,
         headers: {
-          ...(bodyType !== "formData" ? { "Content-Type": "application/json;charset=UTF-8" } : {}),
+          ...(bodyType !== "formData"
+            ? { "Content-Type": "application/json;charset=UTF-8" }
+            : {}),
           "ngrok-skip-browser-warning": "true",
           ...headers,
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -68,19 +71,25 @@ export default async function request<T = any, R = any>({
         const payload = response.data;
 
         // Ensure we have a valid payload object
-        if (payload && typeof payload === 'object' && payload.meta) {
+        if (payload && typeof payload === "object" && payload.meta) {
           const { meta, data } = payload;
           const result: any = {
             success: meta.success,
             message: meta.message,
-            data: data,
             meta,
           };
 
           // Handle Paginated Data
           if (data && data.pageInfo && Array.isArray(data.pageData)) {
+            // For paginated responses, extract the array for data prop
+            // Store full structure separately for components that need it
             result.data = data.pageData;
             result.pagination = data.pageInfo;
+            // Preserve full structure for custom implementations
+            result.rawData = data;
+          } else {
+            // Non-paginated response: data is already the array
+            result.data = data;
           }
 
           resolve(result);
@@ -92,7 +101,7 @@ export default async function request<T = any, R = any>({
               success: true,
               message: "Success",
               data: null as any,
-              meta: { code: response.status === 204 ? 20000 : response.status }
+              meta: { code: response.status === 204 ? 20000 : response.status },
             });
           } else {
             resolve(payload);
@@ -104,19 +113,21 @@ export default async function request<T = any, R = any>({
         const errPayload = error?.response?.data;
 
         // Debugging for development
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env.NODE_ENV === "development") {
           console.error(`[API Error] ${method} ${url}`, {
             status,
             error: errPayload || error.message,
-            fullError: error
+            fullError: error,
           });
         }
 
         // Handle 401 Unauthorized - redirect to login
         if (status === 401) {
           // In development, we skip auto-logout redirect for debugging purposes
-          if (process.env.NODE_ENV === 'development') {
-            console.warn('[Auth] 401 Unauthorized detected. Skipping auto-logout redirect for debugging.');
+          if (process.env.NODE_ENV === "development") {
+            console.warn(
+              "[Auth] 401 Unauthorized detected. Skipping auto-logout redirect for debugging.",
+            );
           } else {
             // Clear auth data
             if (typeof window !== "undefined") {

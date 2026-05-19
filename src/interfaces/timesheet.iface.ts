@@ -8,27 +8,16 @@ export enum TimesheetType {
 
 // Timesheet Request
 export interface ITimesheetRequest {
-  type: TimesheetType;
-  date?: string;
-  startDate?: string;
-  endDate?: string;
-  year?: number;
-  month?: number;
+  monthYear?: string; // Format: MM-YYYY (e.g., "05-2026")
   page?: number;
   pageSize?: number;
   search?: string;
-  sortColumn?: string;
-  sortDirection?: "asc" | "desc";
 }
 
-// Timesheet Record
-export interface ITimesheetRecord {
-  id: number;
-  employeeId: number;
-  employeeCode: string;
-  employeeName: string;
-  department: string;
-  position: string;
+// Daily Attendance Record
+export interface IDailyAttendance {
+  date: string;
+  attendanceId: number;
   clockInTime: string | null;
   clockOutTime: string | null;
   scheduledStartTime: string | null;
@@ -51,28 +40,8 @@ export interface ITimesheetRecord {
   isManuallyEdited: boolean;
 }
 
-// Daily Summary
-export interface IDailySummary {
-  totalEmployees: number;
-  totalPresent: number;
-  totalAbsent: number;
-  totalLate: number;
-  totalOnLeave: number;
-  totalHoliday: number;
-  totalPending: number;
-  totalWorkHours: number;
-}
-
-// Daily Record
-export interface IDailyRecord {
-  date: string;
-  records: ITimesheetRecord[];
-  dailySummary: IDailySummary;
-}
-
-// Summary
-export interface ITimesheetSummary {
-  totalEmployees: number;
+// Monthly Summary
+export interface IMonthlySummary {
   totalPresent: number;
   totalAbsent: number;
   totalLate: number;
@@ -83,29 +52,33 @@ export interface ITimesheetSummary {
   totalBreakHours: number;
   totalOvertimeHours: number;
   totalLateHours: number;
+  totalEarlyDepartureHours: number;
 }
 
-// Pagination
-export interface ITimesheetPagination {
+// Page Info
+export interface IPageInfo {
+  lastPage: number;
   currentPage: number;
+  path: string;
+  total: number;
   pageSize: number;
-  totalDays: number;
-  totalPages: number;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
+}
+
+// Employee Timesheet
+export interface IEmployeeTimesheet {
+  employeeId: number;
+  employeeCode: string;
+  employeeName: string;
+  department: string;
+  position: string;
+  dailyAttendances: IDailyAttendance[];
+  monthlySummary: IMonthlySummary;
 }
 
 // Timesheet Data
 export interface ITimesheetData {
-  type: string;
-  startDate: string;
-  endDate: string;
-  year: number | null;
-  month: number | null;
-  monthName: string | null;
-  dailyRecords: IDailyRecord[];
-  summary: ITimesheetSummary;
-  pagination?: ITimesheetPagination;
+  pageInfo: IPageInfo;
+  pageData: IEmployeeTimesheet[];
 }
 
 // API Response
