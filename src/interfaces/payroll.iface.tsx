@@ -153,6 +153,14 @@ export interface IPayrollEmployeeCalculation {
   calculations: IPayrollCalculation[];
 }
 
+export enum PayslipStatus {
+  Draft = 0,
+  Sent = 1,
+  Viewed = 2,
+  Paid = 3,
+  Cancelled = 4,
+}
+
 export interface IPayslip {
   id: number;
   payslipCode: string;
@@ -189,6 +197,13 @@ export interface IPayslip {
   updatedAt: string;
 }
 
+export interface IUpdatePayslipStatusRequest {
+  Status: number;
+  PaymentReference: string | null;
+  PaymentMethod: string | null;
+  Notes: string | null;
+}
+
 export interface IPayslipPaginationRequest {
   page: number;
   pageSize: number;
@@ -214,4 +229,23 @@ export interface IPayslipResponse {
     };
     pageData: IPayslip[];
   };
+}
+
+export interface IUpdatePayslipRequest {
+  baseSalary: number;
+  totalCommission: number;
+  totalBonus: number;
+  overtimePay: number;
+  otherEarnings: number;
+  taxDeduction: number;
+  insuranceDeduction: number;
+  penaltyDeduction: number;
+  otherDeductions: number;
+  totalSessions: number;
+  totalHoursWorked: number;
+  averageRating: number;
+  daysWorked: number;
+  employeeNotes: string;
+  internalNotes: string;
+  updateReason: string;
 }

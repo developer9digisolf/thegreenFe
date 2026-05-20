@@ -7,12 +7,14 @@ import {
   FileTextOutlined,
   ReloadOutlined,
   PrinterOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import {
   GetPayslipsService,
   GetPayslipByIdService,
   GetPayrollPeriodsService,
 } from "@afx/services/payroll.service";
+import { PayslipStatus } from "@afx/interfaces/payroll.iface";
 import {
   IPayslip,
   IPayslipPaginationRequest,
@@ -187,6 +189,21 @@ export default function PayslipPage() {
     router.push(`/dashboard/payroll/payslip/${record.id}`);
   };
 
+  const handleEdit = (record: IPayslip) => {
+    const status = parseInt(record.status);
+
+    // Check if status is Paid (3)
+    if (status === PayslipStatus.Paid) {
+      notification.warning({
+        message: "Tidak Dapat Mengedit",
+        description: "Payslip dengan status 'Dibayar' tidak dapat diubah.",
+      });
+      return;
+    }
+
+    router.push(`/dashboard/payroll/payslip/${record.id}/edit`);
+  };
+
   const columns: Column[] = [
     {
       key: "payslipCode",
@@ -257,20 +274,36 @@ export default function PayslipPage() {
     {
       key: "actions",
       title: "Aksi",
-      width: "100px",
+      width: "150px",
       align: "center",
-      render: (_: any, record: IPayslip) => (
-        <div className="flex justify-center gap-2">
-          <Button
-            type="primary"
-            size="small"
-            icon={<FileTextOutlined />}
-            onClick={() => handleViewDetail(record)}
-          >
-            Detail
-          </Button>
-        </div>
-      ),
+      render: (_: any, record: IPayslip) => {
+        const status = parseInt(record.status);
+        const isPaid = status === PayslipStatus.Paid;
+
+        return (
+          <div className="flex justify-center gap-2">
+            <Button
+              type="primary"
+              size="small"
+              icon={<FileTextOutlined />}
+              onClick={() => handleViewDetail(record)}
+            >
+              Detail
+            </Button>
+            <Button
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+              disabled={isPaid}
+              title={
+                isPaid ? "Payslip yang sudah dibayar tidak dapat diedit" : ""
+              }
+            >
+              Edit
+            </Button>
+          </div>
+        );
+      },
     },
   ];
 

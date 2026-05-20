@@ -11,6 +11,8 @@ import {
   IPayslip,
   IPayslipPaginationRequest,
   IPayslipResponse,
+  IUpdatePayslipStatusRequest,
+  IUpdatePayslipRequest,
 } from "@afx/interfaces/payroll.iface";
 import request from "@afx/utils/request.utils";
 
@@ -102,5 +104,24 @@ export function GetPayslipByIdService(id: number) {
   return request<IPayslip>({
     url: `/payslips/${id}`,
     method: "GET",
+  });
+}
+
+export function UpdatePayslipStatusService(
+  id: number,
+  data: IUpdatePayslipStatusRequest,
+) {
+  return request<IPayslip>({
+    url: `/payslips/${id}/status`,
+    method: "PATCH",
+    data: data,
+  });
+}
+
+export function UpdatePayslipService(id: number, data: IUpdatePayslipRequest) {
+  return request<IPayslip>({
+    url: `/payslips/${id}`,
+    method: "PUT",
+    data: data,
   });
 }
