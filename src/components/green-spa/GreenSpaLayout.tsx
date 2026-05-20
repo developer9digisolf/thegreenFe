@@ -211,6 +211,13 @@ const menuConfig: MenuSection[] = [
         ],
       },
       {
+        key: "payroll",
+        label: "Payroll",
+        icon: "fa-solid fa-money-bill-wave",
+        roles: ["Owner", "Admin"],
+        path: "/dashboard/payroll",
+      },
+      {
         key: "reports",
         label: "Laporan",
         icon: "fa-solid fa-chart-line",
