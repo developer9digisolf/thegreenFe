@@ -6,6 +6,7 @@ import {
   GetTherapistsTodayService,
   GetLeaderboardTodayService,
 } from "@afx/services/queue.service";
+import { GetRecentSessionsService } from "@afx/services/dashboard.service";
 import { GetPositionsService } from "@afx/services/master/positions.service";
 import { UseSelect } from "@afx/components/ui/select/select.layout";
 import type {
@@ -68,6 +69,8 @@ export default function TherapistSlide() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+  const [recentSessions, setRecentSessions] = useState<any[]>([]);
+  const [loadingRecentSessions, setLoadingRecentSessions] = useState(false);
 
   const toggleFullscreen = () => {
     const elem = document.getElementById("queue-page-container");
@@ -90,7 +93,8 @@ export default function TherapistSlide() {
       setIsFullscreen(!!document.fullscreenElement);
     };
     document.addEventListener("fullscreenchange", handleFsChange);
-    return () => document.removeEventListener("fullscreenchange", handleFsChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFsChange);
   }, []);
 
   const touchStartX = useRef<number | null>(null);
@@ -200,7 +204,9 @@ export default function TherapistSlide() {
       const targetBranchId = branchId || selectedBranch;
       setLoadingLeaderboard(true);
       try {
-        const res = await GetLeaderboardTodayService(targetBranchId || undefined);
+        const res = await GetLeaderboardTodayService(
+          targetBranchId || undefined,
+        );
         if (res.success || res.meta?.success) {
           setLeaderboard(res.data || []);
         }
@@ -212,6 +218,33 @@ export default function TherapistSlide() {
     },
     [selectedBranch],
   );
+
+  // Fetch recent sessions
+  const fetchRecentSessions = useCallback(async () => {
+    setLoadingRecentSessions(true);
+    try {
+      // Get today's date in YYYY-MM-DD format
+      const today = new Date().toISOString().split("T")[0];
+
+      const res = await GetRecentSessionsService({
+        startDate: today,
+        endDate: today,
+      });
+
+      if (res.success || res.meta?.success) {
+        // Handle both array and paginated response formats
+        const sessions = Array.isArray(res.data)
+          ? res.data
+          : res.data?.pageData || [];
+        // Take first 5 sessions (don't filter by rating)
+        setRecentSessions(sessions.slice(0, 5));
+      }
+    } catch (error) {
+      console.error("Failed to fetch recent sessions:", error);
+    } finally {
+      setLoadingRecentSessions(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchBranches("");
@@ -237,13 +270,14 @@ export default function TherapistSlide() {
     fetchPositions();
   }, []);
 
-  // Fetch therapists and leaderboard when branch is selected
+  // Fetch therapists, leaderboard, and recent sessions when branch is selected
   useEffect(() => {
     if (selectedBranch) {
       fetchTherapists(selectedBranch);
       fetchLeaderboard(selectedBranch);
+      fetchRecentSessions();
     }
-  }, [selectedBranch, fetchTherapists, fetchLeaderboard]);
+  }, [selectedBranch, fetchTherapists, fetchLeaderboard, fetchRecentSessions]);
 
   // Reset page pagination on filter/branch change
   useEffect(() => {
@@ -289,7 +323,13 @@ export default function TherapistSlide() {
       // Cleanup listener on unmount or re-run
       signalROff("SessionCreated", handleSessionCreated);
     };
-  }, [signalROn, signalROff, selectedBranch, fetchTherapists, fetchLeaderboard]);
+  }, [
+    signalROn,
+    signalROff,
+    selectedBranch,
+    fetchTherapists,
+    fetchLeaderboard,
+  ]);
 
   // Listen for RefreshQueueTherapist event from backend
   useEffect(() => {
@@ -299,13 +339,14 @@ export default function TherapistSlide() {
         data,
       );
 
-      // Fetch therapists again to get updated data (no text-to-speech)
+      // Fetch therapists, leaderboard, and recent sessions again to get updated data (no text-to-speech)
       if (selectedBranch) {
         console.log(
-          "[TherapistSlide] Refreshing therapists after RefreshQueueTherapist...",
+          "[TherapistSlide] Refreshing data after RefreshQueueTherapist...",
         );
         fetchTherapists(selectedBranch);
         fetchLeaderboard(selectedBranch);
+        fetchRecentSessions();
       }
 
       // Auto-slide to first card after data refresh
@@ -319,7 +360,14 @@ export default function TherapistSlide() {
       // Cleanup listener on unmount or re-run
       signalROff("RefreshQueueTherapist", handleRefreshQueueTherapist);
     };
-  }, [signalROn, signalROff, selectedBranch, fetchTherapists, fetchLeaderboard]);
+  }, [
+    signalROn,
+    signalROff,
+    selectedBranch,
+    fetchTherapists,
+    fetchLeaderboard,
+    fetchRecentSessions,
+  ]);
 
   // Handle branch search
   const handleBranchSearch = (searchTerm: string) => {
@@ -348,13 +396,15 @@ export default function TherapistSlide() {
     const targetPos = positions.find((p) => p.id === selectedPositionId);
     if (!targetPos) return therapists;
     return therapists.filter(
-      (t) => t.position?.toLowerCase() === targetPos.name?.toLowerCase()
+      (t) => t.position?.toLowerCase() === targetPos.name?.toLowerCase(),
     );
   }, [therapists, selectedPositionId, positions]);
 
   // Split: waiting → top cards, do treatment → bottom table
   const waitingList = filteredTherapists.filter((t) => t.status === "waiting");
-  const treatingList = filteredTherapists.filter((t) => t.status === "do treatment");
+  const treatingList = filteredTherapists.filter(
+    (t) => t.status === "do treatment",
+  );
 
   const topCards = waitingList.slice(0, TOP_COUNT);
   const extraWaiting = waitingList.slice(TOP_COUNT);
@@ -363,19 +413,20 @@ export default function TherapistSlide() {
   const totalExtraPages = Math.ceil(extraWaiting.length / extraPageSize);
   const paginatedExtraWaiting = extraWaiting.slice(
     (extraPage - 1) * extraPageSize,
-    extraPage * extraPageSize
+    extraPage * extraPageSize,
   );
 
   const totalTreatingPages = Math.ceil(treatingList.length / treatingPageSize);
   const paginatedTreating = treatingList.slice(
     (treatingPage - 1) * treatingPageSize,
-    treatingPage * treatingPageSize
+    treatingPage * treatingPageSize,
   );
 
   const total = topCards.length;
   const maxIndex = Math.max(0, total - 1);
 
-  const selectedBranchName = branches.find((b) => b.id === selectedBranch)?.name || "";
+  const selectedBranchName =
+    branches.find((b) => b.id === selectedBranch)?.name || "";
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -510,385 +561,569 @@ export default function TherapistSlide() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* LEFT COLUMN: Queue Slider and Tables */}
         <div className="lg:col-span-8 space-y-6">
-
-      {/* Summary Bar */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 rounded-lg px-3 py-1.5">
-          <span className="w-2 h-2 rounded-full bg-slate-400" />
-          <span className="text-xs font-medium text-slate-600">
-            {waitingList.length} menunggu
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-xs font-medium text-emerald-700">
-            {treatingList.length} sedang treatment
-          </span>
-        </div>
-      </div>
-
-      {/* ── TOP CARDS — WAITING ───────────────────────────── */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
-            Menunggu Giliran
-          </p>
-          {total > 0 && (
-            <span className="text-xs text-slate-400">
-              {current + 1} / {total}
-            </span>
-          )}
-        </div>
-
-        {topCards.length === 0 ? (
-          <div className="bg-slate-50 border border-slate-100 rounded-2xl px-6 py-10 text-center">
-            <p className="text-slate-400 text-sm">Tidak ada antrian menunggu</p>
+          {/* Summary Bar */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 rounded-lg px-3 py-1.5">
+              <span className="w-2 h-2 rounded-full bg-slate-400" />
+              <span className="text-xs font-medium text-slate-600">
+                {waitingList.length} menunggu
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-medium text-emerald-700">
+                {treatingList.length} sedang treatment
+              </span>
+            </div>
           </div>
-        ) : (
-          <>
-            {/* Progress Bar */}
-            <div className="w-full h-0.5 bg-slate-100 rounded-full mb-4 overflow-hidden">
-              <div
-                className="h-full bg-blue-400 rounded-full"
-                style={{ width: progress + "%" }}
-              />
-            </div>
 
-            <div
-              className="w-full"
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-1 py-1">
-                {topCards.map((therapist, index) => {
-                  const isActive = index === current;
-                  const estWait = getEstWait(index);
-
-                  return (
-                    <div
-                      key={therapist.id}
-                      className={
-                        "relative rounded-2xl border shadow-sm p-5 flex flex-col items-center gap-3 bg-white transition-all duration-300 cursor-pointer hover:shadow-md " +
-                        (isActive
-                          ? "ring-2 ring-blue-400 ring-offset-2 border-blue-100"
-                          : "border-slate-100")
-                      }
-                      onClick={() => goTo(index)}
-                    >
-                      {/* Queue Number */}
-                      <div className="absolute top-3 left-3 w-7 h-7 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold">
-                        {index + 1}
-                      </div>
-
-                      {/* Avatar */}
-                      <div className="relative mt-2">
-                        <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xl font-bold">
-                          {getInitials(therapist.employeeName)}
-                        </div>
-                      </div>
-
-                      {/* Name */}
-                      <div className="text-center">
-                        <p className="font-bold text-slate-800 text-sm leading-tight">
-                          {therapist.employeeName}
-                        </p>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          {therapist.position}
-                        </p>
-                      </div>
-
-                      {/* Status */}
-                      <div className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 flex-shrink-0" />
-                        Menunggu
-                      </div>
-
-                      {/* Est Wait */}
-                      <div className="flex items-center gap-1 text-xs text-slate-500 w-full justify-center">
-                        <svg
-                          className="w-3 h-3 text-slate-400 flex-shrink-0"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        {/* <span className="font-medium">{estWait}</span> */}
-                        <span className="text-slate-300">•</span>
-                        <span className="text-slate-400">
-                          {formatTime(therapist.dateTime)}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Dot Navigation */}
-            {total > 1 && (
-              <div className="flex items-center justify-center gap-3 mt-4">
-                <button
-                  onClick={prev}
-                  className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-slate-50 transition-all"
-                >
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                </button>
-                <div className="flex gap-1.5 items-center">
-                  {topCards.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => goTo(i)}
-                      className={
-                        "h-1.5 rounded-full transition-all duration-200 " +
-                        (i === current
-                          ? "w-5 bg-blue-500"
-                          : "w-1.5 bg-slate-300")
-                      }
-                    />
-                  ))}
-                </div>
-                <button
-                  onClick={next}
-                  className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-slate-50 transition-all"
-                >
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </button>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Extra waiting (beyond top 3) */}
-        {extraWaiting.length > 0 && (
-          <div className="mt-4 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-            <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100">
+          {/* ── TOP CARDS — WAITING ───────────────────────────── */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
-                Antrian Selanjutnya
+                Menunggu Giliran
               </p>
+              {total > 0 && (
+                <span className="text-xs text-slate-400">
+                  {current + 1} / {total}
+                </span>
+              )}
             </div>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-50">
-                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-400 w-10">
-                    No
-                  </th>
-                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-400">
-                    Nama
-                  </th>
-                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-400 hidden sm:table-cell">
-                    Datang
-                  </th>
-                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-400 hidden sm:table-cell">
-                    Est. Tunggu
-                  </th>
-                  <th className="px-4 py-2.5" />
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedExtraWaiting.map((therapist, i) => {
-                  const queuePos = TOP_COUNT + (extraPage - 1) * extraPageSize + i;
-                  return (
-                    <tr
-                      key={therapist.id}
-                      className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold">
-                          {queuePos + 1}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                            {getInitials(therapist.employeeName)}
+
+            {topCards.length === 0 ? (
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl px-6 py-10 text-center">
+                <p className="text-slate-400 text-sm">
+                  Tidak ada antrian menunggu
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Progress Bar */}
+                <div className="w-full h-0.5 bg-slate-100 rounded-full mb-4 overflow-hidden">
+                  <div
+                    className="h-full bg-blue-400 rounded-full"
+                    style={{ width: progress + "%" }}
+                  />
+                </div>
+
+                <div
+                  className="w-full"
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-1 py-1">
+                    {topCards.map((therapist, index) => {
+                      const isActive = index === current;
+                      const estWait = getEstWait(index);
+
+                      return (
+                        <div
+                          key={therapist.id}
+                          className={
+                            "relative rounded-2xl border shadow-sm p-5 flex flex-col items-center gap-3 bg-white transition-all duration-300 cursor-pointer hover:shadow-md " +
+                            (isActive
+                              ? "ring-2 ring-blue-400 ring-offset-2 border-blue-100"
+                              : "border-slate-100")
+                          }
+                          onClick={() => goTo(index)}
+                        >
+                          {/* Queue Number */}
+                          <div className="absolute top-3 left-3 w-7 h-7 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold">
+                            {index + 1}
                           </div>
-                          <div>
-                            <p className="font-semibold text-slate-800 text-sm leading-tight">
+
+                          {/* Avatar */}
+                          <div className="relative mt-2">
+                            <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xl font-bold">
+                              {getInitials(therapist.employeeName)}
+                            </div>
+                          </div>
+
+                          {/* Name */}
+                          <div className="text-center">
+                            <p className="font-bold text-slate-800 text-sm leading-tight">
                               {therapist.employeeName}
                             </p>
-                            <p className="text-xs text-slate-400">
+                            <p className="text-xs text-slate-400 mt-0.5">
                               {therapist.position}
                             </p>
                           </div>
+
+                          {/* Status */}
+                          <div className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 flex-shrink-0" />
+                            Menunggu
+                          </div>
+
+                          {/* Est Wait */}
+                          <div className="flex items-center gap-1 text-xs text-slate-500 w-full justify-center">
+                            <svg
+                              className="w-3 h-3 text-slate-400 flex-shrink-0"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            {/* <span className="font-medium">{estWait}</span> */}
+                            <span className="text-slate-300">•</span>
+                            <span className="text-slate-400">
+                              {formatTime(therapist.dateTime)}
+                            </span>
+                          </div>
                         </div>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-slate-500 hidden sm:table-cell">
-                        {formatTime(therapist.dateTime)}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-slate-500 hidden sm:table-cell">
-                        {getEstWait(queuePos)}
-                      </td>
-                      <td className="px-4 py-3">
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Dot Navigation */}
+                {total > 1 && (
+                  <div className="flex items-center justify-center gap-3 mt-4">
+                    <button
+                      onClick={prev}
+                      className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-slate-50 transition-all"
+                    >
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 19l-7-7 7-7"
+                        />
+                      </svg>
+                    </button>
+                    <div className="flex gap-1.5 items-center">
+                      {topCards.map((_, i) => (
                         <button
-                          onClick={() => handleStartTreatment(therapist.id)}
-                          className="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-semibold transition-colors"
-                        >
-                          Mulai
-                        </button>
-                      </td>
+                          key={i}
+                          onClick={() => goTo(i)}
+                          className={
+                            "h-1.5 rounded-full transition-all duration-200 " +
+                            (i === current
+                              ? "w-5 bg-blue-500"
+                              : "w-1.5 bg-slate-300")
+                          }
+                        />
+                      ))}
+                    </div>
+                    <button
+                      onClick={next}
+                      className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-slate-50 transition-all"
+                    >
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Extra waiting (beyond top 3) */}
+            {extraWaiting.length > 0 && (
+              <div className="mt-4 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100">
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+                    Antrian Selanjutnya
+                  </p>
+                </div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-50">
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-400 w-10">
+                        No
+                      </th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-400">
+                        Nama
+                      </th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-400 hidden sm:table-cell">
+                        Datang
+                      </th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-400 hidden sm:table-cell">
+                        Est. Tunggu
+                      </th>
+                      <th className="px-4 py-2.5" />
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            
-            {/* Frontend Pagination Controls for Extra Waiting */}
-            {totalExtraPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-t border-slate-100">
-                <span className="text-xs text-slate-400 font-medium">
-                  Halaman {extraPage} dari {totalExtraPages} (Total {extraWaiting.length} antrian)
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    disabled={extraPage === 1}
-                    onClick={() => setExtraPage((p) => Math.max(1, p - 1))}
-                    className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-bold transition-all"
-                  >
-                    Sebelumnya
-                  </button>
-                  <button
-                    disabled={extraPage === totalExtraPages}
-                    onClick={() => setExtraPage((p) => Math.min(totalExtraPages, p + 1))}
-                    className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-bold transition-all"
-                  >
-                    Selanjutnya
-                  </button>
-                </div>
+                  </thead>
+                  <tbody>
+                    {paginatedExtraWaiting.map((therapist, i) => {
+                      const queuePos =
+                        TOP_COUNT + (extraPage - 1) * extraPageSize + i;
+                      return (
+                        <tr
+                          key={therapist.id}
+                          className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors"
+                        >
+                          <td className="px-4 py-3">
+                            <div className="w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold">
+                              {queuePos + 1}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                                {getInitials(therapist.employeeName)}
+                              </div>
+                              <div>
+                                <p className="font-semibold text-slate-800 text-sm leading-tight">
+                                  {therapist.employeeName}
+                                </p>
+                                <p className="text-xs text-slate-400">
+                                  {therapist.position}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-slate-500 hidden sm:table-cell">
+                            {formatTime(therapist.dateTime)}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-slate-500 hidden sm:table-cell">
+                            {getEstWait(queuePos)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => handleStartTreatment(therapist.id)}
+                              className="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-semibold transition-colors"
+                            >
+                              Mulai
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+
+                {/* Frontend Pagination Controls for Extra Waiting */}
+                {totalExtraPages > 1 && (
+                  <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-t border-slate-100">
+                    <span className="text-xs text-slate-400 font-medium">
+                      Halaman {extraPage} dari {totalExtraPages} (Total{" "}
+                      {extraWaiting.length} antrian)
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        disabled={extraPage === 1}
+                        onClick={() => setExtraPage((p) => Math.max(1, p - 1))}
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-bold transition-all"
+                      >
+                        Sebelumnya
+                      </button>
+                      <button
+                        disabled={extraPage === totalExtraPages}
+                        onClick={() =>
+                          setExtraPage((p) => Math.min(totalExtraPages, p + 1))
+                        }
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-bold transition-all"
+                      >
+                        Selanjutnya
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
-      </div>
 
-      {/* ── BOTTOM TABLE — DO TREATMENT ───────────────────── */}
-      {treatingList.length > 0 && (
-        <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">
-            Sedang Treatment
-          </p>
-          <div className="bg-emerald-50 rounded-2xl border border-emerald-100 shadow-sm overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-emerald-100">
-                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-emerald-600 uppercase tracking-wide">
-                    Nama
-                  </th>
-                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-emerald-600 uppercase tracking-wide hidden sm:table-cell">
-                    Mulai
-                  </th>
-                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-emerald-600 uppercase tracking-wide">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedTreating.map((therapist) => (
-                  <tr
-                    key={therapist.id}
-                    className="border-b border-emerald-100 last:border-0"
-                  >
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-emerald-200 text-emerald-800 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                          {getInitials(therapist.employeeName)}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-slate-800 text-sm leading-tight">
-                            {therapist.employeeName}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {therapist.position}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-500 hidden sm:table-cell">
-                      {formatTime(therapist.dateTime)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        Do Treatment
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* ── BOTTOM TABLE — DO TREATMENT ───────────────────── */}
+          {treatingList.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">
+                Sedang Treatment
+              </p>
+              <div className="bg-emerald-50 rounded-2xl border border-emerald-100 shadow-sm overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-emerald-100">
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-emerald-600 uppercase tracking-wide">
+                        Nama
+                      </th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-emerald-600 uppercase tracking-wide hidden sm:table-cell">
+                        Mulai
+                      </th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-emerald-600 uppercase tracking-wide">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedTreating.map((therapist) => (
+                      <tr
+                        key={therapist.id}
+                        className="border-b border-emerald-100 last:border-0"
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full bg-emerald-200 text-emerald-800 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                              {getInitials(therapist.employeeName)}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-800 text-sm leading-tight">
+                                {therapist.employeeName}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                {therapist.position}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-500 hidden sm:table-cell">
+                          {formatTime(therapist.dateTime)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Do Treatment
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
 
-            {/* Frontend Pagination Controls for Treating */}
-            {totalTreatingPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 bg-emerald-100/50 border-t border-emerald-100">
-                <span className="text-xs text-emerald-700 font-medium">
-                  Halaman {treatingPage} dari {totalTreatingPages} (Total {treatingList.length} terapis)
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    disabled={treatingPage === 1}
-                    onClick={() => setTreatingPage((p) => Math.max(1, p - 1))}
-                    className="px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-bold transition-all"
-                  >
-                    Sebelumnya
-                  </button>
-                  <button
-                    disabled={treatingPage === totalTreatingPages}
-                    onClick={() => setTreatingPage((p) => Math.min(totalTreatingPages, p + 1))}
-                    className="px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-bold transition-all"
-                  >
-                    Selanjutnya
-                  </button>
-                </div>
+                {/* Frontend Pagination Controls for Treating */}
+                {totalTreatingPages > 1 && (
+                  <div className="flex items-center justify-between px-4 py-3 bg-emerald-100/50 border-t border-emerald-100">
+                    <span className="text-xs text-emerald-700 font-medium">
+                      Halaman {treatingPage} dari {totalTreatingPages} (Total{" "}
+                      {treatingList.length} terapis)
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        disabled={treatingPage === 1}
+                        onClick={() =>
+                          setTreatingPage((p) => Math.max(1, p - 1))
+                        }
+                        className="px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-bold transition-all"
+                      >
+                        Sebelumnya
+                      </button>
+                      <button
+                        disabled={treatingPage === totalTreatingPages}
+                        onClick={() =>
+                          setTreatingPage((p) =>
+                            Math.min(totalTreatingPages, p + 1),
+                          )
+                        }
+                        className="px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-bold transition-all"
+                      >
+                        Selanjutnya
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
-      )}
+            </div>
+          )}
 
           <p className="text-center text-xs text-slate-300 pt-2">
             Geser untuk navigasi • Klik untuk pilih
           </p>
         </div>
 
-        {/* RIGHT COLUMN: Today's Leaderboard Widget */}
-        <div className="lg:col-span-4">
+        {/* RIGHT COLUMN: Recent Sessions & Today's Leaderboard Widget */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Recent Sessions Widget */}
+          <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📋</span>
+                <div>
+                  <h3 className="font-bold text-slate-800 text-sm">
+                    Sesi Terbaru
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-medium">
+                    Hari Ini
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {loadingRecentSessions ? (
+              <div className="py-12 flex flex-col items-center justify-center gap-2">
+                <svg
+                  className="animate-spin"
+                  style={{
+                    width: "24px",
+                    height: "24px",
+                    fill: "none",
+                    stroke: "#3b82f6",
+                    strokeWidth: 3,
+                  }}
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="rgba(59,130,246,0.2)"
+                  />
+                  <path d="M12 2C6.477 2 2 6.477 2 12" strokeLinecap="round" />
+                </svg>
+                <span className="text-xs text-slate-400 font-medium">
+                  Memuat sesi...
+                </span>
+              </div>
+            ) : recentSessions.length === 0 ? (
+              <div className="py-12 flex flex-col items-center justify-center gap-2 text-slate-400 text-center">
+                <span className="text-2xl">📝</span>
+                <span className="text-xs font-semibold">
+                  Belum ada sesi hari ini
+                </span>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+                {recentSessions.map((session: any, index: number) => {
+                  const isTop3 = index < 3;
+                  const rankColors = [
+                    "from-amber-400 to-yellow-500 text-white shadow-amber-500/20", // 1st
+                    "from-slate-300 to-slate-400 text-slate-800 shadow-slate-400/20", // 2nd
+                    "from-amber-600 to-amber-700 text-white shadow-amber-700/20", // 3rd
+                  ];
+
+                  return (
+                    <div
+                      key={session.id}
+                      className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                        index === 0
+                          ? "bg-blue-50/40 border-blue-200/60 shadow-sm shadow-blue-500/5"
+                          : "bg-slate-50/50 border-slate-100 hover:border-slate-200"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        {/* Rank Badge */}
+                        {/* <div
+                          className={`w-7 h-7 rounded-full flex items-center justify-center font-black text-xs shadow-sm bg-gradient-to-br flex-shrink-0 ${
+                            isTop3
+                              ? rankColors[index]
+                              : "bg-slate-100 text-slate-600 border border-slate-200"
+                          }`}
+                        >
+                          {index + 1}
+                        </div> */}
+
+                        {/* Session Info */}
+                        <div className="min-w-0 flex-1">
+                          {/* Session Code */}
+                          <div className="text-[10px] font-bold text-slate-600 mb-0.5">
+                            {session.sessionCode}
+                          </div>
+
+                          {/* Member Name */}
+                          {/* <div className="font-bold text-slate-800 text-xs truncate">
+                            {session.memberName || "N/A"}
+                          </div> */}
+
+                          {/* Service & Therapist */}
+                          <div className="text-[9px] text-slate-800 truncate mt-0.5">
+                            {session.serviceName} •{" "}
+                            {session.therapistName || "N/A"}
+                          </div>
+
+                          {/* Date & Time */}
+                          <div className="flex items-center gap-1 text-[9px] text-slate-400 mt-0.5">
+                            <span>📅</span>
+                            <span>{session.sessionDate}</span>
+                            <span className="mx-1">•</span>
+                            <span>⏰</span>
+                            <span>
+                              {session.scheduledTime?.substring(0, 5)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Side: Status & Price */}
+                      <div className="text-right flex-shrink-0 pl-2">
+                        {/* Status Badge */}
+                        <span
+                          className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                            session.status === "completed"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : session.status === "pending"
+                                ? "bg-amber-100 text-amber-700"
+                                : session.status === "claimed"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          {session.statusName}
+                        </span>
+
+                        {/* Room if available */}
+                        {session.roomName && (
+                          <div className="text-[9px] text-slate-400 font-semibold mt-1">
+                            🚪 {session.roomName}
+                          </div>
+                        )}
+
+                        {/* Rating - Only show if rating exists */}
+                        {session.rating !== null &&
+                          session.rating !== undefined && (
+                            <div className="flex items-center justify-end gap-0.5 mt-1">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <svg
+                                  key={i}
+                                  style={{
+                                    width: "8px",
+                                    height: "8px",
+                                    fill:
+                                      i < session.rating ? "#eab308" : "none",
+                                    stroke: "#eab308",
+                                    strokeWidth: 1.5,
+                                  }}
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                </svg>
+                              ))}
+                              <span className="text-[8px] text-slate-400 font-bold ml-1">
+                                {session.rating.toFixed(1)}
+                              </span>
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Today's Leaderboard Widget */}
           <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <span className="text-xl">🏆</span>
                 <div>
-                  <h3 className="font-bold text-slate-800 text-sm">Leaderboard Hari Ini</h3>
-                  <p className="text-[10px] text-slate-400 font-medium">Therapist Paling Aktif</p>
+                  <h3 className="font-bold text-slate-800 text-sm">
+                    Leaderboard Hari Ini
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-medium">
+                    Therapist Paling Aktif
+                  </p>
                 </div>
               </div>
               {selectedBranchName && (
@@ -900,16 +1135,30 @@ export default function TherapistSlide() {
 
             {loadingLeaderboard ? (
               <div className="py-12 flex flex-col items-center justify-center gap-2">
-                <svg className="animate-spin" style={{ width: "24px", height: "24px", fill: "none", stroke: "#eab308", strokeWidth: 3 }} viewBox="0 0 24 24">
+                <svg
+                  className="animate-spin"
+                  style={{
+                    width: "24px",
+                    height: "24px",
+                    fill: "none",
+                    stroke: "#eab308",
+                    strokeWidth: 3,
+                  }}
+                  viewBox="0 0 24 24"
+                >
                   <circle cx="12" cy="12" r="10" stroke="rgba(234,179,8,0.2)" />
                   <path d="M12 2C6.477 2 2 6.477 2 12" strokeLinecap="round" />
                 </svg>
-                <span className="text-xs text-slate-400 font-medium">Memuat peringkat...</span>
+                <span className="text-xs text-slate-400 font-medium">
+                  Memuat peringkat...
+                </span>
               </div>
             ) : leaderboard.length === 0 ? (
               <div className="py-12 flex flex-col items-center justify-center gap-2 text-slate-400 text-center">
                 <span className="text-2xl">✨</span>
-                <span className="text-xs font-semibold">Belum ada layanan selesai hari ini</span>
+                <span className="text-xs font-semibold">
+                  Belum ada layanan selesai hari ini
+                </span>
               </div>
             ) : (
               <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
@@ -957,7 +1206,9 @@ export default function TherapistSlide() {
                             )}
                           </div>
                           {t.rank === 1 && (
-                            <span className="absolute -top-1.5 -right-1 text-xs">👑</span>
+                            <span className="absolute -top-1.5 -right-1 text-xs">
+                              👑
+                            </span>
                           )}
                         </div>
 
@@ -973,7 +1224,10 @@ export default function TherapistSlide() {
                                 style={{
                                   width: "10px",
                                   height: "10px",
-                                  fill: i < (t.averageRating ?? 0) ? "#eab308" : "none",
+                                  fill:
+                                    i < (t.averageRating ?? 0)
+                                      ? "#eab308"
+                                      : "none",
                                   stroke: "#eab308",
                                   strokeWidth: 1.5,
                                 }}
@@ -983,7 +1237,9 @@ export default function TherapistSlide() {
                               </svg>
                             ))}
                             <span className="text-[9px] text-slate-400 font-bold ml-1">
-                              {t.averageRating ? t.averageRating.toFixed(1) : "—"}
+                              {t.averageRating
+                                ? t.averageRating.toFixed(1)
+                                : "—"}
                             </span>
                           </div>
                         </div>
@@ -993,7 +1249,9 @@ export default function TherapistSlide() {
                       <div className="text-right flex-shrink-0 pl-2">
                         <div className="text-slate-800 font-black text-xs">
                           {t.totalServices}{" "}
-                          <span className="text-[9px] text-slate-400 font-medium">Layanan</span>
+                          <span className="text-[9px] text-slate-400 font-medium">
+                            Layanan
+                          </span>
                         </div>
                         <div className="text-[9px] text-slate-400 font-semibold mt-0.5">
                           {t.totalRatedSessions} ulasan
