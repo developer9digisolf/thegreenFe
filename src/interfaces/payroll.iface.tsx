@@ -152,3 +152,66 @@ export interface IPayrollEmployeeCalculation {
   latestSessionDate: string;
   calculations: IPayrollCalculation[];
 }
+
+export interface IPayslip {
+  id: number;
+  payslipCode: string;
+  payrollPeriodId: number;
+  payrollPeriodCode: string;
+  payrollPeriodName: string;
+  employeeId: number;
+  employeeName: string;
+  baseSalary: number;
+  totalCommission: number;
+  totalBonus: number;
+  overtimePay: number;
+  otherEarnings: number;
+  grossEarnings: number;
+  taxDeduction: number;
+  insuranceDeduction: number;
+  penaltyDeduction: number;
+  otherDeductions: number;
+  totalDeductions: number;
+  netPay: number;
+  totalSessions: number;
+  totalHoursWorked: number;
+  averageRating: number;
+  daysWorked: number;
+  status: string;
+  sentAt: string | null;
+  viewedAt: string | null;
+  paidAt: string | null;
+  paymentReference: string | null;
+  paymentMethod: string | null;
+  employeeNotes: string;
+  internalNotes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IPayslipPaginationRequest {
+  page: number;
+  pageSize: number;
+  search?: string;
+  sortColumn?: string;
+  sortDirection?: string;
+  PayrollPeriodCode?: string;
+}
+
+export interface IPayslipResponse {
+  meta: {
+    success: boolean;
+    code: number;
+    message: string;
+  };
+  data: {
+    pageInfo: {
+      lastPage: number;
+      currentPage: number;
+      path: string;
+      total: number;
+      pageSize: number;
+    };
+    pageData: IPayslip[];
+  };
+}

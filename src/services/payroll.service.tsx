@@ -8,8 +8,10 @@ import {
   IPayrollEmployeeCalculation,
   IUpdatePayrollCalculationRequest,
   IUpdatePayrollStatusRequest,
+  IPayslip,
+  IPayslipPaginationRequest,
+  IPayslipResponse,
 } from "@afx/interfaces/payroll.iface";
-import { rest } from "@afx/utils/config.rest";
 import request from "@afx/utils/request.utils";
 
 export function GetPayrollPeriodsService(
@@ -85,5 +87,20 @@ export function UpdatePayrollPeriodStatusService(
     url: `/payroll-periods/${id}/status`,
     method: "PATCH",
     data: data,
+  });
+}
+
+export function GetPayslipsService(params: IPayslipPaginationRequest) {
+  return request<IPayslip[]>({
+    url: "/payslips",
+    method: "GET",
+    data: params,
+  });
+}
+
+export function GetPayslipByIdService(id: number) {
+  return request<IPayslip>({
+    url: `/payslips/${id}`,
+    method: "GET",
   });
 }

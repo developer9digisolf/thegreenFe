@@ -215,7 +215,20 @@ const menuConfig: MenuSection[] = [
         label: "Payroll",
         icon: "fa-solid fa-money-bill-wave",
         roles: ["Owner", "Admin"],
-        path: "/dashboard/payroll",
+        subItems: [
+          {
+            key: "payroll-period",
+            label: "Period",
+            icon: "fa-solid fa-calendar-days",
+            path: "/dashboard/payroll",
+          },
+          {
+            key: "payroll-payslip",
+            label: "Payslip",
+            icon: "fa-solid fa-file-invoice-dollar",
+            path: "/dashboard/payroll/payslip",
+          },
+        ],
       },
       {
         key: "reports",
