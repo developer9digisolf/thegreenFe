@@ -25,6 +25,9 @@ import {
   CalendarOutlined,
   DeleteOutlined,
   EyeOutlined,
+  CheckCircleOutlined,
+  DollarOutlined,
+  PlayCircleOutlined,
 } from "@ant-design/icons";
 import {
   GetPayrollPeriodsService,
@@ -33,6 +36,7 @@ import {
   UpdatePayrollPeriodService,
   DeletePayrollPeriodService,
   GetPayrollCalculationsService,
+  UpdatePayrollPeriodStatusService,
 } from "@afx/services/payroll.service";
 import {
   IPayrollPeriod,
@@ -194,12 +198,15 @@ export default function PayrollPage() {
         search: "",
       });
       if (res.success) {
-        setCalculations(res.data);
-        setCalculationsPagination({
-          current: res.pagination?.currentPage || 1,
-          pageSize: res.pagination?.pageSize || 10,
-          total: res.pagination?.total || 0,
-        });
+        const responseData = res.data as any;
+        if (responseData?.pageData) {
+          setCalculations(responseData.pageData);
+          setCalculationsPagination({
+            current: responseData?.pageInfo?.currentPage || 1,
+            pageSize: responseData?.pageInfo?.pageSize || 10,
+            total: responseData?.pageInfo?.total || 0,
+          });
+        }
       }
     } catch (err: any) {
       notification.error({
@@ -299,6 +306,99 @@ export default function PayrollPage() {
     router.push(`/dashboard/payroll/${record.periodCode}/calculations`);
   };
 
+  const handleStartProcessing = async (record: IPayrollPeriod) => {
+    Modal.confirm({
+      title: "Mulai Proses Perhitungan",
+      content: `Apakah Anda yakin ingin memulai perhitungan gaji untuk periode ${record.periodName}? Status akan berubah menjadi Sedang Diproses.`,
+      okText: "Mulai Proses",
+      cancelText: "Batal",
+      onOk: async () => {
+        try {
+          setLoading(true);
+          const res = await UpdatePayrollPeriodStatusService(record.id, {
+            Status: 1, // Processing
+            note: null,
+          });
+          if (res.success) {
+            notification.success({
+              title: "Proses Perhitungan Dimulai",
+            });
+            fetchData(pagination.current, pagination.pageSize, searchQuery);
+          }
+        } catch (err: any) {
+          notification.error({
+            title: "Gagal Memulai Proses",
+            description: err?.message || "Terjadi kesalahan",
+          });
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
+  };
+
+  const handleApprove = async (record: IPayrollPeriod) => {
+    Modal.confirm({
+      title: "Setujui Periode Payroll",
+      content: `Apakah Anda yakin ingin menyetujui periode ${record.periodName}? Status akan berubah menjadi Disetujui.`,
+      okText: "Setujui",
+      cancelText: "Batal",
+      onOk: async () => {
+        try {
+          setLoading(true);
+          const res = await UpdatePayrollPeriodStatusService(record.id, {
+            Status: 3, // Approved
+            note: null,
+          });
+          if (res.success) {
+            notification.success({
+              title: "Periode Payroll Berhasil Disetujui",
+            });
+            fetchData(pagination.current, pagination.pageSize, searchQuery);
+          }
+        } catch (err: any) {
+          notification.error({
+            title: "Gagal Menyetujui Periode",
+            description: err?.message || "Terjadi kesalahan",
+          });
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
+  };
+
+  const handleMarkAsPaid = async (record: IPayrollPeriod) => {
+    Modal.confirm({
+      title: "Tandai Sudah Dibayar",
+      content: `Apakah Anda yakin ingin menandai periode ${record.periodName} sebagai sudah dibayar?`,
+      okText: "Tandai Dibayar",
+      cancelText: "Batal",
+      onOk: async () => {
+        try {
+          setLoading(true);
+          const res = await UpdatePayrollPeriodStatusService(record.id, {
+            Status: 4, // Paid
+            note: null,
+          });
+          if (res.success) {
+            notification.success({
+              title: "Periode Payroll Berhasil Ditandai Dibayar",
+            });
+            fetchData(pagination.current, pagination.pageSize, searchQuery);
+          }
+        } catch (err: any) {
+          notification.error({
+            title: "Gagal Menandai Periode",
+            description: err?.message || "Terjadi kesalahan",
+          });
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
+  };
+
   const columns: Column[] = [
     {
       key: "periodName",
@@ -376,7 +476,30 @@ export default function PayrollPage() {
           onClick: () => handleOpenDetail(record),
         });
 
+        // Status-based actions
+        if (record.status?.toLowerCase() === "calculated") {
+          items.push({
+            key: "approve",
+            label: "Setujui",
+            onClick: () => handleApprove(record),
+            icon: <CheckCircleOutlined />,
+          });
+        } else if (record.status?.toLowerCase() === "approved") {
+          items.push({
+            key: "markpaid",
+            label: "Tandai Dibayar",
+            onClick: () => handleMarkAsPaid(record),
+            icon: <DollarOutlined />,
+          });
+        }
+
         if (record.status?.toLowerCase() === "draft") {
+          items.push({
+            key: "startprocess",
+            label: "Mulai Proses",
+            onClick: () => handleStartProcessing(record),
+            icon: <PlayCircleOutlined />,
+          });
           items.push({
             key: "edit",
             label: "Edit",

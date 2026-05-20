@@ -7,6 +7,7 @@ import {
   IPayrollCalculationResponse,
   IPayrollEmployeeCalculation,
   IUpdatePayrollCalculationRequest,
+  IUpdatePayrollStatusRequest,
 } from "@afx/interfaces/payroll.iface";
 import { rest } from "@afx/utils/config.rest";
 import request from "@afx/utils/request.utils";
@@ -72,6 +73,17 @@ export function UpdatePayrollCalculationService(
   return request<IPayrollCalculation>({
     url: `/payroll-calculations/${id}`,
     method: "PUT",
+    data: data,
+  });
+}
+
+export function UpdatePayrollPeriodStatusService(
+  id: number,
+  data: IUpdatePayrollStatusRequest,
+) {
+  return request<IPayrollPeriod>({
+    url: `/payroll-periods/${id}/status`,
+    method: "PATCH",
     data: data,
   });
 }

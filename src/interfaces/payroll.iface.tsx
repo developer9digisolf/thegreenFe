@@ -52,6 +52,11 @@ export interface IPayrollPeriodResponse {
   };
 }
 
+export interface IUpdatePayrollStatusRequest {
+  Status: number;
+  note: string | null;
+}
+
 export interface ICreatePayrollPeriodRequest {
   PeriodCode: string;
   periodName: string;
