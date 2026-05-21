@@ -48,6 +48,322 @@ function getPhotoUrl(url: string | null): string {
   return `https://sin1.contabostorage.com/30e3a2fafcfd4aa0a6af34e9ca6f9492:thegreen-cdn/${url}`;
 }
 
+// ─── Star Rating ──────────────────────────────────────────────────────────────
+function StarRating({ rating, size = 10 }: { rating: number; size?: number }) {
+  return (
+    <div style={{ display: "flex", gap: 1, alignItems: "center" }}>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <svg
+          key={i}
+          width={size}
+          height={size}
+          viewBox="0 0 24 24"
+          fill={i < Math.round(rating) ? "#ef9f27" : "none"}
+          stroke="#ef9f27"
+          strokeWidth={1.5}
+        >
+          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
+// ─── Spinner ──────────────────────────────────────────────────────────────────
+function Spinner({ color = "#3b82f6" }: { color?: string }) {
+  return (
+    <div
+      style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        padding: "24px 0",
+      }}
+    >
+      <svg
+        width={24}
+        height={24}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={color}
+        strokeWidth={3}
+        style={{ animation: "spin 0.8s linear infinite" }}
+      >
+        <circle cx="12" cy="12" r="10" stroke={color + "33"} />
+        <path d="M12 2C6.477 2 2 6.477 2 12" strokeLinecap="round" />
+      </svg>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
+// ─── Fullscreen Icon ──────────────────────────────────────────────────────────
+function FullscreenIcon({ active }: { active: boolean }) {
+  return (
+    <svg
+      width={14}
+      height={14}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {active ? (
+        <path d="M4 14h6v6M10 14l-7 7M20 10h-6V4M14 10l7-7" />
+      ) : (
+        <path d="M8 3H5a2 2 0 00-2 2v3M21 8V5a2 2 0 00-2-2h-3M3 16v3a2 2 0 002 2h3M16 21h3a2 2 0 002-2v-3" />
+      )}
+    </svg>
+  );
+}
+
+// ─── Inline styles helpers ────────────────────────────────────────────────────
+const S = {
+  page: (isFs: boolean): React.CSSProperties => ({
+    width: "100%",
+    height: isFs ? "100vh" : "calc(100vh - 64px)",
+    display: "flex",
+    flexDirection: "column",
+    gap: 14,
+    padding: isFs ? "20px 28px" : "16px 20px",
+    overflow: "hidden",
+    boxSizing: "border-box",
+    background: "var(--bg-page, #f8f9fb)",
+  }),
+  header: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexShrink: 0,
+    gap: 12,
+    flexWrap: "wrap" as const,
+  } as React.CSSProperties,
+  h2: {
+    fontSize: 15,
+    fontWeight: 600,
+    color: "#1e293b",
+    margin: 0,
+  } as React.CSSProperties,
+  dateTxt: {
+    fontSize: 11,
+    color: "#94a3b8",
+    marginTop: 2,
+  } as React.CSSProperties,
+  controlsRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap" as const,
+  } as React.CSSProperties,
+  fsBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    height: 32,
+    padding: "0 12px",
+    borderRadius: 8,
+    border: "1px solid #e2e8f0",
+    background: "#fff",
+    color: "#475569",
+    fontSize: 11,
+    fontWeight: 600,
+    cursor: "pointer",
+    whiteSpace: "nowrap" as const,
+  } as React.CSSProperties,
+  statBar: {
+    display: "flex",
+    gap: 8,
+    flexShrink: 0,
+    flexWrap: "wrap" as const,
+  } as React.CSSProperties,
+  chip: (active?: boolean): React.CSSProperties => ({
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "5px 12px",
+    borderRadius: 20,
+    fontSize: 11,
+    fontWeight: 500,
+    border: "1px solid",
+    borderColor: active ? "#a7f3d0" : "#e2e8f0",
+    background: active ? "#ecfdf5" : "#f8fafc",
+    color: active ? "#065f46" : "#64748b",
+  }),
+  dot: (active?: boolean): React.CSSProperties => ({
+    width: 6,
+    height: 6,
+    borderRadius: "50%",
+    background: active ? "#10b981" : "#94a3b8",
+    ...(active ? { animation: "pulse 1.5s ease-in-out infinite" } : {}),
+  }),
+  mainGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 300px",
+    gap: 14,
+    flex: 1,
+    minHeight: 0,
+  } as React.CSSProperties,
+  leftCol: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+    minHeight: 0,
+  } as React.CSSProperties,
+  rightCol: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+    minHeight: 0,
+  } as React.CSSProperties,
+  sectionLabel: {
+    fontSize: 10,
+    fontWeight: 600,
+    color: "#94a3b8",
+    letterSpacing: "0.08em",
+    textTransform: "uppercase" as const,
+  } as React.CSSProperties,
+  card: (active: boolean): React.CSSProperties => ({
+    position: "relative",
+    background: "#fff",
+    borderRadius: 14,
+    border: active ? "1.5px solid #60a5fa" : "1px solid #e8edf3",
+    padding: "16px 14px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 8,
+    cursor: "pointer",
+    transition: "border-color 0.15s, box-shadow 0.15s",
+    boxShadow: active
+      ? "0 0 0 3px rgba(96,165,250,0.12)"
+      : "0 1px 3px rgba(0,0,0,0.04)",
+  }),
+  cardNum: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    width: 20,
+    height: 20,
+    borderRadius: "50%",
+    background: "#f1f5f9",
+    color: "#64748b",
+    fontSize: 10,
+    fontWeight: 700,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  } as React.CSSProperties,
+  avatar: (color = "#f1f5f9", text = "#475569"): React.CSSProperties => ({
+    width: 44,
+    height: 44,
+    borderRadius: "50%",
+    background: color,
+    color: text,
+    fontSize: 14,
+    fontWeight: 600,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 4,
+    flexShrink: 0,
+  }),
+  cardName: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: "#1e293b",
+    textAlign: "center" as const,
+    lineHeight: 1.3,
+  } as React.CSSProperties,
+  cardPos: {
+    fontSize: 10,
+    color: "#94a3b8",
+    textAlign: "center" as const,
+  } as React.CSSProperties,
+  cardStatus: {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    background: "#f8fafc",
+    borderRadius: 8,
+    padding: "5px 0",
+    fontSize: 10,
+    color: "#64748b",
+  } as React.CSSProperties,
+  cardTime: {
+    fontSize: 10,
+    color: "#94a3b8",
+    display: "flex",
+    alignItems: "center",
+    gap: 3,
+  } as React.CSSProperties,
+  tableCard: {
+    flex: 1,
+    minHeight: 0,
+    background: "#fff",
+    border: "1px solid #e8edf3",
+    borderRadius: 14,
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
+  } as React.CSSProperties,
+  tableHead: {
+    padding: "9px 16px",
+    background: "#f8fafc",
+    borderBottom: "1px solid #e8edf3",
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+  } as React.CSSProperties,
+  tableBody: {
+    overflowY: "auto" as const,
+    flex: 1,
+  } as React.CSSProperties,
+  tableRow: {
+    display: "grid",
+    gridTemplateColumns: "28px 1fr 70px 80px 54px",
+    alignItems: "center",
+    gap: 8,
+    padding: "9px 16px",
+    borderBottom: "1px solid #f1f5f9",
+    fontSize: 12,
+  } as React.CSSProperties,
+  widgetCard: {
+    background: "#fff",
+    border: "1px solid #e8edf3",
+    borderRadius: 14,
+    display: "flex",
+    flexDirection: "column",
+    flex: 1,
+    minHeight: 0,
+    overflow: "hidden",
+  } as React.CSSProperties,
+  widgetHead: {
+    padding: "10px 14px",
+    borderBottom: "1px solid #f1f5f9",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexShrink: 0,
+  } as React.CSSProperties,
+  widgetBody: {
+    padding: "10px",
+    overflowY: "auto" as const,
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
+  } as React.CSSProperties,
+} as const;
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function TherapistSlide() {
   const [therapists, setTherapists] = useState<TherapistQueue[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -56,15 +372,12 @@ export default function TherapistSlide() {
   const [loadingTherapists, setLoadingTherapists] = useState(false);
   const [current, setCurrent] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [progress, setProgress] = useState(0);
 
   const [positions, setPositions] = useState<any[]>([]);
   const [selectedPositionId, setSelectedPositionId] = useState<number>(0);
 
   const [extraPage, setExtraPage] = useState(1);
-  const [treatingPage, setTreatingPage] = useState(1);
-  const extraPageSize = 5;
-  const treatingPageSize = 5;
+  const extraPageSize = 6;
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
@@ -72,53 +385,38 @@ export default function TherapistSlide() {
   const [recentSessions, setRecentSessions] = useState<any[]>([]);
   const [loadingRecentSessions, setLoadingRecentSessions] = useState(false);
 
+  const { token } = useAuth();
+  const { on: signalROn, off: signalROff } = useSignalR({
+    hubName: "hubs/notification",
+    accessToken: token || undefined,
+    autoConnect: true,
+  });
+
+  const isFetchingRef = useRef(false);
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
+  // ── Toggle fullscreen ───────────────────────────────────────────────────────
   const toggleFullscreen = () => {
     const elem = document.getElementById("queue-page-container");
     if (!elem) return;
     if (!document.fullscreenElement) {
-      elem.requestFullscreen().catch((err) => {
-        console.error(err);
-      });
+      elem.requestFullscreen().catch(console.error);
       setIsFullscreen(true);
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-        setIsFullscreen(false);
-      }
+      document.exitFullscreen();
+      setIsFullscreen(false);
     }
   };
 
   useEffect(() => {
-    const handleFsChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
+    const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", handleFsChange);
     return () =>
       document.removeEventListener("fullscreenchange", handleFsChange);
   }, []);
 
-  const touchStartX = useRef<number | null>(null);
-  const touchEndX = useRef<number | null>(null);
-
-  // Get authentication token from AuthContext
-  const { token } = useAuth();
-
-  // Initialize SignalR connection for real-time updates
-  const { on: signalROn, off: signalROff } = useSignalR({
-    hubName: "hubs/notification",
-    accessToken: token || undefined, // Pass authentication token
-    autoConnect: true,
-    onConnected: () => {
-      console.log(
-        "[TherapistSlide] SignalR connected - listening for SessionCreated",
-      );
-    },
-    onError: (error) => {
-      console.error("[TherapistSlide] SignalR error:", error);
-    },
-  });
-
-  // Fetch branches on mount
+  // ── Fetch helpers ───────────────────────────────────────────────────────────
   const fetchBranches = useCallback(
     async (searchTerm = "") => {
       try {
@@ -131,10 +429,8 @@ export default function TherapistSlide() {
         })) as unknown as { success: boolean; data: Branch[] };
         if (response.success) {
           setBranches(response.data);
-          // Select first branch by default if no branch selected
-          if (!selectedBranch && response.data.length > 0) {
+          if (!selectedBranch && response.data.length > 0)
             setSelectedBranch(response.data[0].id);
-          }
         }
       } catch (error) {
         console.error("Failed to fetch branches:", error);
@@ -145,10 +441,6 @@ export default function TherapistSlide() {
     [selectedBranch],
   );
 
-  // Use ref to track if we're already fetching to prevent loops
-  const isFetchingRef = useRef(false);
-
-  // Fetch therapists when branch is selected
   const fetchTherapists = useCallback(
     async (branchId?: number) => {
       const targetBranchId = branchId || selectedBranch;
@@ -156,13 +448,7 @@ export default function TherapistSlide() {
         setTherapists([]);
         return;
       }
-
-      // Prevent duplicate fetches
-      if (isFetchingRef.current) {
-        console.log("[TherapistSlide] Already fetching, skipping...");
-        return;
-      }
-
+      if (isFetchingRef.current) return;
       isFetchingRef.current = true;
       setLoadingTherapists(true);
       try {
@@ -170,26 +456,20 @@ export default function TherapistSlide() {
           targetBranchId,
         )) as unknown as { success: boolean; data: TherapistAPIResponse[] };
         if (response.success && response.data) {
-          // Transform API response to TherapistQueue format
-          const transformedTherapists: TherapistQueue[] = response.data.map(
-            (therapist: TherapistAPIResponse) => ({
-              id: therapist.id,
-              employeeName: therapist.employeeName,
-              position: therapist.position,
-              dateTime: therapist.clockInTime,
-              status:
-                therapist.status === "waiting" ? "waiting" : "do treatment",
-            }),
-          );
-          setTherapists(transformedTherapists);
+          const transformed: TherapistQueue[] = response.data.map((t) => ({
+            id: t.id,
+            employeeName: t.employeeName,
+            position: t.position,
+            dateTime: t.clockInTime,
+            status: t.status === "waiting" ? "waiting" : "do treatment",
+          }));
+          setTherapists(transformed);
           setCurrent(0);
-          setProgress(0);
         }
       } catch (error) {
         console.error("Failed to fetch therapists:", error);
       } finally {
         setLoadingTherapists(false);
-        // Reset fetch flag after delay to allow next fetch
         setTimeout(() => {
           isFetchingRef.current = false;
         }, 500);
@@ -198,7 +478,6 @@ export default function TherapistSlide() {
     [selectedBranch],
   );
 
-  // Fetch leaderboard today
   const fetchLeaderboard = useCallback(
     async (branchId?: number) => {
       const targetBranchId = branchId || selectedBranch;
@@ -207,11 +486,9 @@ export default function TherapistSlide() {
         const res = await GetLeaderboardTodayService(
           targetBranchId || undefined,
         );
-        if (res.success || res.meta?.success) {
-          setLeaderboard(res.data || []);
-        }
+        if (res.success || res.meta?.success) setLeaderboard(res.data || []);
       } catch (error) {
-        console.error("Failed to fetch leaderboard today:", error);
+        console.error("Failed to fetch leaderboard:", error);
       } finally {
         setLoadingLeaderboard(false);
       }
@@ -219,38 +496,36 @@ export default function TherapistSlide() {
     [selectedBranch],
   );
 
-  // Fetch recent sessions
-  const fetchRecentSessions = useCallback(async () => {
-    setLoadingRecentSessions(true);
-    try {
-      // Get today's date in YYYY-MM-DD format
-      const today = new Date().toISOString().split("T")[0];
-
-      const res = await GetRecentSessionsService({
-        startDate: today,
-        endDate: today,
-      });
-
-      if (res.success || res.meta?.success) {
-        // Handle both array and paginated response formats
-        const sessions = Array.isArray(res.data)
-          ? res.data
-          : res.data?.pageData || [];
-        // Take first 5 sessions (don't filter by rating)
-        setRecentSessions(sessions.slice(0, 5));
+  const fetchRecentSessions = useCallback(
+    async (branchId?: number) => {
+      setLoadingRecentSessions(true);
+      try {
+        const today = new Date().toISOString().split("T")[0];
+        const res = await GetRecentSessionsService({
+          startDate: today,
+          endDate: today,
+          branchId: branchId || selectedBranch || undefined,
+        });
+        if (res.success || res.meta?.success) {
+          const sessions = Array.isArray(res.data)
+            ? res.data
+            : res.data?.pageData || [];
+          setRecentSessions(sessions.slice(0, 8));
+        }
+      } catch (error) {
+        console.error("Failed to fetch recent sessions:", error);
+      } finally {
+        setLoadingRecentSessions(false);
       }
-    } catch (error) {
-      console.error("Failed to fetch recent sessions:", error);
-    } finally {
-      setLoadingRecentSessions(false);
-    }
-  }, []);
+    },
+    [selectedBranch],
+  );
 
+  // ── Effects ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     fetchBranches("");
   }, [fetchBranches]);
 
-  // Fetch positions on mount
   useEffect(() => {
     const fetchPositions = async () => {
       try {
@@ -260,9 +535,7 @@ export default function TherapistSlide() {
           SortColumn: "name",
           SortDirection: "asc",
         });
-        if (res.success && res.data) {
-          setPositions(res.data);
-        }
+        if (res.success && res.data) setPositions(res.data);
       } catch (err) {
         console.error("Failed to fetch positions:", err);
       }
@@ -270,7 +543,6 @@ export default function TherapistSlide() {
     fetchPositions();
   }, []);
 
-  // Fetch therapists, leaderboard, and recent sessions when branch is selected
   useEffect(() => {
     if (selectedBranch) {
       fetchTherapists(selectedBranch);
@@ -279,50 +551,29 @@ export default function TherapistSlide() {
     }
   }, [selectedBranch, fetchTherapists, fetchLeaderboard, fetchRecentSessions]);
 
-  // Reset page pagination on filter/branch change
   useEffect(() => {
     setExtraPage(1);
-    setTreatingPage(1);
   }, [selectedPositionId, selectedBranch]);
 
-  // Listen for SessionCreated event from backend
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // ── SignalR listeners ───────────────────────────────────────────────────────
   useEffect(() => {
     const handleSessionCreated = (data: any) => {
-      console.log("[TherapistSlide] SessionCreated event received:", data);
-
-      // Play text-to-speech
-      const textToSpeechText =
+      const text =
         data?.textToSpeech ?? data?.textToSpeach ?? "Ada notifikasi baru";
-
-      TextToSpeechAndPlay({ text: textToSpeechText, language: "id" }).catch(
-        (error) => {
-          console.error(
-            "[TherapistSlide] Failed to play text-to-speech:",
-            error,
-          );
-        },
-      );
-
-      // Fetch therapists again to get updated data
+      TextToSpeechAndPlay({ text, language: "id" }).catch(console.error);
       if (selectedBranch) {
-        console.log(
-          "[TherapistSlide] Refreshing therapists after SessionCreated...",
-        );
         fetchTherapists(selectedBranch);
         fetchLeaderboard(selectedBranch);
       }
-
-      // Auto-slide to first card after data refresh
       setCurrent(0);
-      setProgress(0);
     };
-
     signalROn("SessionCreated", handleSessionCreated);
-
-    return () => {
-      // Cleanup listener on unmount or re-run
-      signalROff("SessionCreated", handleSessionCreated);
-    };
+    return () => signalROff("SessionCreated", handleSessionCreated);
   }, [
     signalROn,
     signalROff,
@@ -331,35 +582,17 @@ export default function TherapistSlide() {
     fetchLeaderboard,
   ]);
 
-  // Listen for RefreshQueueTherapist event from backend
   useEffect(() => {
-    const handleRefreshQueueTherapist = (data: any) => {
-      console.log(
-        "[TherapistSlide] RefreshQueueTherapist event received:",
-        data,
-      );
-
-      // Fetch therapists, leaderboard, and recent sessions again to get updated data (no text-to-speech)
+    const handleRefresh = (data: any) => {
       if (selectedBranch) {
-        console.log(
-          "[TherapistSlide] Refreshing data after RefreshQueueTherapist...",
-        );
         fetchTherapists(selectedBranch);
         fetchLeaderboard(selectedBranch);
         fetchRecentSessions();
       }
-
-      // Auto-slide to first card after data refresh
       setCurrent(0);
-      setProgress(0);
     };
-
-    signalROn("RefreshQueueTherapist", handleRefreshQueueTherapist);
-
-    return () => {
-      // Cleanup listener on unmount or re-run
-      signalROff("RefreshQueueTherapist", handleRefreshQueueTherapist);
-    };
+    signalROn("RefreshQueueTherapist", handleRefresh);
+    return () => signalROff("RefreshQueueTherapist", handleRefresh);
   }, [
     signalROn,
     signalROff,
@@ -369,28 +602,7 @@ export default function TherapistSlide() {
     fetchRecentSessions,
   ]);
 
-  // Handle branch search
-  const handleBranchSearch = (searchTerm: string) => {
-    setLoadingBranches(true);
-    fetchBranches(searchTerm);
-  };
-
-  // Branch options for select dropdown
-  const branchOptions = branches.map((branch) => ({
-    label: `${branch.name} (${branch.city})`,
-    value: branch.id,
-  }));
-
-  // Position options for select dropdown
-  const positionOptions = [
-    { label: "Semua Posisi", value: 0 },
-    ...positions.map((pos) => ({
-      label: pos.name,
-      value: pos.id,
-    })),
-  ];
-
-  // Filter therapists by position
+  // ── Derived data ────────────────────────────────────────────────────────────
   const filteredTherapists = useMemo(() => {
     if (!selectedPositionId) return therapists;
     const targetPos = positions.find((p) => p.id === selectedPositionId);
@@ -400,7 +612,7 @@ export default function TherapistSlide() {
     );
   }, [therapists, selectedPositionId, positions]);
 
-  // Split: waiting → top cards, do treatment → bottom table
+  // Only waiting list — treating section removed
   const waitingList = filteredTherapists.filter((t) => t.status === "waiting");
   const treatingList = filteredTherapists.filter(
     (t) => t.status === "do treatment",
@@ -408,60 +620,46 @@ export default function TherapistSlide() {
 
   const topCards = waitingList.slice(0, TOP_COUNT);
   const extraWaiting = waitingList.slice(TOP_COUNT);
-
-  // Paginated lists
   const totalExtraPages = Math.ceil(extraWaiting.length / extraPageSize);
-  const paginatedExtraWaiting = extraWaiting.slice(
+  const paginatedExtra = extraWaiting.slice(
     (extraPage - 1) * extraPageSize,
     extraPage * extraPageSize,
   );
 
-  const totalTreatingPages = Math.ceil(treatingList.length / treatingPageSize);
-  const paginatedTreating = treatingList.slice(
-    (treatingPage - 1) * treatingPageSize,
-    treatingPage * treatingPageSize,
-  );
-
-  const total = topCards.length;
-  const maxIndex = Math.max(0, total - 1);
-
+  const maxIndex = Math.max(0, topCards.length - 1);
   const selectedBranchName =
     branches.find((b) => b.id === selectedBranch)?.name || "";
 
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+  const branchOptions = branches.map((b) => ({
+    label: `${b.name} (${b.city})`,
+    value: b.id,
+  }));
+  const positionOptions = [
+    { label: "Semua Posisi", value: 0 },
+    ...positions.map((p) => ({ label: p.name, value: p.id })),
+  ];
 
-  const next = useCallback(() => {
-    setCurrent((c) => (c >= maxIndex ? 0 : c + 1));
-    setProgress(0);
-  }, [maxIndex]);
-
-  const prev = useCallback(() => {
-    setCurrent((c) => (c <= 0 ? maxIndex : c - 1));
-    setProgress(0);
-  }, [maxIndex]);
-
-  const goTo = (i: number) => {
-    setCurrent(i);
-    setProgress(0);
-  };
+  // ── Navigation ──────────────────────────────────────────────────────────────
+  const next = useCallback(
+    () => setCurrent((c) => (c >= maxIndex ? 0 : c + 1)),
+    [maxIndex],
+  );
+  const prev = useCallback(
+    () => setCurrent((c) => (c <= 0 ? maxIndex : c - 1)),
+    [maxIndex],
+  );
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
   };
-
   const handleTouchMove = (e: React.TouchEvent) => {
     touchEndX.current = e.touches[0].clientX;
   };
-
   const handleTouchEnd = () => {
     if (touchStartX.current === null || touchEndX.current === null) return;
     const diff = touchStartX.current - touchEndX.current;
     if (Math.abs(diff) > 40) {
-      if (diff > 0) next();
-      else prev();
+      diff > 0 ? next() : prev();
     }
     touchStartX.current = null;
     touchEndX.current = null;
@@ -472,29 +670,59 @@ export default function TherapistSlide() {
       prev.map((t) => (t.id === id ? { ...t, status: "do treatment" } : t)),
     );
     setCurrent(0);
-    setProgress(0);
   };
 
-  const handleFinish = (id: number) => {
-    setTherapists((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, status: "waiting" } : t)),
-    );
+  // ── Rank colors ─────────────────────────────────────────────────────────────
+  const rankStyle = (rank: number) => {
+    if (rank === 1) return { bg: "#fef3c7", text: "#92400e" };
+    if (rank === 2) return { bg: "#f1f5f9", text: "#475569" };
+    if (rank === 3) return { bg: "#fef9ec", text: "#92400e" };
+    return { bg: "#f8fafc", text: "#94a3b8" };
   };
 
+  const statusBadgeStyle = (status: string): React.CSSProperties => {
+    if (status === "completed")
+      return {
+        background: "#ecfdf5",
+        color: "#065f46",
+        border: "1px solid #a7f3d0",
+      };
+    if (status === "pending")
+      return {
+        background: "#fffbeb",
+        color: "#92400e",
+        border: "1px solid #fcd34d",
+      };
+    if (status === "claimed")
+      return {
+        background: "#eff6ff",
+        color: "#1e40af",
+        border: "1px solid #bfdbfe",
+      };
+    return {
+      background: "#f8fafc",
+      color: "#64748b",
+      border: "1px solid #e2e8f0",
+    };
+  };
+
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div
-      id="queue-page-container"
-      className={`w-full transition-all space-y-6 ${
-        isFullscreen ? "p-8 bg-slate-50 overflow-y-auto h-screen" : "px-4 py-6"
-      }`}
-    >
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div id="queue-page-container" style={S.page(isFullscreen)}>
+      <style>{`
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        #queue-page-container *::-webkit-scrollbar { width: 4px; }
+        #queue-page-container *::-webkit-scrollbar-track { background: transparent; }
+        #queue-page-container *::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 2px; }
+        .qt-row-hover:hover { background: #f8fafc; }
+        .lb-row-hover:hover { background: #f8fafc; }
+      `}</style>
+
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <div style={S.header}>
         <div>
-          <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            Kehadiran Therapist
-          </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <h2 style={S.h2}>Kehadiran Therapist</h2>
+          <p style={S.dateTxt}>
             {currentTime.toLocaleDateString("id-ID", {
               weekday: "long",
               day: "numeric",
@@ -503,45 +731,17 @@ export default function TherapistSlide() {
             })}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Fullscreen Toggle Button */}
-          <button
-            onClick={toggleFullscreen}
-            className="flex items-center gap-2 h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold active:scale-95 transition-all text-xs border border-slate-200 shadow-sm"
-          >
-            <svg
-              style={{
-                width: "14px",
-                height: "14px",
-                fill: "none",
-                stroke: "currentColor",
-                strokeWidth: 2,
-              }}
-              viewBox="0 0 24 24"
-            >
-              {isFullscreen ? (
-                <path
-                  d="M4 14h6v6M10 14l-7 7M20 10h-6V4M14 10l7-7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              ) : (
-                <path
-                  d="M8 3H5a2 2 0 00-2 2v3M21 8V5a2 2 0 00-2-2h-3M3 16v3a2 2 0 002 2h3M16 21h3a2 2 0 002-2v-3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              )}
-            </svg>
-            <span>{isFullscreen ? "Keluar Layar Penuh" : "Layar Penuh"}</span>
+        <div style={S.controlsRow}>
+          <button onClick={toggleFullscreen} style={S.fsBtn}>
+            <FullscreenIcon active={isFullscreen} />
+            {isFullscreen ? "Keluar Layar Penuh" : "Layar Penuh"}
           </button>
-
           <UseSelect
             options={positionOptions}
             value={selectedPositionId}
             onChange={(value) => setSelectedPositionId(value as number)}
             placeholder="Semua Posisi"
-            className="w-44"
+            className="w-40"
             allowClear={false}
           />
           <UseSelect
@@ -551,717 +751,834 @@ export default function TherapistSlide() {
             placeholder="Pilih Cabang"
             loading={loadingBranches}
             showSearch
-            className="w-48"
+            className="w-44"
             allowClear={false}
           />
         </div>
       </div>
 
-      {/* Grid Layout containing left & right columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* LEFT COLUMN: Queue Slider and Tables */}
-        <div className="lg:col-span-8 space-y-6">
-          {/* Summary Bar */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 rounded-lg px-3 py-1.5">
-              <span className="w-2 h-2 rounded-full bg-slate-400" />
-              <span className="text-xs font-medium text-slate-600">
-                {waitingList.length} menunggu
+      {/* ── Stat chips ─────────────────────────────────────────────────────── */}
+      <div style={S.statBar}>
+        <div style={S.chip(false)}>
+          <span style={S.dot(false)} />
+          <span>{waitingList.length} menunggu</span>
+        </div>
+        <div style={S.chip(true)}>
+          <span style={S.dot(true)} />
+          <span>{treatingList.length} sedang treatment</span>
+        </div>
+      </div>
+
+      {/* ── Main grid ──────────────────────────────────────────────────────── */}
+      <div style={S.mainGrid}>
+        {/* ── LEFT COLUMN ──────────────────────────────────────────────────── */}
+        <div style={S.leftCol}>
+          {/* Section label + counter */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexShrink: 0,
+            }}
+          >
+            <span style={S.sectionLabel}>Menunggu Giliran</span>
+            {topCards.length > 0 && (
+              <span style={{ fontSize: 11, color: "#94a3b8" }}>
+                {current + 1} / {topCards.length}
               </span>
-            </div>
-            <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-medium text-emerald-700">
-                {treatingList.length} sedang treatment
-              </span>
-            </div>
+            )}
           </div>
 
-          {/* ── TOP CARDS — WAITING ───────────────────────────── */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
-                Menunggu Giliran
-              </p>
-              {total > 0 && (
-                <span className="text-xs text-slate-400">
-                  {current + 1} / {total}
-                </span>
-              )}
-            </div>
-
-            {topCards.length === 0 ? (
-              <div className="bg-slate-50 border border-slate-100 rounded-2xl px-6 py-10 text-center">
-                <p className="text-slate-400 text-sm">
-                  Tidak ada antrian menunggu
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* Progress Bar */}
-                <div className="w-full h-0.5 bg-slate-100 rounded-full mb-4 overflow-hidden">
+          {/* Top 3 cards */}
+          {loadingTherapists ? (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3,1fr)",
+                gap: 12,
+                flexShrink: 0,
+              }}
+            >
+              {[0, 1, 2].map((i) => (
+                <div key={i} style={{ ...S.card(false), minHeight: 140 }}>
                   <div
-                    className="h-full bg-blue-400 rounded-full"
-                    style={{ width: progress + "%" }}
+                    style={{
+                      width: "60%",
+                      height: 10,
+                      background: "#f1f5f9",
+                      borderRadius: 4,
+                    }}
                   />
                 </div>
-
+              ))}
+            </div>
+          ) : topCards.length === 0 ? (
+            <div
+              style={{
+                flexShrink: 0,
+                background: "#f8fafc",
+                border: "1px solid #e8edf3",
+                borderRadius: 14,
+                padding: "28px 0",
+                textAlign: "center",
+                fontSize: 13,
+                color: "#94a3b8",
+              }}
+            >
+              Tidak ada antrian menunggu
+            </div>
+          ) : (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3,1fr)",
+                gap: 12,
+                flexShrink: 0,
+              }}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              {topCards.map((therapist, index) => (
                 <div
-                  className="w-full"
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
+                  key={therapist.id}
+                  style={S.card(index === current)}
+                  onClick={() => setCurrent(index)}
                 >
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-1 py-1">
-                    {topCards.map((therapist, index) => {
-                      const isActive = index === current;
-                      const estWait = getEstWait(index);
-
-                      return (
-                        <div
-                          key={therapist.id}
-                          className={
-                            "relative rounded-2xl border shadow-sm p-5 flex flex-col items-center gap-3 bg-white transition-all duration-300 cursor-pointer hover:shadow-md " +
-                            (isActive
-                              ? "ring-2 ring-blue-400 ring-offset-2 border-blue-100"
-                              : "border-slate-100")
-                          }
-                          onClick={() => goTo(index)}
-                        >
-                          {/* Queue Number */}
-                          <div className="absolute top-3 left-3 w-7 h-7 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold">
-                            {index + 1}
-                          </div>
-
-                          {/* Avatar */}
-                          <div className="relative mt-2">
-                            <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xl font-bold">
-                              {getInitials(therapist.employeeName)}
-                            </div>
-                          </div>
-
-                          {/* Name */}
-                          <div className="text-center">
-                            <p className="font-bold text-slate-800 text-sm leading-tight">
-                              {therapist.employeeName}
-                            </p>
-                            <p className="text-xs text-slate-400 mt-0.5">
-                              {therapist.position}
-                            </p>
-                          </div>
-
-                          {/* Status */}
-                          <div className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 flex-shrink-0" />
-                            Menunggu
-                          </div>
-
-                          {/* Est Wait */}
-                          <div className="flex items-center gap-1 text-xs text-slate-500 w-full justify-center">
-                            <svg
-                              className="w-3 h-3 text-slate-400 flex-shrink-0"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            {/* <span className="font-medium">{estWait}</span> */}
-                            <span className="text-slate-300">•</span>
-                            <span className="text-slate-400">
-                              {formatTime(therapist.dateTime)}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div style={S.cardNum}>{index + 1}</div>
+                  <div style={S.avatar()}>
+                    {getInitials(therapist.employeeName)}
+                  </div>
+                  <div>
+                    <div style={S.cardName}>{therapist.employeeName}</div>
+                    <div style={S.cardPos}>{therapist.position}</div>
+                  </div>
+                  <div style={S.cardStatus}>
+                    <span
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        background: "#94a3b8",
+                      }}
+                    />
+                    Menunggu
+                  </div>
+                  <div style={S.cardTime}>
+                    <svg
+                      width={10}
+                      height={10}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#94a3b8"
+                      strokeWidth={2}
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 6v6l4 2" strokeLinecap="round" />
+                    </svg>
+                    {formatTime(therapist.dateTime)}
                   </div>
                 </div>
-
-                {/* Dot Navigation */}
-                {total > 1 && (
-                  <div className="flex items-center justify-center gap-3 mt-4">
-                    <button
-                      onClick={prev}
-                      className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-slate-50 transition-all"
-                    >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 19l-7-7 7-7"
-                        />
-                      </svg>
-                    </button>
-                    <div className="flex gap-1.5 items-center">
-                      {topCards.map((_, i) => (
-                        <button
-                          key={i}
-                          onClick={() => goTo(i)}
-                          className={
-                            "h-1.5 rounded-full transition-all duration-200 " +
-                            (i === current
-                              ? "w-5 bg-blue-500"
-                              : "w-1.5 bg-slate-300")
-                          }
-                        />
-                      ))}
-                    </div>
-                    <button
-                      onClick={next}
-                      className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-slate-50 transition-all"
-                    >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Extra waiting (beyond top 3) */}
-            {extraWaiting.length > 0 && (
-              <div className="mt-4 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100">
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
-                    Antrian Selanjutnya
-                  </p>
-                </div>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-50">
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-400 w-10">
-                        No
-                      </th>
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-400">
-                        Nama
-                      </th>
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-400 hidden sm:table-cell">
-                        Datang
-                      </th>
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-400 hidden sm:table-cell">
-                        Est. Tunggu
-                      </th>
-                      <th className="px-4 py-2.5" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedExtraWaiting.map((therapist, i) => {
-                      const queuePos =
-                        TOP_COUNT + (extraPage - 1) * extraPageSize + i;
-                      return (
-                        <tr
-                          key={therapist.id}
-                          className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors"
-                        >
-                          <td className="px-4 py-3">
-                            <div className="w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold">
-                              {queuePos + 1}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                                {getInitials(therapist.employeeName)}
-                              </div>
-                              <div>
-                                <p className="font-semibold text-slate-800 text-sm leading-tight">
-                                  {therapist.employeeName}
-                                </p>
-                                <p className="text-xs text-slate-400">
-                                  {therapist.position}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-xs text-slate-500 hidden sm:table-cell">
-                            {formatTime(therapist.dateTime)}
-                          </td>
-                          <td className="px-4 py-3 text-xs text-slate-500 hidden sm:table-cell">
-                            {getEstWait(queuePos)}
-                          </td>
-                          <td className="px-4 py-3">
-                            <button
-                              onClick={() => handleStartTreatment(therapist.id)}
-                              className="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-semibold transition-colors"
-                            >
-                              Mulai
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-
-                {/* Frontend Pagination Controls for Extra Waiting */}
-                {totalExtraPages > 1 && (
-                  <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-t border-slate-100">
-                    <span className="text-xs text-slate-400 font-medium">
-                      Halaman {extraPage} dari {totalExtraPages} (Total{" "}
-                      {extraWaiting.length} antrian)
-                    </span>
-                    <div className="flex gap-2">
-                      <button
-                        disabled={extraPage === 1}
-                        onClick={() => setExtraPage((p) => Math.max(1, p - 1))}
-                        className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-bold transition-all"
-                      >
-                        Sebelumnya
-                      </button>
-                      <button
-                        disabled={extraPage === totalExtraPages}
-                        onClick={() =>
-                          setExtraPage((p) => Math.min(totalExtraPages, p + 1))
-                        }
-                        className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-bold transition-all"
-                      >
-                        Selanjutnya
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* ── BOTTOM TABLE — DO TREATMENT ───────────────────── */}
-          {treatingList.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">
-                Sedang Treatment
-              </p>
-              <div className="bg-emerald-50 rounded-2xl border border-emerald-100 shadow-sm overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-emerald-100">
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-emerald-600 uppercase tracking-wide">
-                        Nama
-                      </th>
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-emerald-600 uppercase tracking-wide hidden sm:table-cell">
-                        Mulai
-                      </th>
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-emerald-600 uppercase tracking-wide">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedTreating.map((therapist) => (
-                      <tr
-                        key={therapist.id}
-                        className="border-b border-emerald-100 last:border-0"
-                      >
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-full bg-emerald-200 text-emerald-800 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                              {getInitials(therapist.employeeName)}
-                            </div>
-                            <div>
-                              <p className="font-semibold text-slate-800 text-sm leading-tight">
-                                {therapist.employeeName}
-                              </p>
-                              <p className="text-xs text-slate-500">
-                                {therapist.position}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-slate-500 hidden sm:table-cell">
-                          {formatTime(therapist.dateTime)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            Do Treatment
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                {/* Frontend Pagination Controls for Treating */}
-                {totalTreatingPages > 1 && (
-                  <div className="flex items-center justify-between px-4 py-3 bg-emerald-100/50 border-t border-emerald-100">
-                    <span className="text-xs text-emerald-700 font-medium">
-                      Halaman {treatingPage} dari {totalTreatingPages} (Total{" "}
-                      {treatingList.length} terapis)
-                    </span>
-                    <div className="flex gap-2">
-                      <button
-                        disabled={treatingPage === 1}
-                        onClick={() =>
-                          setTreatingPage((p) => Math.max(1, p - 1))
-                        }
-                        className="px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-bold transition-all"
-                      >
-                        Sebelumnya
-                      </button>
-                      <button
-                        disabled={treatingPage === totalTreatingPages}
-                        onClick={() =>
-                          setTreatingPage((p) =>
-                            Math.min(totalTreatingPages, p + 1),
-                          )
-                        }
-                        className="px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-bold transition-all"
-                      >
-                        Selanjutnya
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              ))}
             </div>
           )}
 
-          <p className="text-center text-xs text-slate-300 pt-2">
-            Geser untuk navigasi • Klik untuk pilih
-          </p>
+          {/* Dot navigation */}
+          {topCards.length > 1 && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                flexShrink: 0,
+              }}
+            >
+              <button
+                onClick={prev}
+                style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: 6,
+                  border: "1px solid #e2e8f0",
+                  background: "#fff",
+                  color: "#94a3b8",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
+              >
+                <svg
+                  width={10}
+                  height={10}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path d="M15 19l-7-7 7-7" strokeLinecap="round" />
+                </svg>
+              </button>
+              {topCards.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrent(i)}
+                  style={{
+                    border: "none",
+                    background: "none",
+                    padding: 2,
+                    cursor: "pointer",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: 4,
+                      borderRadius: 2,
+                      width: i === current ? 20 : 6,
+                      background: i === current ? "#60a5fa" : "#e2e8f0",
+                      transition: "all 0.2s",
+                    }}
+                  />
+                </button>
+              ))}
+              <button
+                onClick={next}
+                style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: 6,
+                  border: "1px solid #e2e8f0",
+                  background: "#fff",
+                  color: "#94a3b8",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
+              >
+                <svg
+                  width={10}
+                  height={10}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path d="M9 5l7 7-7 7" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+          )}
+
+          {/* Extra waiting table */}
+          <div style={S.tableCard}>
+            <div style={S.tableHead}>
+              <span style={S.sectionLabel}>Antrian Selanjutnya</span>
+              {extraWaiting.length > 0 && (
+                <span style={{ fontSize: 10, color: "#94a3b8" }}>
+                  {extraWaiting.length} antrian
+                </span>
+              )}
+            </div>
+            <div style={S.tableBody}>
+              {extraWaiting.length === 0 ? (
+                <div
+                  style={{
+                    padding: "20px 0",
+                    textAlign: "center",
+                    fontSize: 12,
+                    color: "#94a3b8",
+                  }}
+                >
+                  Tidak ada antrian selanjutnya
+                </div>
+              ) : (
+                <>
+                  {/* Table header row */}
+                  <div
+                    style={{
+                      ...S.tableRow,
+                      background: "#f8fafc",
+                      borderBottom: "1px solid #e8edf3",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 10,
+                        color: "#94a3b8",
+                        fontWeight: 600,
+                      }}
+                    >
+                      #
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 10,
+                        color: "#94a3b8",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Nama
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 10,
+                        color: "#94a3b8",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Datang
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 10,
+                        color: "#94a3b8",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Est. Tunggu
+                    </div>
+                    <div />
+                  </div>
+                  {paginatedExtra.map((therapist, i) => {
+                    const queuePos =
+                      TOP_COUNT + (extraPage - 1) * extraPageSize + i;
+                    return (
+                      <div
+                        key={therapist.id}
+                        className="qt-row-hover"
+                        style={S.tableRow}
+                      >
+                        <div
+                          style={{
+                            width: 22,
+                            height: 22,
+                            borderRadius: "50%",
+                            background: "#f1f5f9",
+                            color: "#64748b",
+                            fontSize: 10,
+                            fontWeight: 700,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {queuePos + 1}
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            minWidth: 0,
+                          }}
+                        >
+                          <div style={S.avatar()}>
+                            {getInitials(therapist.employeeName)}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div
+                              style={{
+                                fontSize: 12,
+                                fontWeight: 600,
+                                color: "#1e293b",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {therapist.employeeName}
+                            </div>
+                            <div style={{ fontSize: 10, color: "#94a3b8" }}>
+                              {therapist.position}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ fontSize: 11, color: "#64748b" }}>
+                          {formatTime(therapist.dateTime)}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                          {getEstWait(queuePos)}
+                        </div>
+                        <button
+                          onClick={() => handleStartTreatment(therapist.id)}
+                          style={{
+                            padding: "4px 8px",
+                            borderRadius: 6,
+                            border: "1px solid #bfdbfe",
+                            background: "#eff6ff",
+                            color: "#1d4ed8",
+                            fontSize: 10,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Mulai
+                        </button>
+                      </div>
+                    );
+                  })}
+
+                  {/* Pagination */}
+                  {totalExtraPages > 1 && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "8px 16px",
+                        background: "#f8fafc",
+                        borderTop: "1px solid #e8edf3",
+                      }}
+                    >
+                      <span style={{ fontSize: 10, color: "#94a3b8" }}>
+                        Hal. {extraPage} / {totalExtraPages}
+                      </span>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button
+                          disabled={extraPage === 1}
+                          onClick={() =>
+                            setExtraPage((p) => Math.max(1, p - 1))
+                          }
+                          style={{
+                            padding: "3px 8px",
+                            borderRadius: 6,
+                            border: "1px solid #e2e8f0",
+                            background: "#fff",
+                            color: "#64748b",
+                            fontSize: 10,
+                            fontWeight: 600,
+                            cursor: extraPage === 1 ? "not-allowed" : "pointer",
+                            opacity: extraPage === 1 ? 0.4 : 1,
+                          }}
+                        >
+                          ← Prev
+                        </button>
+                        <button
+                          disabled={extraPage === totalExtraPages}
+                          onClick={() =>
+                            setExtraPage((p) =>
+                              Math.min(totalExtraPages, p + 1),
+                            )
+                          }
+                          style={{
+                            padding: "3px 8px",
+                            borderRadius: 6,
+                            border: "1px solid #e2e8f0",
+                            background: "#fff",
+                            color: "#64748b",
+                            fontSize: 10,
+                            fontWeight: 600,
+                            cursor:
+                              extraPage === totalExtraPages
+                                ? "not-allowed"
+                                : "pointer",
+                            opacity: extraPage === totalExtraPages ? 0.4 : 1,
+                          }}
+                        >
+                          Next →
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* RIGHT COLUMN: Recent Sessions & Today's Leaderboard Widget */}
-        <div className="lg:col-span-4 space-y-6">
-          {/* Recent Sessions Widget */}
-          <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">📋</span>
+        {/* ── RIGHT COLUMN ─────────────────────────────────────────────────── */}
+        <div style={S.rightCol}>
+          {/* Recent Sessions */}
+          <div style={S.widgetCard}>
+            <div style={S.widgetHead}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 8,
+                    background: "#ecfdf5",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <svg
+                    width={13}
+                    height={13}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#059669"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                  >
+                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
                 <div>
-                  <h3 className="font-bold text-slate-800 text-sm">
+                  <div
+                    style={{ fontSize: 12, fontWeight: 600, color: "#1e293b" }}
+                  >
                     Sesi Terbaru
-                  </h3>
-                  <p className="text-[10px] text-slate-400 font-medium">
-                    Hari Ini
-                  </p>
+                  </div>
+                  <div style={{ fontSize: 10, color: "#94a3b8" }}>Hari ini</div>
                 </div>
               </div>
             </div>
-
-            {loadingRecentSessions ? (
-              <div className="py-12 flex flex-col items-center justify-center gap-2">
-                <svg
-                  className="animate-spin"
+            <div style={S.widgetBody}>
+              {loadingRecentSessions ? (
+                <Spinner color="#059669" />
+              ) : recentSessions.length === 0 ? (
+                <div
                   style={{
-                    width: "24px",
-                    height: "24px",
-                    fill: "none",
-                    stroke: "#3b82f6",
-                    strokeWidth: 3,
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    color: "#94a3b8",
+                    fontSize: 12,
                   }}
-                  viewBox="0 0 24 24"
                 >
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="rgba(59,130,246,0.2)"
-                  />
-                  <path d="M12 2C6.477 2 2 6.477 2 12" strokeLinecap="round" />
-                </svg>
-                <span className="text-xs text-slate-400 font-medium">
-                  Memuat sesi...
-                </span>
-              </div>
-            ) : recentSessions.length === 0 ? (
-              <div className="py-12 flex flex-col items-center justify-center gap-2 text-slate-400 text-center">
-                <span className="text-2xl">📝</span>
-                <span className="text-xs font-semibold">
+                  <svg
+                    width={24}
+                    height={24}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#cbd5e1"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
                   Belum ada sesi hari ini
-                </span>
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-                {recentSessions.map((session: any, index: number) => {
-                  const isTop3 = index < 3;
-                  const rankColors = [
-                    "from-amber-400 to-yellow-500 text-white shadow-amber-500/20", // 1st
-                    "from-slate-300 to-slate-400 text-slate-800 shadow-slate-400/20", // 2nd
-                    "from-amber-600 to-amber-700 text-white shadow-amber-700/20", // 3rd
-                  ];
-
-                  return (
-                    <div
-                      key={session.id}
-                      className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
-                        index === 0
-                          ? "bg-blue-50/40 border-blue-200/60 shadow-sm shadow-blue-500/5"
-                          : "bg-slate-50/50 border-slate-100 hover:border-slate-200"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        {/* Rank Badge */}
-                        {/* <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center font-black text-xs shadow-sm bg-gradient-to-br flex-shrink-0 ${
-                            isTop3
-                              ? rankColors[index]
-                              : "bg-slate-100 text-slate-600 border border-slate-200"
-                          }`}
-                        >
-                          {index + 1}
-                        </div> */}
-
-                        {/* Session Info */}
-                        <div className="min-w-0 flex-1">
-                          {/* Session Code */}
-                          <div className="text-[10px] font-bold text-slate-600 mb-0.5">
-                            {session.sessionCode}
-                          </div>
-
-                          {/* Member Name */}
-                          {/* <div className="font-bold text-slate-800 text-xs truncate">
-                            {session.memberName || "N/A"}
-                          </div> */}
-
-                          {/* Service & Therapist */}
-                          <div className="text-[9px] text-slate-800 truncate mt-0.5">
-                            {session.serviceName} •{" "}
-                            {session.therapistName || "N/A"}
-                          </div>
-
-                          {/* Date & Time */}
-                          <div className="flex items-center gap-1 text-[9px] text-slate-400 mt-0.5">
-                            <span>📅</span>
-                            <span>{session.sessionDate}</span>
-                            <span className="mx-1">•</span>
-                            <span>⏰</span>
-                            <span>
-                              {session.scheduledTime?.substring(0, 5)}
-                            </span>
-                          </div>
-                        </div>
+                </div>
+              ) : (
+                recentSessions.map((session: any, index: number) => (
+                  <div
+                    key={session.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 8,
+                      padding: "8px 10px",
+                      borderRadius: 10,
+                      border: `1px solid ${index === 0 ? "#bfdbfe" : "#f1f5f9"}`,
+                      background: index === 0 ? "#eff6ff" : "#fafafa",
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 600,
+                          color: "#64748b",
+                        }}
+                      >
+                        {session.sessionCode}
                       </div>
-
-                      {/* Right Side: Status & Price */}
-                      <div className="text-right flex-shrink-0 pl-2">
-                        {/* Status Badge */}
-                        <span
-                          className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                            session.status === "completed"
-                              ? "bg-emerald-100 text-emerald-700"
-                              : session.status === "pending"
-                                ? "bg-amber-100 text-amber-700"
-                                : session.status === "claimed"
-                                  ? "bg-blue-100 text-blue-700"
-                                  : "bg-slate-100 text-slate-600"
-                          }`}
-                        >
-                          {session.statusName}
-                        </span>
-
-                        {/* Room if available */}
-                        {session.roomName && (
-                          <div className="text-[9px] text-slate-400 font-semibold mt-1">
-                            🚪 {session.roomName}
-                          </div>
-                        )}
-
-                        {/* Rating - Only show if rating exists */}
-                        {session.rating !== null &&
-                          session.rating !== undefined && (
-                            <div className="flex items-center justify-end gap-0.5 mt-1">
-                              {Array.from({ length: 5 }).map((_, i) => (
-                                <svg
-                                  key={i}
-                                  style={{
-                                    width: "8px",
-                                    height: "8px",
-                                    fill:
-                                      i < session.rating ? "#eab308" : "none",
-                                    stroke: "#eab308",
-                                    strokeWidth: 1.5,
-                                  }}
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                                </svg>
-                              ))}
-                              <span className="text-[8px] text-slate-400 font-bold ml-1">
-                                {session.rating.toFixed(1)}
-                              </span>
-                            </div>
-                          )}
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: "#1e293b",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          marginTop: 1,
+                        }}
+                      >
+                        {session.serviceName} · {session.therapistName || "N/A"}
+                      </div>
+                      <div
+                        style={{ fontSize: 9, color: "#94a3b8", marginTop: 2 }}
+                      >
+                        {session.sessionDate} ·{" "}
+                        {session.scheduledTime?.substring(0, 5)}
+                        {session.roomName && ` · ${session.roomName}`}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                    <div style={{ flexShrink: 0, textAlign: "right" }}>
+                      <span
+                        style={{
+                          fontSize: 9,
+                          fontWeight: 600,
+                          padding: "3px 7px",
+                          borderRadius: 10,
+                          ...statusBadgeStyle(session.status),
+                        }}
+                      >
+                        {session.statusName}
+                      </span>
+                      {session.rating != null && (
+                        <div
+                          style={{
+                            marginTop: 4,
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            alignItems: "center",
+                            gap: 2,
+                          }}
+                        >
+                          <StarRating rating={session.rating} size={8} />
+                          <span
+                            style={{
+                              fontSize: 8,
+                              color: "#94a3b8",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {session.rating.toFixed(1)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
-          {/* Today's Leaderboard Widget */}
-          <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">🏆</span>
+          {/* Leaderboard */}
+          <div style={S.widgetCard}>
+            <div style={S.widgetHead}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 8,
+                    background: "#fffbeb",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <svg
+                    width={13}
+                    height={13}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#d97706"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                  >
+                    <path d="M8 21H5a2 2 0 01-2-2v-1a5 5 0 015-5h8a5 5 0 015 5v1a2 2 0 01-2 2h-3M12 11a4 4 0 100-8 4 4 0 000 8z" />
+                  </svg>
+                </div>
                 <div>
-                  <h3 className="font-bold text-slate-800 text-sm">
+                  <div
+                    style={{ fontSize: 12, fontWeight: 600, color: "#1e293b" }}
+                  >
                     Leaderboard Hari Ini
-                  </h3>
-                  <p className="text-[10px] text-slate-400 font-medium">
-                    Therapist Paling Aktif
-                  </p>
+                  </div>
+                  <div style={{ fontSize: 10, color: "#94a3b8" }}>
+                    Therapist paling aktif
+                  </div>
                 </div>
               </div>
               {selectedBranchName && (
-                <span className="text-[10px] bg-amber-50 text-amber-600 font-bold px-2 py-0.5 rounded-full border border-amber-100">
+                <span
+                  style={{
+                    fontSize: 10,
+                    background: "#fffbeb",
+                    color: "#92400e",
+                    border: "1px solid #fcd34d",
+                    padding: "3px 8px",
+                    borderRadius: 10,
+                    fontWeight: 500,
+                  }}
+                >
                   {selectedBranchName}
                 </span>
               )}
             </div>
-
-            {loadingLeaderboard ? (
-              <div className="py-12 flex flex-col items-center justify-center gap-2">
-                <svg
-                  className="animate-spin"
+            <div style={S.widgetBody}>
+              {loadingLeaderboard ? (
+                <Spinner color="#d97706" />
+              ) : leaderboard.length === 0 ? (
+                <div
                   style={{
-                    width: "24px",
-                    height: "24px",
-                    fill: "none",
-                    stroke: "#eab308",
-                    strokeWidth: 3,
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    color: "#94a3b8",
+                    fontSize: 12,
                   }}
-                  viewBox="0 0 24 24"
                 >
-                  <circle cx="12" cy="12" r="10" stroke="rgba(234,179,8,0.2)" />
-                  <path d="M12 2C6.477 2 2 6.477 2 12" strokeLinecap="round" />
-                </svg>
-                <span className="text-xs text-slate-400 font-medium">
-                  Memuat peringkat...
-                </span>
-              </div>
-            ) : leaderboard.length === 0 ? (
-              <div className="py-12 flex flex-col items-center justify-center gap-2 text-slate-400 text-center">
-                <span className="text-2xl">✨</span>
-                <span className="text-xs font-semibold">
-                  Belum ada layanan selesai hari ini
-                </span>
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-                {leaderboard.map((t: any) => {
-                  const isTop3 = t.rank <= 3;
-                  const rankColors = [
-                    "from-amber-400 to-yellow-500 text-white shadow-amber-500/20", // 1st
-                    "from-slate-300 to-slate-400 text-slate-800 shadow-slate-400/20", // 2nd
-                    "from-amber-600 to-amber-700 text-white shadow-amber-700/20", // 3rd
-                  ];
+                  <svg
+                    width={24}
+                    height={24}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#cbd5e1"
+                    strokeWidth={1.5}
+                    strokeLinecap="round"
+                  >
+                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                  </svg>
+                  Belum ada layanan selesai
+                </div>
+              ) : (
+                leaderboard.map((t: any) => {
+                  const rs = rankStyle(t.rank);
                   return (
                     <div
                       key={t.therapistId}
-                      className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
-                        t.rank === 1
-                          ? "bg-amber-50/40 border-amber-200/60 shadow-sm shadow-amber-500/5"
-                          : "bg-slate-50/50 border-slate-100 hover:border-slate-200"
-                      }`}
+                      className="lb-row-hover"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        padding: "8px 10px",
+                        borderRadius: 10,
+                        border: `1px solid ${t.rank === 1 ? "#fcd34d" : "#f1f5f9"}`,
+                        background: t.rank === 1 ? "#fffbeb" : "#fafafa",
+                      }}
                     >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        {/* Rank Badge */}
-                        <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center font-black text-xs shadow-sm bg-gradient-to-br flex-shrink-0 ${
-                            isTop3
-                              ? rankColors[t.rank - 1]
-                              : "bg-slate-100 text-slate-600 border border-slate-200"
-                          }`}
-                        >
-                          {t.rank}
-                        </div>
+                      {/* Rank badge */}
+                      <div
+                        style={{
+                          width: 22,
+                          height: 22,
+                          borderRadius: "50%",
+                          background: rs.bg,
+                          color: rs.text,
+                          fontSize: 10,
+                          fontWeight: 700,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {t.rank}
+                      </div>
 
-                        {/* Photo/Avatar */}
-                        <div className="relative flex-shrink-0">
-                          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm bg-slate-100 flex items-center justify-center">
-                            {t.therapistPhotoUrl ? (
-                              <img
-                                src={getPhotoUrl(t.therapistPhotoUrl)}
-                                alt={t.therapistName}
-                                className="w-10 h-10 object-cover"
-                              />
-                            ) : (
-                              <div className="text-xs font-bold text-slate-400 uppercase">
-                                {getInitials(t.therapistName)}
-                              </div>
-                            )}
-                          </div>
-                          {t.rank === 1 && (
-                            <span className="absolute -top-1.5 -right-1 text-xs">
-                              👑
-                            </span>
+                      {/* Photo / initials */}
+                      <div style={{ position: "relative", flexShrink: 0 }}>
+                        <div
+                          style={{
+                            width: 30,
+                            height: 30,
+                            borderRadius: "50%",
+                            overflow: "hidden",
+                            background: "#f1f5f9",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: 10,
+                            fontWeight: 600,
+                            color: "#64748b",
+                          }}
+                        >
+                          {t.therapistPhotoUrl ? (
+                            <img
+                              src={getPhotoUrl(t.therapistPhotoUrl)}
+                              alt={t.therapistName}
+                              style={{
+                                width: 30,
+                                height: 30,
+                                objectFit: "cover",
+                              }}
+                            />
+                          ) : (
+                            getInitials(t.therapistName)
                           )}
                         </div>
+                        {t.rank === 1 && (
+                          <span
+                            style={{
+                              position: "absolute",
+                              top: -6,
+                              right: -4,
+                              fontSize: 11,
+                            }}
+                          >
+                            👑
+                          </span>
+                        )}
+                      </div>
 
-                        {/* Name and Rating */}
-                        <div className="min-w-0 flex-1">
-                          <div className="font-bold text-slate-800 text-xs truncate">
-                            {t.therapistName}
-                          </div>
-                          <div className="flex items-center gap-0.5 mt-0.5">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <svg
-                                key={i}
-                                style={{
-                                  width: "10px",
-                                  height: "10px",
-                                  fill:
-                                    i < (t.averageRating ?? 0)
-                                      ? "#eab308"
-                                      : "none",
-                                  stroke: "#eab308",
-                                  strokeWidth: 1.5,
-                                }}
-                                viewBox="0 0 24 24"
-                              >
-                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                              </svg>
-                            ))}
-                            <span className="text-[9px] text-slate-400 font-bold ml-1">
-                              {t.averageRating
-                                ? t.averageRating.toFixed(1)
-                                : "—"}
-                            </span>
-                          </div>
+                      {/* Name + stars */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: "#1e293b",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {t.therapistName}
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 3,
+                            marginTop: 2,
+                          }}
+                        >
+                          <StarRating rating={t.averageRating ?? 0} size={8} />
+                          <span
+                            style={{
+                              fontSize: 9,
+                              color: "#94a3b8",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {t.averageRating ? t.averageRating.toFixed(1) : "—"}
+                          </span>
                         </div>
                       </div>
 
-                      {/* Performance Details */}
-                      <div className="text-right flex-shrink-0 pl-2">
-                        <div className="text-slate-800 font-black text-xs">
-                          {t.totalServices}{" "}
-                          <span className="text-[9px] text-slate-400 font-medium">
+                      {/* Count */}
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        <div
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 700,
+                            color: "#1e293b",
+                          }}
+                        >
+                          {t.totalServices}
+                          <span
+                            style={{
+                              fontSize: 9,
+                              fontWeight: 400,
+                              color: "#94a3b8",
+                              marginLeft: 2,
+                            }}
+                          >
                             Layanan
                           </span>
                         </div>
-                        <div className="text-[9px] text-slate-400 font-semibold mt-0.5">
+                        <div
+                          style={{
+                            fontSize: 9,
+                            color: "#94a3b8",
+                            marginTop: 1,
+                          }}
+                        >
                           {t.totalRatedSessions} ulasan
                         </div>
                       </div>
                     </div>
                   );
-                })}
-              </div>
-            )}
+                })
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -19,6 +19,10 @@ export interface IResBranch {
   isMainBranch: boolean;
   imageUrl: string;
   imageGaleries: string[];
+  commissionType: string;
+  commissionAmount: number;
+  commissionBonusType: string;
+  commissionBonusAmount: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -37,7 +41,11 @@ export interface IReqFormBranch {
   longitude: number;
   isMainBranch: boolean;
   imageUrl: string;
-  ImageGaleries: string[];
+  imageGaleries: string[];
+  commissionType: string;
+  commissionAmount: number;
+  commissionBonusType: string;
+  commissionBonusAmount: number;
 }
 
 export interface IPropsBranch {

@@ -1,96 +1,97 @@
 import { IPaginationResponse } from "./global.iface";
 
 export interface ISummaryRevenue {
-    todayRevenue: number;
-    todayGrowth: number;
-    monthRevenue: number;
-    monthGrowth: number;
-    avgTransaction: number;
-    avgGrowth: number;
-    totalTransactions: number;
-    transactionGrowth: number;
+  todayRevenue: number;
+  todayGrowth: number;
+  monthRevenue: number;
+  monthGrowth: number;
+  avgTransaction: number;
+  avgGrowth: number;
+  totalTransactions: number;
+  transactionGrowth: number;
 }
 
 export interface ISalesPerformance {
-    labels: string[];
-    sales: number[];
-    quantities: number[];
+  labels: string[];
+  sales: number[];
+  quantities: number[];
 }
 
 export interface ITopTherapist {
-    employeeCode: string;
-    name: string;
-    averageRate: number;
-    totalSession: number;
+  employeeCode: string;
+  name: string;
+  averageRate: number;
+  totalSession: number;
 }
 
 export interface IPaymentMethodTotal {
-    labels: string[];
-    values: number[];
+  labels: string[];
+  values: number[];
 }
 
 export interface IRecentSale {
-    id: number;
-    saleCode: string;
-    saleType: string;
-    saleTypeName: string;
-    grandTotal: number;
-    paymentStatus: string;
-    paymentStatusName: string;
-    saleDate: string;
-    memberName: string;
-    memberPhone: string;
-    itemCount: number;
-    paymentMethods: string;
+  id: number;
+  saleCode: string;
+  saleType: string;
+  saleTypeName: string;
+  grandTotal: number;
+  paymentStatus: string;
+  paymentStatusName: string;
+  saleDate: string;
+  memberName: string;
+  memberPhone: string;
+  itemCount: number;
+  paymentMethods: string;
 }
 
 export interface IRecentSession {
-    id: number;
-    sessionCode: string;
-    sessionDate: string;
-    scheduledTime: string;
-    status: string;
-    statusName: string;
-    serviceName: string;
-    memberName: string;
-    memberPhone: string;
-    therapistName: string;
-    roomName: string;
-    price: number;
-    rating: number;
+  id: number;
+  sessionCode: string;
+  sessionDate: string;
+  scheduledTime: string;
+  status: string;
+  statusName: string;
+  serviceName: string;
+  memberName: string;
+  memberPhone: string;
+  therapistName: string;
+  roomName: string;
+  price: number;
+  rating: number;
 }
 
 export interface IPeakHour {
-    labels: string[];
-    values: number[];
+  labels: string[];
+  values: number[];
 }
 
 export interface ICustomerSegmentation {
-    newCustomers: number;
-    returningCustomers: number;
-    totalCustomers: number;
-    newPercentage: number;
-    returningPercentage: number;
+  newCustomers: number;
+  returningCustomers: number;
+  totalCustomers: number;
+  newPercentage: number;
+  returningPercentage: number;
 }
 
 export interface ITopMember {
-    memberCode: string;
-    name: string;
-    phone: string;
-    totalAmountSpent: number;
-    transactionCount: number;
+  memberCode: string;
+  name: string;
+  phone: string;
+  totalAmountSpent: number;
+  transactionCount: number;
 }
 
 export interface ITopService {
-    serviceId: number;
-    serviceName: string;
-    totalRevenue: number;
-    totalQuantity: number;
-    transactionCount: number;
+  serviceId: number;
+  serviceName: string;
+  totalRevenue: number;
+  totalQuantity: number;
+  transactionCount: number;
 }
 
 export interface IDashboardParams {
-    startDate?: string;
-    endDate?: string;
-    period?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  startDate?: string;
+  endDate?: string;
+  period?: "daily" | "weekly" | "monthly" | "yearly";
+  branchId?: number;
 }

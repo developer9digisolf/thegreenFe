@@ -7,7 +7,10 @@ import { BrowseBranch } from "./layouts/browse.layout";
 import { FormBranch } from "./layouts/form.layout";
 import { useAuth } from "@afx/contexts/AuthContext";
 import { BranchOperatingHoursModal } from "./layouts/operating-hours.layout";
-import { ConfirmActionModal, ActionPresets } from "@afx/components/modals/ConfirmActionModal.layout";
+import {
+  ConfirmActionModal,
+  ActionPresets,
+} from "@afx/components/modals/ConfirmActionModal.layout";
 import {
   IActionBranch,
   IStateBranch,
@@ -41,14 +44,18 @@ export default function BranchView() {
   });
 
   const [tempSearch, setTempSearch] = useState<string>("");
-  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number; name: string }>({
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean;
+    id: number;
+    name: string;
+  }>({
     open: false,
     id: 0,
     name: "",
   });
 
   const getPathFromUrl = (url: any) => {
-    return typeof url === "string" ? url : (url?.imageUrl || "");
+    return typeof url === "string" ? url : url?.imageUrl || "";
   };
 
   const handleSearch = () => {
@@ -81,16 +88,26 @@ export default function BranchView() {
     return forms
       .validateFields()
       .then((val) => {
-        const payload = {
+        const payload: any = {
           ...val,
           imageUrl: val.imageUrl ? getPathFromUrl(val.imageUrl) : val.imageUrl,
-          ImageGaleries: val.imageGaleries ? val.imageGaleries.map((url: any) => getPathFromUrl(url)) : [],
+          ImageGaleries: val.imageGaleries
+            ? val.imageGaleries.map((url: any) => getPathFromUrl(url))
+            : [],
+          // Add commission fields
+          commissionType: val.commissionType || "percentage",
+          commissionAmount: val.commissionAmount || 25,
+          commissionBonusType: val.commissionBonusType || "percentage",
+          commissionBonusAmount: val.commissionBonusAmount || 5,
         };
-        
-        // Remove lowercase imageGaleries to match backend casing expectation
-        delete (payload as any).imageGaleries;
 
-        console.log("🚀 [Branch Submit Payload]:", JSON.stringify(payload, null, 2));
+        // Remove lowercase imageGaleries to match backend casing expectation
+        delete payload.imageGaleries;
+
+        console.log(
+          "🚀 [Branch Submit Payload]:",
+          JSON.stringify(payload, null, 2),
+        );
 
         if (formType === "create") {
           useActions<"createBranch">(
@@ -98,7 +115,10 @@ export default function BranchView() {
             [
               payload,
               (code: any) => {
-                const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
+                const isSuccess =
+                  !code ||
+                  String(code) === "20000" ||
+                  String(code).startsWith("2");
                 if (isSuccess) {
                   setTimeout(() => {
                     setOpenFormCreate(false);
@@ -117,7 +137,10 @@ export default function BranchView() {
               branch?.id,
               payload,
               (code: any) => {
-                const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
+                const isSuccess =
+                  !code ||
+                  String(code) === "20000" ||
+                  String(code).startsWith("2");
                 if (isSuccess) {
                   setTimeout(() => {
                     setOpenFormCreate(false);
@@ -142,24 +165,29 @@ export default function BranchView() {
       });
   };
 
-  const handleUpdateGallery = (values: Partial<IReqFormBranch>) => {
+  const handleUpdateGallery = (values: any) => {
     if (branch?.id) {
-      const galleryUrls = values.imageGaleries || forms.getFieldValue('imageGaleries') || [];
-      
+      const galleryUrls =
+        values.imageGaleries || forms.getFieldValue("imageGaleries") || [];
+
       // Send ONLY ImageGaleries for the gallery update request
       const payload = {
         ImageGaleries: galleryUrls.map((url: any) => getPathFromUrl(url)),
       };
-      
-      console.log("📸 [Branch Gallery Update Payload]:", JSON.stringify(payload, null, 2));
-      
+
+      console.log(
+        "📸 [Branch Gallery Update Payload]:",
+        JSON.stringify(payload, null, 2),
+      );
+
       useActions<"updateBranch">(
         "updateBranch",
         [
           branch.id,
           payload,
           (code: any) => {
-            const isSuccess = !code || String(code) === "20000" || String(code).startsWith("2");
+            const isSuccess =
+              !code || String(code) === "20000" || String(code).startsWith("2");
             if (isSuccess) {
               useActions<"getBranch">("getBranch", [branch.id], true);
               getBranches();
@@ -177,7 +205,8 @@ export default function BranchView() {
       [
         id,
         (code: any) => {
-          const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
+          const isSuccess =
+            !code || String(code) === "20000" || String(code).startsWith("2");
           if (isSuccess) {
             setDeleteConfirm({ open: false, id: 0, name: "" });
             getBranches();
@@ -199,24 +228,26 @@ export default function BranchView() {
   return (
     <>
       {!openFormCreate && (
-      <BrowseBranch
-        {...{ page, pageSize, setPage, setPageSize }}
-        onSearch={handleSearch}
-        searchText={tempSearch}
-        setSearchText={setTempSearch}
-        setOpenFormCreate={() => {
-          setFormType("create");
-          setOpenFormCreate(true);
-        }}
-        handleToDetail={(v: number) => handleDetail(v)}
-        handleEdit={(id: number) => {
-          useActions<"getBranch">("getBranch", [id], true);
-          setFormType("update");
-          setOpenFormCreate(true);
-        }}
-        handleDelete={(id: number, name: string) => setDeleteConfirm({ open: true, id, name })}
-        handleOperatingHours={handleOperatingHours}
-      />
+        <BrowseBranch
+          {...{ page, pageSize, setPage, setPageSize }}
+          onSearch={handleSearch}
+          searchText={tempSearch}
+          setSearchText={setTempSearch}
+          setOpenFormCreate={() => {
+            setFormType("create");
+            setOpenFormCreate(true);
+          }}
+          handleToDetail={(v: number) => handleDetail(v)}
+          handleEdit={(id: number) => {
+            useActions<"getBranch">("getBranch", [id], true);
+            setFormType("update");
+            setOpenFormCreate(true);
+          }}
+          handleDelete={(id: number, name: string) =>
+            setDeleteConfirm({ open: true, id, name })
+          }
+          handleOperatingHours={handleOperatingHours}
+        />
       )}
 
       {openFormCreate && (
@@ -248,7 +279,9 @@ export default function BranchView() {
           branchId={operatingHoursModal.branchId}
           branchName={operatingHoursModal.branchName}
           open={operatingHoursModal.open}
-          onClose={() => setOperatingHoursModal({ ...operatingHoursModal, open: false })}
+          onClose={() =>
+            setOperatingHoursModal({ ...operatingHoursModal, open: false })
+          }
         />
       )}
     </>

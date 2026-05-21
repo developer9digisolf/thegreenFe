@@ -10,7 +10,6 @@ import {
   Typography,
   Space,
   Tag,
-  Drawer,
   message,
   Empty,
   Tooltip,
@@ -22,7 +21,6 @@ import {
   CalendarOutlined,
   DollarCircleOutlined,
   SolutionOutlined,
-  UserOutlined,
 } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
 import weekOfYear from "dayjs/plugin/weekOfYear";
@@ -37,6 +35,7 @@ import {
   DateFilterType,
   ICommissionFilterRequest,
 } from "@afx/interfaces/commission.iface";
+import { CommissionDetailDrawer } from "./components/CommissionDetailDrawer";
 
 // Extend dayjs with weekOfYear plugin
 dayjs.extend(weekOfYear);
@@ -44,14 +43,50 @@ dayjs.extend(weekOfYear);
 const { RangePicker } = DatePicker;
 const { Title, Text } = Typography;
 
+// ─── Summary Card Component ─────────────────────────────────────────────────────
+interface SummaryCardProps {
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+  color: "emerald" | "blue" | "indigo" | "amber";
+}
+
+function SummaryCard({ title, value, icon, color }: SummaryCardProps) {
+  const colorMap: Record<string, string> = {
+    emerald: "bg-emerald-50 text-emerald-500",
+    blue: "bg-blue-50 text-blue-500",
+    indigo: "bg-indigo-50 text-indigo-500",
+    amber: "bg-amber-50 text-amber-500",
+  };
+
+  return (
+    <Card className="rounded-2xl border-none shadow-sm hover:shadow-md transition-all">
+      <div className="flex items-center gap-4">
+        <div
+          className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${colorMap[color]}`}
+        >
+          {icon}
+        </div>
+        <div>
+          <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+            {title}
+          </div>
+          <div className="text-xl font-extrabold text-slate-800">{value}</div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ─── Main Page Component ────────────────────────────────────────────────────────
 export default function CommissionsReportPage() {
-  // Filters
+  // ─── Filter States ────────────────────────────────────────────────────────────
   const [dateFilterType, setDateFilterType] = useState<DateFilterType>("Month");
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
   const [search, setSearch] = useState("");
 
-  // Data
+  // ─── Data States ───────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<ICommissionByEmployee[]>([]);
   const [pagination, setPagination] = useState({
@@ -60,7 +95,7 @@ export default function CommissionsReportPage() {
     total: 0,
   });
 
-  // Detail
+  // ─── Detail States ─────────────────────────────────────────────────────────────
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] =
     useState<ICommissionByEmployee | null>(null);
@@ -72,10 +107,11 @@ export default function CommissionsReportPage() {
     total: 0,
   });
 
-  // Summary
+  // ─── Computed Values ───────────────────────────────────────────────────────────
   const totalCommission = data.reduce((acc, curr) => acc + curr.totalAmount, 0);
   const totalSessions = data.reduce((acc, curr) => acc + curr.sessionCount, 0);
 
+  // ─── Fetch Commission Data ─────────────────────────────────────────────────────
   const fetchData = useCallback(
     async (page = 1) => {
       if (!selectedDate && dateFilterType !== "Custom") return;
@@ -105,7 +141,7 @@ export default function CommissionsReportPage() {
 
         const res = await getCommissionsByEmployee(params);
         if (res.success) {
-          setData(res.data);
+          setData(res.data || []);
           setPagination({
             current: res.pagination?.currentPage || 1,
             pageSize: res.pagination?.pageSize || 10,
@@ -123,6 +159,7 @@ export default function CommissionsReportPage() {
     [dateFilterType, selectedDate, dateRange, search, pagination.pageSize],
   );
 
+  // ─── Fetch Session Details ─────────────────────────────────────────────────────
   const fetchSessions = useCallback(
     async (employeeId: number, page = 1) => {
       setLoadingSessions(true);
@@ -149,7 +186,7 @@ export default function CommissionsReportPage() {
 
         const res = await getCommissionSessions(params);
         if (res.success) {
-          setSessions(res.data);
+          setSessions(res.data || []);
           setSessionPagination({
             current: res.pagination?.currentPage || 1,
             pageSize: res.pagination?.pageSize || 10,
@@ -165,10 +202,12 @@ export default function CommissionsReportPage() {
     [dateFilterType, selectedDate, dateRange, sessionPagination.pageSize],
   );
 
+  // ─── Effects ───────────────────────────────────────────────────────────────────
   useEffect(() => {
     fetchData();
   }, [dateFilterType, selectedDate, dateRange]);
 
+  // ─── Export to Excel ───────────────────────────────────────────────────────────
   const handleExport = async () => {
     try {
       const params: ICommissionFilterRequest = {
@@ -203,12 +242,14 @@ export default function CommissionsReportPage() {
     }
   };
 
+  // ─── Show Employee Detail ─────────────────────────────────────────────────────
   const showEmployeeDetail = (employee: ICommissionByEmployee) => {
     setSelectedEmployee(employee);
     setDrawerOpen(true);
     fetchSessions(employee.id, 1);
   };
 
+  // ─── Table Columns ─────────────────────────────────────────────────────────────
   const columns = [
     {
       title: "Nama Karyawan",
@@ -243,7 +284,9 @@ export default function CommissionsReportPage() {
       key: "commissionAmount",
       align: "right" as const,
       render: (amount: number) => (
-        <Text strong>Rp {(amount || 0).toLocaleString("id-ID")}</Text>
+        <Text strong className="text-slate-700">
+          Rp {(amount || 0).toLocaleString("id-ID")}
+        </Text>
       ),
     },
     {
@@ -252,7 +295,10 @@ export default function CommissionsReportPage() {
       key: "bonusAmount",
       align: "right" as const,
       render: (amount: number) => (
-        <Text type={amount > 0 ? "success" : "secondary"}>
+        <Text
+          type={amount > 0 ? "success" : "secondary"}
+          className="font-medium"
+        >
           Rp {(amount || 0).toLocaleString("id-ID")}
         </Text>
       ),
@@ -284,98 +330,7 @@ export default function CommissionsReportPage() {
     },
   ];
 
-  const sessionColumns = [
-    {
-      title: "Sesi",
-      dataIndex: "sessionCode",
-      key: "sessionCode",
-      render: (code: string, record: ICommissionSession) => (
-        <div>
-          <div className="font-mono text-xs font-bold">{code}</div>
-          <div className="text-[10px] text-slate-400">
-            {dayjs(record.sessionDate).format("DD MMM YYYY")}
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "Layanan",
-      dataIndex: "serviceName",
-      key: "serviceName",
-      render: (text: string, record: ICommissionSession) => (
-        <div>
-          <div className="text-sm font-medium">{text}</div>
-          <div className="text-xs text-slate-400">
-            {record.serviceVariantName}
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "Member",
-      dataIndex: "memberName",
-      key: "memberName",
-      render: (text: string) => (
-        <Text className="text-sm">{text || "Guest"}</Text>
-      ),
-    },
-    {
-      title: "Komisi",
-      dataIndex: "totalCommission",
-      key: "totalCommission",
-      align: "right" as const,
-      render: (amount: number) => (
-        <Text strong className="text-xs">
-          Rp {(amount || 0).toLocaleString("id-ID")}
-        </Text>
-      ),
-    },
-    {
-      title: "Rating",
-      dataIndex: "rating",
-      key: "rating",
-      align: "center" as const,
-      render: (rating: number | null) => {
-        if (!rating)
-          return (
-            <Text type="secondary" className="text-xs">
-              -
-            </Text>
-          );
-        const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
-        return (
-          <div className="flex items-center gap-1">
-            <span className="text-amber-400 text-xs">{stars}</span>
-            <span className="text-xs font-bold text-slate-600">{rating}</span>
-          </div>
-        );
-      },
-    },
-    {
-      title: "Komentar",
-      dataIndex: "comment",
-      key: "comment",
-      render: (comment: string | null) => (
-        <Text className="text-xs italic text-slate-500">{comment || "-"}</Text>
-      ),
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status: string) => {
-        let color = "default";
-        if (status === "Completed") color = "success";
-        if (status === "Claimed") color = "processing";
-        return (
-          <Tag color={color} className="text-[10px] uppercase font-bold">
-            {status}
-          </Tag>
-        );
-      },
-    },
-  ];
-
+  // ─── Render ─────────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -405,6 +360,7 @@ export default function CommissionsReportPage() {
       {/* Filters */}
       <Card className="rounded-2xl shadow-sm border-none overflow-visible">
         <div className="flex flex-wrap items-center gap-4">
+          {/* Filter Type */}
           <div className="flex flex-col gap-1">
             <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
               Filter Tipe
@@ -425,6 +381,7 @@ export default function CommissionsReportPage() {
             />
           </div>
 
+          {/* Date Picker */}
           <div className="flex flex-col gap-1">
             <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
               {dateFilterType === "Day"
@@ -460,6 +417,7 @@ export default function CommissionsReportPage() {
             )}
           </div>
 
+          {/* Search */}
           <div className="flex flex-col gap-1 flex-1 min-w-[200px]">
             <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
               Cari Karyawan
@@ -476,6 +434,7 @@ export default function CommissionsReportPage() {
             </div>
           </div>
 
+          {/* Submit Button */}
           <div className="flex flex-col gap-1 justify-end h-full mt-auto">
             <Button
               type="primary"
@@ -503,7 +462,6 @@ export default function CommissionsReportPage() {
           icon={<SolutionOutlined />}
           color="blue"
         />
-
         <SummaryCard
           title="Periode"
           value={
@@ -541,69 +499,20 @@ export default function CommissionsReportPage() {
       </Card>
 
       {/* Detail Drawer */}
-      <Drawer
-        title={
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-lg">
-              {selectedEmployee?.name?.charAt(0) || "U"}
-            </div>
-            <div>
-              <div className="text-lg font-bold text-slate-800">
-                {selectedEmployee?.name}
-              </div>
-              <div className="text-xs text-slate-500">
-                {selectedEmployee?.positionName}
-              </div>
-            </div>
-          </div>
-        }
-        placement="right"
-        width={600}
-        onClose={() => setDrawerOpen(false)}
+      <CommissionDetailDrawer
         open={drawerOpen}
-        styles={{
-          header: { borderBottom: "1px solid #f1f5f9", padding: "20px 24px" },
-          body: { padding: "0" },
-        }}
-        className="premium-drawer"
-      >
-        <div className="p-6 bg-slate-50 border-b border-slate-200">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-              <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">
-                Total Komisi
-              </div>
-              <div className="text-xl font-extrabold text-emerald-600">
-                Rp{" "}
-                {(selectedEmployee?.totalAmount || 0).toLocaleString("id-ID")}
-              </div>
-            </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-              <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">
-                Sesi Terdaftar
-              </div>
-              <div className="text-xl font-extrabold text-blue-600">
-                {selectedEmployee?.sessionCount || 0} Sesi
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <Table
-          columns={sessionColumns}
-          dataSource={sessions}
-          rowKey="id"
-          loading={loadingSessions}
-          pagination={{
-            ...sessionPagination,
-            size: "small",
-            onChange: (page) =>
-              selectedEmployee && fetchSessions(selectedEmployee.id, page),
-            className: "px-6 py-4",
-          }}
-          className="session-table"
-        />
-      </Drawer>
+        onClose={() => setDrawerOpen(false)}
+        employee={selectedEmployee}
+        sessions={sessions}
+        loadingSessions={loadingSessions}
+        sessionPagination={sessionPagination}
+        onSessionPageChange={(page) =>
+          selectedEmployee && fetchSessions(selectedEmployee.id, page)
+        }
+        dateFilterType={dateFilterType}
+        selectedDate={selectedDate}
+        dateRange={dateRange}
+      />
 
       <style jsx global>{`
         .premium-table .ant-table-thead > tr > th {
@@ -633,42 +542,5 @@ export default function CommissionsReportPage() {
         }
       `}</style>
     </div>
-  );
-}
-
-function SummaryCard({
-  title,
-  value,
-  icon,
-  color,
-}: {
-  title: string;
-  value: string;
-  icon: any;
-  color: string;
-}) {
-  const colorMap: any = {
-    emerald: "bg-emerald-50 text-emerald-500",
-    blue: "bg-blue-50 text-blue-500",
-    indigo: "bg-indigo-50 text-indigo-500",
-    amber: "bg-amber-50 text-amber-500",
-  };
-
-  return (
-    <Card className="rounded-2xl border-none shadow-sm hover:shadow-md transition-all">
-      <div className="flex items-center gap-4">
-        <div
-          className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${colorMap[color]}`}
-        >
-          {icon}
-        </div>
-        <div>
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-            {title}
-          </div>
-          <div className="text-xl font-extrabold text-slate-800">{value}</div>
-        </div>
-      </div>
-    </Card>
   );
 }
