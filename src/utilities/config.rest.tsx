@@ -60,6 +60,7 @@ export const rest = {
   memberDetailFull: "members/:id/detail",
   memberCheckPhone: "members/check-phone",
   memberCheckEmail: "members/check-email",
+  memberServicePackages: "members/:id/service-packages",
 
   // Therapists
   therapist: "therapists",
