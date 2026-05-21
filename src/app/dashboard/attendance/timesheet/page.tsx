@@ -224,7 +224,7 @@ export default function TimesheetCalendarTable() {
   const [selectedMonth, setSelectedMonth] = useState<Dayjs>(dayjs());
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50); // large page for calendar view
+  const [pageSize, setPageSize] = useState(10); // default page size
 
   // ── Data fetching ──────────────────────────────────────────────────────────
 
