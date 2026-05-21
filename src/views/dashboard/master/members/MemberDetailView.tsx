@@ -245,7 +245,7 @@ export default function MemberDetailView({ memberId }: MemberDetailViewProps) {
               <code className="text-xs text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full font-mono">
                 {member.code}
               </code>
-              {getStatusBadge(member.status)}
+              {/* {getStatusBadge(member.status)} */}
             </div>
           </div>
           <div className="text-right shrink-0">
