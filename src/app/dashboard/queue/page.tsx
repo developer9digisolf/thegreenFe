@@ -1102,21 +1102,6 @@ export default function TherapistSlide() {
                         <div style={{ fontSize: 11, color: "#94a3b8" }}>
                           {getEstWait(queuePos)}
                         </div>
-                        <button
-                          onClick={() => handleStartTreatment(therapist.id)}
-                          style={{
-                            padding: "4px 8px",
-                            borderRadius: 6,
-                            border: "1px solid #bfdbfe",
-                            background: "#eff6ff",
-                            color: "#1d4ed8",
-                            fontSize: 10,
-                            fontWeight: 600,
-                            cursor: "pointer",
-                          }}
-                        >
-                          Mulai
-                        </button>
                       </div>
                     );
                   })}
