@@ -563,13 +563,13 @@ export default function BookingTab({ branchId, onToast, onBookingCountChange }: 
     const { get, post } = useApi();
 
     const getDefaultDates = () => {
+        // [FIX] Mengubah return date menjadi hari ini saja untuk start dan end
         const now = new Date();
-        const future = new Date(now);
-        future.setMonth(now.getMonth() + 3); // Default load 3 months ahead
-        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-        
-        const formatDate = (date: Date) => date.toISOString().split("T")[0];
-        return { start: formatDate(lastMonth), end: formatDate(future) };
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        const today = `${year}-${month}-${day}`;
+        return { start: today, end: today };
     };
 
     const { start, end } = getDefaultDates();
@@ -591,47 +591,36 @@ export default function BookingTab({ branchId, onToast, onBookingCountChange }: 
     // ── Fetch list booking ───────────────────────────────────────────────────────
     const fetchBookings = useCallback(async (overrideFilter?: any) => {
         const f = overrideFilter || filter;
-        console.log("[BookingTab] fetchBookings START - Input branchId:", branchId, "Filter:", f);
-        if (!branchId) {
-            console.warn("[BookingTab] Cannot fetch bookings: branchId is missing or empty!");
-            return;
-        }
+        if (!branchId) return;
+        
         setLoading(true);
         try {
             let url = `pos/bookings?StartDate=${f.startDate}&EndDate=${f.endDate}&BranchId=${branchId}`;
             if (f.statuses) {
                 url += `&Statuses=${f.statuses}`;
             }
-            console.log("[BookingTab] Built API URL:", url);
             const res = await get(url);
-            console.log("[BookingTab] API Raw Response:", res);
             
             if (res.success || res.meta?.success) {
                 const list = res.data?.pageData ?? res.data ?? [];
-                console.log("[BookingTab] Successfully fetched list (length:", list.length, "):", list);
                 
-                // If searching locally by search input
                 if (f.search?.trim()) {
                     const term = f.search.toLowerCase().trim();
                     const filtered = list.filter((bk: BookingRow) => 
                         bk.code?.toLowerCase().includes(term) || 
                         bk.memberName?.toLowerCase().includes(term)
                     );
-                    console.log("[BookingTab] Filtered list by local search term '" + term + "' (length:", filtered.length, "):", filtered);
                     setBookings(filtered);
                 } else {
                     setBookings(list);
                 }
             } else {
-                console.error("[BookingTab] API returned success=false. Message:", res.message, "Meta:", res.meta);
                 onToast(res.message ?? "Gagal memuat data booking", "error");
             }
         } catch (err) {
-            console.error("[BookingTab] Catch Error during fetchBookings:", err);
             onToast("Gagal memuat data booking", "error");
         } finally {
             setLoading(false);
-            console.log("[BookingTab] fetchBookings FINISHED");
         }
     }, [branchId, filter, onToast, get]);
 
@@ -684,7 +673,6 @@ export default function BookingTab({ branchId, onToast, onBookingCountChange }: 
                 if (res.data) {
                     setCreatedSession(res.data);
                     
-                    // Update active selected booking so barcode is shown instantly in the open drawer
                     if (selectedBooking && selectedBooking.code === assignTarget.code) {
                         setSelectedBooking({
                             ...selectedBooking,
@@ -698,9 +686,7 @@ export default function BookingTab({ branchId, onToast, onBookingCountChange }: 
                     }
                 }
 
-                // Refresh bookings list
                 fetchBookings();
-                // Notify parent count change
                 if (onBookingCountChange) onBookingCountChange();
             } else {
                 const backendMsg = res?.message || res?.meta?.message;

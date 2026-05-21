@@ -2,7 +2,7 @@ import { rest } from '@afx/utils/config.rest';
 import request from '@afx/utils/request.utils';
 import type {
     PosInitData, Order, PendingOrder, Member, Category,
-    PaymentMethod, Therapist, TherapistData, RoomData, CashierSession,ServiceCategory
+    PaymentMethod, Therapist, TherapistData, RoomData, CashierSession, ServiceCategory
 } from "@afx/interfaces/pos.iface";
 
 // ============================================
@@ -132,7 +132,7 @@ export const GetServiceCategoriesService = async (
 };
 
 // ============================================
-// Member Search
+// Member Search & Detail
 // ============================================
 export function SearchMembersPosService(query: string) {
     console.log("SearchMembersPosService CALLED with query:", query);
@@ -175,6 +175,41 @@ export function CheckMemberEmailPosService(email: string, excludeId?: number) {
     });
 }
 
+export const GetMemberDetailService = async (
+    memberId: number
+): Promise<{ success: boolean; data?: any; message?: string }> => {
+    try {
+        const response = await request<any>({
+            url: `/members/${memberId}`,
+            method: 'GET'
+        });
+        return { success: true, data: response.data || response };
+    } catch (error: any) {
+        return { success: false, message: extractErrorMessage(error, "Gagal memuat detail member") };
+    }
+};
+
+export const GetMemberVouchersService = async (
+    memberId: number,
+    search?: string,
+    page = 1,
+    pageSize = 10
+): Promise<{ success: boolean; data?: any[]; message?: string }> => {
+    try {
+        // Buat URL dinamis berbasis query params
+        let url = `/members/${memberId}/service-packages?page=${page}&PageSize=${pageSize}`;
+        
+        if (search) {
+            url += `&Search=${encodeURIComponent(search)}`;
+        }
+
+        const response = await request<any>({ url, method: 'GET' });
+        return { success: true, data: response.data?.pageData || response.data || [] };
+    } catch (error: any) {
+        return { success: false, message: extractErrorMessage(error, "Gagal memuat voucher member") };
+    }
+};
+
 // ============================================
 // Cash Movement & Session
 // ============================================
@@ -191,16 +226,6 @@ export function SubmitCashMovementService(
     });
 }
 
-/**
- * [FIX] CloseCashierSessionService sekarang mengembalikan object terstruktur
- * alih-alih melempar exception mentah.
- *
- * Sebelumnya: `return request<any>(...)` → melempar AxiosError saat 400
- * → POSPage masuk ke catch → pesan backend hilang → hanya tampil "Gagal menutup sesi"
- *
- * Sekarang: selalu return { success, message, data }
- * → POSPage bisa baca pesan backend yang spesifik (misal: "Masih ada 2 order pending...")
- */
 export async function CloseCashierSessionService(
     sessionId: number,
     actualClosingCash: number
@@ -212,10 +237,9 @@ export async function CloseCashierSessionService(
             data: { actualClosingCash },
         });
 
-        // request() sukses (2xx) — cek apakah backend juga menandai success
         const isSuccess =
-            response?.meta?.success !== false &&  // jika ada field meta.success
-            response?.success !== false;           // atau field success langsung
+            response?.meta?.success !== false &&  
+            response?.success !== false;           
 
         return {
             success: isSuccess,
@@ -223,7 +247,6 @@ export async function CloseCashierSessionService(
             data: response?.data ?? response,
         };
     } catch (error: any) {
-        // [FIX] Ekstrak pesan dari struktur backend: error.response.data.meta.message
         const message = extractErrorMessage(error, "Gagal menutup sesi");
         return { success: false, message };
     }
@@ -257,5 +280,28 @@ export const GetTherapistsTodayService = async (
         return { success: true, data: response.data || response };
     } catch (error: any) {
         return { success: false, message: extractErrorMessage(error, "Gagal memuat therapist") };
+    }
+};
+
+// ============================================
+// Validasi Voucher Code untuk POS
+// ============================================
+// Validasi voucher sebelum redeem
+export const ValidateVoucherService = async (code: string) => {
+    try {
+        const response = await request<any>({ url: `/pos/vouchers/${code}`, method: 'GET' });
+        return { success: true, data: response.data || response };
+    } catch (error: any) {
+        return { success: false, message: extractErrorMessage(error, "Voucher tidak ditemukan") };
+    }
+};
+
+// Eksekusi redeem
+export const RedeemVoucherPosService = async (payload: any) => {
+    try {
+        const response = await request<any>({ url: `/pos/vouchers/redeem`, method: 'POST', data: payload });
+        return { success: true, data: response.data || response };
+    } catch (error: any) {
+        return { success: false, message: extractErrorMessage(error, "Gagal memproses voucher") };
     }
 };
