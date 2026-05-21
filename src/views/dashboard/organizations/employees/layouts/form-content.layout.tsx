@@ -1,6 +1,17 @@
 "use client";
 
-import { Form, Input, Select, DatePicker, Row, Col, Divider, Upload, message, Button } from "antd";
+import {
+  Form,
+  Input,
+  Select,
+  DatePicker,
+  Row,
+  Col,
+  Divider,
+  Upload,
+  message,
+  Button,
+} from "antd";
 import { useEffect, useState } from "react";
 import { PlusOutlined, LoadingOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
@@ -16,11 +27,11 @@ interface EmployeeFormContentProps {
 export const EmployeeFormContent = ({
   form,
   formType,
-  disabled = false
+  disabled = false,
 }: EmployeeFormContentProps) => {
   const [loading, setLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>("");
-  
+
   const { state: employeeStore } = useStore<any, any>("employees");
   const { state: deptState } = useStore<any, any>("departments");
   const { state: posState } = useStore<any, any>("positions");
@@ -43,26 +54,28 @@ export const EmployeeFormContent = ({
   }, [formType, employeeStore?.employee, form]);
 
   const handleChange = (info: any) => {
-    if (info.file.status === 'uploading') {
+    if (info.file.status === "uploading") {
       setLoading(true);
       return;
     }
-    if (info.file.status === 'done') {
+    if (info.file.status === "done") {
       // The response here comes from onSuccess(res) in customRequest
       const response = info.file.response;
       const path = response?.data?.path || "";
       const url = response?.data?.url || "";
-      
+
       setImageUrl(url); // Use the full URL for the UI preview
       form.setFieldValue("photoUrl", path); // Store only the path in the form payload as requested
       setLoading(false);
       message.success("Foto berhasil diunggah");
     }
-    if (info.file.status === 'error') {
+    if (info.file.status === "error") {
       setLoading(false);
       // Errors are handled in customRequest, but we can add a fallback here
       if (info.file.error) {
-        message.error(`${info.file.name} file upload failed: ${info.file.error.message}`);
+        message.error(
+          `${info.file.name} file upload failed: ${info.file.error.message}`,
+        );
       }
     }
   };
@@ -77,9 +90,9 @@ export const EmployeeFormContent = ({
         url: "images/upload",
         method: "POST",
         data: formData,
-        bodyType: "formData"
+        bodyType: "formData",
       });
-      
+
       if (res.success) {
         // Pass the full response data to onSuccess so handleChange can access it via info.file.response
         onSuccess(res);
@@ -104,7 +117,11 @@ export const EmployeeFormContent = ({
   );
 
   return (
-    <Form form={form} layout="vertical" disabled={disabled || formType === "detail"}>
+    <Form
+      form={form}
+      layout="vertical"
+      disabled={disabled || formType === "detail"}
+    >
       <Divider titlePlacement="left">Informasi Utama</Divider>
       <Row gutter={16}>
         <Col span={12}>
@@ -122,18 +139,11 @@ export const EmployeeFormContent = ({
           </Form.Item>
         </Col>
       </Row>
-
+      <Form.Item name="employeeCode" hidden>
+        <Input />
+      </Form.Item>
       <Row gutter={16}>
-        <Col span={8}>
-          <Form.Item
-            name="employeeCode"
-            label="Kode Karyawan"
-            rules={[{ required: true, message: "Kode karyawan wajib diisi" }]}
-          >
-            <Input placeholder="EMP-001" />
-          </Form.Item>
-        </Col>
-        <Col span={8}>
+        <Col span={12}>
           <Form.Item
             name="gender"
             label="Jenis Kelamin"
@@ -147,7 +157,7 @@ export const EmployeeFormContent = ({
             />
           </Form.Item>
         </Col>
-        <Col span={8}>
+        <Col span={12}>
           <Form.Item name="employmentStatus" label="Status" initialValue={1}>
             <Select
               options={[
@@ -158,14 +168,16 @@ export const EmployeeFormContent = ({
           </Form.Item>
         </Col>
       </Row>
-
       <Divider titlePlacement="left">Organisasi & Kontak</Divider>
       <Row gutter={16}>
         <Col span={12}>
           <Form.Item name="departmentId" label="Departemen">
             <Select
               placeholder="Pilih Departemen"
-              options={deptState?.departments?.map((d: any) => ({ label: d.name, value: d.id }))}
+              options={deptState?.departments?.map((d: any) => ({
+                label: d.name,
+                value: d.id,
+              }))}
             />
           </Form.Item>
         </Col>
@@ -173,12 +185,14 @@ export const EmployeeFormContent = ({
           <Form.Item name="positionId" label="Jabatan">
             <Select
               placeholder="Pilih Jabatan"
-              options={posState?.positions?.map((p: any) => ({ label: p.name, value: p.id }))}
+              options={posState?.positions?.map((p: any) => ({
+                label: p.name,
+                value: p.id,
+              }))}
             />
           </Form.Item>
         </Col>
       </Row>
-
       <Row gutter={16}>
         <Col span={12}>
           <Form.Item name="phone" label="Nomor Telepon">
@@ -191,24 +205,21 @@ export const EmployeeFormContent = ({
           </Form.Item>
         </Col>
       </Row>
-
       <Form.Item name="address" label="Alamat">
         <Input.TextArea rows={2} placeholder="Alamat lengkap..." />
       </Form.Item>
-
       <Row gutter={16}>
         <Col span={12}>
           <Form.Item name="hireDate" label="Tanggal Bergabung">
-            <DatePicker style={{ width: '100%' }} />
+            <DatePicker style={{ width: "100%" }} />
           </Form.Item>
         </Col>
         <Col span={12}>
           <Form.Item name="dateOfBirth" label="Tanggal Lahir">
-            <DatePicker style={{ width: '100%' }} />
+            <DatePicker style={{ width: "100%" }} />
           </Form.Item>
         </Col>
       </Row>
-
       <Divider titlePlacement="left">Informasi Bank</Divider>
       <Row gutter={16}>
         <Col span={12}>
@@ -222,7 +233,6 @@ export const EmployeeFormContent = ({
           </Form.Item>
         </Col>
       </Row>
-
       <Divider titlePlacement="left">Kontak Darurat</Divider>
       <Row gutter={16}>
         <Col span={8}>
@@ -241,7 +251,6 @@ export const EmployeeFormContent = ({
           </Form.Item>
         </Col>
       </Row>
-
       <Divider titlePlacement="left">Informasi Lainnya</Divider>
       <Row gutter={16}>
         <Col span={24}>
@@ -258,12 +267,14 @@ export const EmployeeFormContent = ({
               onChange={handleChange}
             >
               {imageUrl ? (
-                <img 
-                  src={imageUrl} 
-                  alt="avatar" 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                <img
+                  src={imageUrl}
+                  alt="avatar"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
-              ) : uploadButton}
+              ) : (
+                uploadButton
+              )}
             </Upload>
           </Form.Item>
         </Col>

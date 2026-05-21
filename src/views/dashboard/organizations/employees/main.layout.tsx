@@ -5,7 +5,10 @@ import { Form, notification } from "antd";
 import { useEffect, useState } from "react";
 import { BrowseEmployee } from "./layouts/browse.layout";
 import { FormEmployee } from "./layouts/form.layout";
-import { ConfirmActionModal, ActionPresets } from "@afx/components/modals/ConfirmActionModal.layout";
+import {
+  ConfirmActionModal,
+  ActionPresets,
+} from "@afx/components/modals/ConfirmActionModal.layout";
 import {
   IActionEmployee,
   IStateEmployee,
@@ -13,10 +16,10 @@ import {
 import { IReqFormEmployee } from "@afx/interfaces/master/employee.iface";
 
 export default function EmployeeView() {
-  const {
-    useActions: useEmployeeActions,
-    state: employeeState,
-  } = useStore<IStateEmployee, IActionEmployee>("employees");
+  const { useActions: useEmployeeActions, state: employeeState } = useStore<
+    IStateEmployee,
+    IActionEmployee
+  >("employees");
 
   const { useActions: useDeptActions } = useStore<any, any>("departments");
   const { useActions: usePosActions } = useStore<any, any>("positions");
@@ -29,7 +32,11 @@ export default function EmployeeView() {
   const [formType, setFormType] = useState<string>("create");
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [tempSearch, setTempSearch] = useState<string>("");
-  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number; name: string }>({
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean;
+    id: number;
+    name: string;
+  }>({
     open: false,
     id: 0,
     name: "",
@@ -71,7 +78,8 @@ export default function EmployeeView() {
   };
 
   const getPathFromUrl = (url: string) => {
-    const cdnBase = "https://sin1.contabostorage.com/30e3a2fafcfd4aa0a6af34e9ca6f9492:thegreen-cdn/";
+    const cdnBase =
+      "https://sin1.contabostorage.com/30e3a2fafcfd4aa0a6af34e9ca6f9492:thegreen-cdn/";
     if (url && typeof url === "string" && url.startsWith(cdnBase)) {
       return url.replace(cdnBase, "");
     }
@@ -85,8 +93,15 @@ export default function EmployeeView() {
         // Format dates to YYYY-MM-DD for API as requested
         const payload = {
           ...val,
+          employeeCode:
+            val.employeeCode ||
+            (formType === "update"
+              ? employeeState?.employee?.employeeCode
+              : ""),
           photoUrl: val.photoUrl ? getPathFromUrl(val.photoUrl) : val.photoUrl,
-          dateOfBirth: val.dateOfBirth ? val.dateOfBirth.format("YYYY-MM-DD") : null,
+          dateOfBirth: val.dateOfBirth
+            ? val.dateOfBirth.format("YYYY-MM-DD")
+            : null,
           hireDate: val.hireDate ? val.hireDate.format("YYYY-MM-DD") : null,
         };
 
@@ -98,7 +113,10 @@ export default function EmployeeView() {
             [
               payload,
               (code: any) => {
-                const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
+                const isSuccess =
+                  !code ||
+                  String(code) === "20000" ||
+                  String(code).startsWith("2");
                 if (isSuccess) {
                   setTimeout(() => {
                     setOpenFormCreate(false);
@@ -117,7 +135,10 @@ export default function EmployeeView() {
               currentId,
               payload,
               (code: any) => {
-                const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
+                const isSuccess =
+                  !code ||
+                  String(code) === "20000" ||
+                  String(code).startsWith("2");
                 if (isSuccess) {
                   setTimeout(() => {
                     setOpenFormCreate(false);
@@ -148,7 +169,8 @@ export default function EmployeeView() {
       [
         id,
         (code: any) => {
-          const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
+          const isSuccess =
+            !code || String(code) === "20000" || String(code).startsWith("2");
           if (isSuccess) {
             setDeleteConfirm({ open: false, id: 0, name: "" });
             getEmployees();
@@ -177,7 +199,9 @@ export default function EmployeeView() {
           setCurrentId(id);
           setOpenFormCreate(true);
         }}
-        handleDelete={(id: number, name: string) => setDeleteConfirm({ open: true, id, name })}
+        handleDelete={(id: number, name: string) =>
+          setDeleteConfirm({ open: true, id, name })
+        }
       />
 
       {openFormCreate && (
