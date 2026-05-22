@@ -25,7 +25,7 @@ export default function MasterPackages() {
         description: string;
         totalSessions: number;
         price: number;
-        validityDays: number;
+        validityDays: number | null;
         serviceVariantId: number | null;
         isActive: boolean;
     }>({
@@ -140,7 +140,7 @@ export default function MasterPackages() {
                     description: formData.description?.trim() || undefined,
                     totalSessions: formData.totalSessions,
                     price: formData.price,
-                    validityDays: formData.validityDays,
+                    validityDays: formData.validityDays!,
                     isActive: formData.isActive
                 };
 
@@ -166,7 +166,7 @@ export default function MasterPackages() {
                     description: formData.description?.trim() || undefined,
                     totalSessions: formData.totalSessions,
                     price: formData.price,
-                    validityDays: formData.validityDays,
+                    validityDays: formData.validityDays!,
                     serviceVariantId: formData.serviceVariantId || undefined
                 };
 
@@ -477,7 +477,7 @@ export default function MasterPackages() {
                                     min={1}
                                     max={3650}
                                     value={formData.validityDays}
-                                    onChange={(value) => setFormData({ ...formData, validityDays: value || 365 })}
+                                    onChange={(value) => setFormData({ ...formData, validityDays: value })}
                                     style={{ width: '100%', height: '40px' }}
                                     addonAfter="hari"
                                 />

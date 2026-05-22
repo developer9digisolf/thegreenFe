@@ -25,7 +25,7 @@ export default function MasterCreditPackages() {
         description: string;
         payAmount: number;
         creditAmount: number;
-        validityDays: number;
+        validityDays: number | null;
         sortOrder: number;
         isActive: boolean;
     }>({
@@ -148,7 +148,7 @@ export default function MasterCreditPackages() {
                     description: formData.description?.trim() || undefined,
                     payAmount: formData.payAmount,
                     creditAmount: formData.creditAmount,
-                    validityDays: formData.validityDays,
+                    validityDays: formData.validityDays!,
                     sortOrder: formData.sortOrder,
                     isActive: formData.isActive
                 };
@@ -169,7 +169,7 @@ export default function MasterCreditPackages() {
                     description: formData.description?.trim() || undefined,
                     payAmount: formData.payAmount,
                     creditAmount: formData.creditAmount,
-                    validityDays: formData.validityDays,
+                    validityDays: formData.validityDays!,
                     sortOrder: formData.sortOrder
                 };
 
@@ -534,7 +534,7 @@ export default function MasterCreditPackages() {
                                         max={3650}
                                         size="large"
                                         value={formData.validityDays}
-                                        onChange={(value) => setFormData({ ...formData, validityDays: value || 365 })}
+                                        onChange={(value) => setFormData({ ...formData, validityDays: value })}
                                         className="w-full !rounded-xl !bg-slate-50 !border-slate-200 focus-within:!ring-2 focus-within:!ring-[#3d6b5f]/20 focus-within:!border-[#3d6b5f]"
                                         addonAfter={<span className="text-slate-400 font-bold">hari</span>}
                                     />
