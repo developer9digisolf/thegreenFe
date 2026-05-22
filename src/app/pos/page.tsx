@@ -1024,7 +1024,7 @@ export default function POSPage() {
                                             onClick={() => { setSelectedPackage(pkg.id); pos.addPackageToCart(pkg); }}
                                         >
                                             {(pkg.savings ?? 0) > 0 && (
-                                                <div className="package-badge">Hemat {formatCurrency(pkg.savings)}</div>
+                                                <div className="package-badge">Hemat {formatCurrency(pkg.savings ?? 0)}</div>
                                             )}
                                             <div className="package-name">{pkg.name}</div>
                                             <div className="package-desc">{pkg.serviceVariantName ?? pkg.description}</div>
