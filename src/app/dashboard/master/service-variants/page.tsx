@@ -34,6 +34,8 @@ import {
 import {
   ServiceGetAllService,
   VariantGetAllActiveService,
+  ServiceGetUnregistered,
+  VariantGetUnregistered,
 } from "@afx/services/service.service";
 import { IBranchServiceVariant } from "@afx/interfaces/service.iface";
 import { UseDynamicTable, Column } from "@afx/components/tables/DynamicTable";
@@ -72,6 +74,12 @@ export default function ServiceVariantsPage() {
   const [services, setServices] = useState<any[]>([]);
   const [variants, setVariants] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
+
+  // Form Dropdown Data
+  const [formServices, setFormServices] = useState<any[]>([]);
+  const [formVariants, setFormVariants] = useState<any[]>([]);
+  const [fetchingFormServices, setFetchingFormServices] = useState(false);
+  const [fetchingFormVariants, setFetchingFormVariants] = useState(false);
 
   const [openForm, setOpenForm] = useState(false);
   const [formType, setFormType] = useState<"create" | "update" | "detail">(
@@ -123,6 +131,87 @@ export default function ServiceVariantsPage() {
     };
     fetchMaster();
   }, [user]);
+
+  const fetchUnregisteredServices = async (branchId: number, currentServiceId?: number) => {
+    if (!branchId) {
+      setFormServices([]);
+      return;
+    }
+    setFetchingFormServices(true);
+    try {
+      const res = await ServiceGetUnregistered({
+        Page: 1,
+        PageSize: 100,
+        SortColumn: "createdat",
+        SortDirection: "desc",
+        BranchId: branchId,
+      });
+      if (res.success) {
+        let list = res.data || [];
+        if (currentServiceId) {
+          const exists = list.some((s: any) => s.id === currentServiceId);
+          if (!exists) {
+            const currentService = services.find((s: any) => s.id === currentServiceId);
+            if (currentService) {
+              list = [currentService, ...list];
+            } else {
+              list = [
+                {
+                  id: currentServiceId,
+                  name: selectedItem?.serviceName || "Layanan Saat Ini",
+                },
+                ...list,
+              ];
+            }
+          }
+        }
+        setFormServices(list);
+      }
+    } catch (err) {
+      console.error("Failed to fetch unregistered services", err);
+    } finally {
+      setFetchingFormServices(false);
+    }
+  };
+
+  const fetchUnregisteredVariants = async (serviceId: number, branchId: number, currentVariantId?: number) => {
+    if (!serviceId || !branchId) {
+      setFormVariants([]);
+      return;
+    }
+    setFetchingFormVariants(true);
+    try {
+      const res = await VariantGetUnregistered(serviceId, { branchId });
+      if (res.success) {
+        let list = res.data || [];
+        if (currentVariantId) {
+          const exists = list.some((v: any) => v.id === currentVariantId);
+          if (!exists) {
+            const currentVar = variants.find((v: any) => v.id === currentVariantId);
+            if (currentVar) {
+              list = [currentVar, ...list];
+            } else {
+              list = [
+                {
+                  id: currentVariantId,
+                  label: selectedItem?.serviceVariantLabel || "Varian Saat Ini",
+                  duration: selectedItem?.serviceVariantDuration || 0,
+                  price: selectedItem?.serviceVariantDefaultPrice || 0,
+                  serviceId: serviceId,
+                },
+                ...list,
+              ];
+            }
+          }
+        }
+        setFormVariants(list);
+      }
+    } catch (err) {
+      console.error("Failed to fetch unregistered variants", err);
+    } finally {
+      setFetchingFormVariants(false);
+    }
+  };
 
   const fetchData = async (
     page = pagination.current,
@@ -183,6 +272,12 @@ export default function ServiceVariantsPage() {
       sortOrder: 1,
     });
     setOpenForm(true);
+    if (selectedBranchId) {
+      fetchUnregisteredServices(selectedBranchId);
+    } else {
+      setFormServices([]);
+    }
+    setFormVariants([]);
   };
 
   const handleOpenEdit = (item: IBranchServiceVariant) => {
@@ -191,10 +286,11 @@ export default function ServiceVariantsPage() {
 
     // Find the serviceId from the variants list
     const variant = variants.find((v) => v.id === item.serviceVariantId);
+    const serviceId = variant?.serviceId;
 
     forms.setFieldsValue({
       branchId: item.branchId,
-      serviceId: variant?.serviceId,
+      serviceId: serviceId,
       serviceVariantId: item.serviceVariantId,
       price: item.price,
       isActive: item.isActive,
@@ -202,6 +298,18 @@ export default function ServiceVariantsPage() {
       notes: item.notes,
     });
     setOpenForm(true);
+
+    if (item.branchId) {
+      fetchUnregisteredServices(item.branchId, serviceId);
+      if (serviceId) {
+        fetchUnregisteredVariants(serviceId, item.branchId, item.serviceVariantId);
+      } else {
+        setFormVariants([]);
+      }
+    } else {
+      setFormServices([]);
+      setFormVariants([]);
+    }
   };
 
   const handleSave = async () => {
@@ -549,6 +657,16 @@ export default function ServiceVariantsPage() {
                     className="w-full h-12 custom-select"
                     options={branches}
                     placeholder="Pilih cabang..."
+                    disabled={formType === "update"}
+                    onChange={(val) => {
+                      forms.setFieldsValue({
+                        serviceId: undefined,
+                        serviceVariantId: undefined,
+                        price: undefined,
+                      });
+                      fetchUnregisteredServices(val);
+                      setFormVariants([]);
+                    }}
                   />
                 </UseFormItem>
               </Col>
@@ -561,16 +679,27 @@ export default function ServiceVariantsPage() {
                 >
                   <Select
                     className="w-full h-12 custom-select"
-                    options={services.map((s) => ({
+                    options={formServices.map((s) => ({
                       label: s.name,
                       value: s.id,
                     }))}
                     placeholder="Pilih layanan..."
                     showSearch
                     optionFilterProp="label"
-                    onChange={() =>
-                      forms.setFieldValue("serviceVariantId", undefined)
-                    }
+                    loading={fetchingFormServices}
+                    disabled={formType === "update"}
+                    onChange={(val) => {
+                      forms.setFieldsValue({
+                        serviceVariantId: undefined,
+                        price: undefined,
+                      });
+                      const branchId = forms.getFieldValue("branchId");
+                      if (branchId) {
+                        fetchUnregisteredVariants(val, branchId);
+                      } else {
+                        setFormVariants([]);
+                      }
+                    }}
                   />
                 </UseFormItem>
               </Col>
@@ -583,9 +712,6 @@ export default function ServiceVariantsPage() {
                 >
                   {({ getFieldValue }) => {
                     const serviceId = getFieldValue("serviceId");
-                    const filteredVariants = variants.filter(
-                      (v) => v.serviceId === serviceId,
-                    );
                     return (
                       <UseFormItem
                         name="serviceVariantId"
@@ -595,20 +721,22 @@ export default function ServiceVariantsPage() {
                       >
                         <Select
                           className="w-full h-12 custom-select"
-                          options={filteredVariants.map((v) => ({
-                            label: `${v.label} (${v.duration} min) - Default: Rp ${v.price?.toLocaleString()}`,
+                          options={formVariants.map((v) => ({
+                            label: `${v.label || v.serviceVariantLabel || ""} (${v.duration !== undefined ? v.duration : v.serviceVariantDuration || 0} min) - Default: Rp ${(v.price !== undefined ? v.price : v.serviceVariantDefaultPrice || 0)?.toLocaleString()}`,
                             value: v.id,
                           }))}
                           placeholder={
                             serviceId ? "Pilih varian..." : "Pilih layanan dulu"
                           }
-                          disabled={!serviceId}
+                          disabled={formType === "update" || !serviceId}
+                          loading={fetchingFormVariants}
                           onChange={(val) => {
-                            const selectedVar = variants.find(
+                            const selectedVar = formVariants.find(
                               (v) => v.id === val,
                             );
                             if (selectedVar) {
-                              forms.setFieldValue("price", selectedVar.price);
+                              const priceVal = selectedVar.price !== undefined ? selectedVar.price : selectedVar.serviceVariantDefaultPrice;
+                              forms.setFieldsValue({ price: priceVal });
                             }
                           }}
                         />
@@ -636,7 +764,9 @@ export default function ServiceVariantsPage() {
               </Col>
               <Col xs={24} md={12}>
                 <UseFormItem name="sortOrder" label="Urutan" {...itemLayouts}>
-                  <InputNumber className="w-full h-12 rounded-xl border-2 border-slate-100 flex items-center bg-slate-50" />
+                  <InputNumber
+                    className="w-full h-12 rounded-xl border-2 border-slate-100 flex items-center bg-slate-50"
+                  />
                 </UseFormItem>
               </Col>
               <Col span={24}>
@@ -663,7 +793,7 @@ export default function ServiceVariantsPage() {
                     </span>
                   </div>
                   <UseFormItem name="isActive" valuePropName="checked" noStyle>
-                    <Switch className="bg-slate-200" />
+                    <Switch className="bg-slate-200" disabled={formType === "update"} />
                   </UseFormItem>
                 </div>
               </Col>

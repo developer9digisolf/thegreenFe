@@ -34,6 +34,8 @@ export const rest = {
   serviceDetail: "services/:id",
   serviceDetailFull: "services/:id/detail",
   serviceByCategory: "services/category/:categoryId",
+  servicesUnregistered: "services/unregistered",
+  serviceVariantsUnregistered: "services/:serviceId/variants/unregistered",
 
   // Service Variants
   serviceVariants: "services/variants",

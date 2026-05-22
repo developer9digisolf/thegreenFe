@@ -76,6 +76,8 @@ export interface IReqServicePackage {
 }
 
 export interface IPropsServicePackage {
+    page: number;
+    pageSize: number;
     searchText: string;
     setSearchText: (text: string) => void;
     onSearch: () => void;
@@ -83,6 +85,6 @@ export interface IPropsServicePackage {
     setPageSize: (size: number) => void;
     setOpenFormCreate: () => void;
     handleEdit: (id: number) => void;
-    handleDelete: (id: number) => void;
+    handleDelete: (id: number, name: string) => void;
     handleToDetail: (id: number) => void;
 }

@@ -129,7 +129,7 @@ export const BrowseServicePackage = ({
             align: 'center' as const,
             render: (text: any, record: any) => (
                 <div style={{ fontSize: '13px', color: '#64748b' }}>
-                    <b>{record.usedCount || 0}</b> Terpakai
+                    <b>{record.usedCount || 0}</b> terjual
                 </div>
             )
         },

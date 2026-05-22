@@ -97,6 +97,7 @@ export interface DynamicTableProps {
   setSearchText?: (val: string) => void;
   filters?: React.JSX.Element | null;
   checkCanExpand?: (record: any) => boolean;
+  loading?: boolean;
 }
 
 export const emptyFilterValues = (config: FilterSection[]): FilterValues =>
@@ -984,6 +985,7 @@ export function UseDynamicTable({
   setSearchText,
   filters = null,
   checkCanExpand,
+  loading = false,
 }: DynamicTableProps) {
   const [localSearchTerm, setLocalSearchTerm] = useState("");
   
@@ -1243,24 +1245,19 @@ export function UseDynamicTable({
             </tr>
           </thead>
           <tbody>
-            {pagedData.map((row: any, index) => (
-              <TableRow
-                key={row.id ?? `row-${index}`}
-                row={row}
-                index={index}
-                columns={activeColumns}
-                fetchDetails={fetchDetails}
-                subColumns={permittedSubColumns}
-                showCheckbox={showCheckbox}
-                selectedRowIdsSet={selectedRowIdsSet}
-                onRowSelect={handleRowSelect}
-                detailsCache={detailsCache}
-                onDetailsFetched={handleDetailsFetched}
-                totalCols={totalCols}
-                checkCanExpand={checkCanExpand}
-              />
-            ))}
-            {pagedData.length === 0 && (
+            {loading ? (
+              <tr>
+                <td
+                  colSpan={totalCols}
+                  className="px-4 py-10 text-center text-gray-500"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    <span>Memuat data...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : pagedData.length === 0 ? (
               <tr>
                 <td
                   colSpan={totalCols}
@@ -1269,6 +1266,24 @@ export function UseDynamicTable({
                   Tidak ada data
                 </td>
               </tr>
+            ) : (
+              pagedData.map((row: any, index) => (
+                <TableRow
+                  key={row.id ?? `row-${index}`}
+                  row={row}
+                  index={index}
+                  columns={activeColumns}
+                  fetchDetails={fetchDetails}
+                  subColumns={permittedSubColumns}
+                  showCheckbox={showCheckbox}
+                  selectedRowIdsSet={selectedRowIdsSet}
+                  onRowSelect={handleRowSelect}
+                  detailsCache={detailsCache}
+                  onDetailsFetched={handleDetailsFetched}
+                  totalCols={totalCols}
+                  checkCanExpand={checkCanExpand}
+                />
+              ))
             )}
           </tbody>
         </table>

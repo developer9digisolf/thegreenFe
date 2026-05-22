@@ -121,3 +121,19 @@ export function VariantDeleteService(variantId: number) {
         method: 'DELETE'
     })
 }
+
+export function ServiceGetUnregistered(params?: any) {
+    return request<any>({
+        url: rest.servicesUnregistered,
+        method: 'GET',
+        data: params
+    })
+}
+
+export function VariantGetUnregistered(serviceId: number, params?: any) {
+    return request<any>({
+        url: rest.serviceVariantsUnregistered.replace(':serviceId', serviceId.toString()),
+        method: 'GET',
+        data: params
+    })
+}
