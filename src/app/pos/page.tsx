@@ -458,7 +458,7 @@ export default function POSPage() {
     }, []);
 
     // ── Booking Count ──────────────────────────────────────────────────────
-    const fetchBookingCount = useCallback(async () => {
+    const fetchBookingCount = useCallback(async (startDate?: string, endDate?: string) => {
         const bId = activeBranchId ?? (currentActiveSession as any)?.branchId ?? null;
         if (!bId) { 
             setBookingCount(0); 
@@ -466,22 +466,19 @@ export default function POSPage() {
         }
 
         try {
-            // Dapatkan tanggal hari ini dalam format YYYY-MM-DD
+            // Jika tidak ada parameter tanggal, gunakan hari ini sebagai default
             const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, "0"); // Bulan dimulai dari 0
-            const day = String(now.getDate()).padStart(2, "0");
-            const today = `${year}-${month}-${day}`;
+            const today = now.toISOString().split("T")[0];
+            
+            const start = startDate ?? today;
+            const end = endDate ?? today;
 
-            // Tembak API floating-numbers (tambahkan BranchId agar datanya spesifik untuk cabang kasir tersebut)
             const res = await get(
-                `pos/bookings/floating-numbers?StartDate=${today}&EndDate=${today}&BranchId=${bId}`
+                `pos/bookings/floating-numbers?StartDate=${start}&EndDate=${end}&BranchId=${bId}`
             );
 
             if (res?.success || res?.meta?.success) {
-                // Ambil langsung nilai bookingCount dari response JSON
-                const count = res.data?.bookingCount ?? 0;
-                setBookingCount(count);
+                setBookingCount(res.data?.bookingCount ?? 0);
             }
         } catch (err) {
             console.error("fetchBookingCount error:", err);

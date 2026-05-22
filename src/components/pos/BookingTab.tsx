@@ -46,7 +46,7 @@ export interface BookingRow {
 interface Props {
     branchId?: number | null;
     onToast: (msg: string, type?: "success" | "error" | "info") => void;
-    onBookingCountChange?: () => void;
+    onBookingCountChange?: (startDate?: string, endDate?: string) => void;
 }
 
 // ============================================
@@ -625,21 +625,24 @@ export default function BookingTab({ branchId, onToast, onBookingCountChange }: 
             const res = await get(url);
             
             if (res.success || res.meta?.success) {
-                const list = res.data?.pageData ?? res.data ?? [];
-                
-                if (f.search?.trim()) {
-                    const term = f.search.toLowerCase().trim();
-                    const filtered = list.filter((bk: BookingRow) => 
-                        bk.code?.toLowerCase().includes(term) || 
-                        bk.memberName?.toLowerCase().includes(term)
-                    );
-                    setBookings(filtered);
-                } else {
-                    setBookings(list);
-                }
+            const list = res.data?.pageData ?? res.data ?? [];
+
+            if (f.search?.trim()) {
+                const term = f.search.toLowerCase().trim();
+                const filtered = list.filter((bk: BookingRow) =>
+                    bk.code?.toLowerCase().includes(term) ||
+                    bk.memberName?.toLowerCase().includes(term)
+                );
+                setBookings(filtered);
             } else {
-                onToast(res.message ?? "Gagal memuat data booking", "error");
+                setBookings(list);
             }
+
+           
+            if (onBookingCountChange) onBookingCountChange(f.startDate, f.endDate);
+        } else {
+            onToast(res.message ?? "Gagal memuat data booking", "error");
+        }
         } catch (err) {
             onToast("Gagal memuat data booking", "error");
         } finally {
@@ -710,7 +713,7 @@ export default function BookingTab({ branchId, onToast, onBookingCountChange }: 
                 }
 
                 fetchBookings();
-                if (onBookingCountChange) onBookingCountChange();
+                if (onBookingCountChange) onBookingCountChange(filter.startDate, filter.endDate);
             } else {
                 const backendMsg = res?.message || res?.meta?.message;
                 const errorMsg = backendMsg && backendMsg !== "Request failed"
