@@ -1,12 +1,12 @@
 import { 
   ISalesPaidRequest, 
-  ISalesPaidResponse 
+  ISalePaidItem 
 } from "@afx/interfaces/sales-report.iface";
 import { rest } from "@afx/utils/config.rest";
 import request from "@afx/utils/request.utils";
 
 export function getSalesPaid(params: ISalesPaidRequest) {
-  return request<ISalesPaidResponse>({
+  return request<ISalePaidItem[]>({
     url: rest.salesPaid,
     data: params,
     method: "GET",

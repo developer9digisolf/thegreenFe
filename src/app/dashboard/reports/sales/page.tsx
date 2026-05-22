@@ -28,7 +28,8 @@ import {
   exportSalesExcel 
 } from "@afx/services/sales-report.service";
 import { 
-  ISalePaidItem 
+  ISalePaidItem,
+  ISalesPaidRequest
 } from "@afx/interfaces/sales-report.iface";
 
 const { RangePicker } = DatePicker;
@@ -48,14 +49,14 @@ export default function SalesReportPage() {
   const totalGrandTotal = data.reduce((acc, curr) => acc + curr.grandTotal, 0);
   const totalTransactions = pagination.total;
 
-  const fetchData = useCallback(async (page = 1) => {
+  const fetchData = useCallback(async (page = 1, pageSize = pagination.pageSize) => {
     if (!dateRange) return;
 
     setLoading(true);
     try {
       const params: ISalesPaidRequest = {
         Page: page,
-        PageSize: pagination.pageSize,
+        PageSize: pageSize,
         StartDate: dateRange[0].format("YYYY-MM-DD"),
         EndDate: dateRange[1].format("YYYY-MM-DD"),
         Search: search,
@@ -65,8 +66,8 @@ export default function SalesReportPage() {
       if (res.success) {
         setData(res.data);
         setPagination({
-          current: res.pagination?.currentPage || 1,
-          pageSize: res.pagination?.pageSize || 10,
+          current: res.pagination?.currentPage || page,
+          pageSize: res.pagination?.pageSize || pageSize || 10,
           total: res.pagination?.total || 0,
         });
       } else {
@@ -292,7 +293,7 @@ export default function SalesReportPage() {
             loading={loading}
             pagination={{
               ...pagination,
-              onChange: (page) => fetchData(page),
+              onChange: (page, pageSize) => fetchData(page, pageSize),
               className: "px-6 pb-4",
             }}
             className="premium-table"
