@@ -38,6 +38,9 @@ export default function ModalPayment({
 }: Props) {
     const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
     const canProcess = !isProcessing && payments.length > 0 && totalPaid >= order.grandTotal;
+    
+    // Hitung kembalian (jika total bayar > tagihan, hitung selisihnya. Jika tidak, 0)
+    const totalKembalian = Math.max(0, totalPaid - order.grandTotal);
 
     return (
         <div
@@ -282,20 +285,31 @@ export default function ModalPayment({
                                 </div>
                             </div>
                         ))}
+                        
+                        {/* ── BAGIAN YANG DIPERBARUI: Total Dibayar & Kembalian ── */}
                         <div
                             style={{
                                 display: "flex",
-                                justifyContent: "space-between",
+                                flexDirection: "column",
+                                gap: "8px",
                                 marginTop: "8px",
-                                paddingTop: "8px",
+                                paddingTop: "12px",
                                 borderTop: "1px solid var(--border-color)",
                                 fontSize: "14px",
                             }}
                         >
-                            <span style={{ color: "var(--text-muted)" }}>Total Dibayar</span>
-                            <span style={{ color: "var(--spa-green)", fontWeight: 700 }}>
-                                {formatCurrency(totalPaid)}
-                            </span>
+                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                <span style={{ color: "var(--text-muted)" }}>Total Dibayar</span>
+                                <span style={{ color: "var(--spa-green)", fontWeight: 700 }}>
+                                    {formatCurrency(totalPaid)}
+                                </span>
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                <span style={{ color: "var(--text-muted)" }}>Total Kembalian</span>
+                                <span style={{ color: "var(--text-primary)", fontWeight: 700 }}>
+                                    {formatCurrency(totalKembalian)}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 )}
