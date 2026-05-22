@@ -63,10 +63,29 @@ function Pill({ label, bg, color }: { label: string; bg: string; color: string }
     return <span style={{ background: bg, color, padding: "3px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 700 }}>{label}</span>;
 }
 
-function SessionStatus({ hasSession, sessionStatus }: { hasSession: boolean; sessionStatus?: string }) {
+function SessionStatus({ hasSession, sessionStatus, bookingStatus }: { hasSession: boolean; sessionStatus?: string; bookingStatus?: string }) {
     if (!hasSession) return <span style={{ color: "var(--text-muted)", fontSize: "11px", fontWeight: 600 }}>BELUM DIMULAI</span>;
-    if (sessionStatus === "pending" || sessionStatus === "Pending") {
+    
+    const bStatus = bookingStatus?.toLowerCase() || "";
+    const sStatus = sessionStatus?.toLowerCase() || "";
+    
+    if (bStatus === "completed" || sStatus === "completed" || sStatus === "finished" || sStatus === "selesai") {
+        return <span style={{ color: "#64748b", background: "rgba(100,116,139,0.1)", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: 700 }}>SELESAI</span>;
+    }
+    if (bStatus === "cancelled" || sStatus === "cancel" || sStatus === "cancelled" || sStatus === "batal") {
+        return <span style={{ color: "#dc2626", background: "rgba(239,68,68,0.1)", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: 700 }}>BATAL</span>;
+    }
+    if (sStatus === "pending" || sStatus === "menunggu") {
         return <span style={{ color: "var(--accent-red)", background: "rgba(239,68,68,0.1)", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: 700 }}>PENDING</span>;
+    }
+    if (sStatus === "claimed" || sStatus === "diklaim") {
+        return <span style={{ color: "#2563eb", background: "rgba(59,130,246,0.1)", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: 700 }}>DIKLAIM</span>;
+    }
+    if (sStatus === "paused" || sStatus === "tertunda") {
+        return <span style={{ color: "#d97706", background: "rgba(245,158,11,0.1)", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: 700 }}>TERTUNDA</span>;
+    }
+    if (bStatus === "noshow" || sStatus === "noshow" || sStatus === "tidak hadir") {
+        return <span style={{ color: "#dc2626", background: "rgba(239,68,68,0.1)", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: 700 }}>TIDAK HADIR</span>;
     }
     return <span style={{ color: "var(--spa-green)", background: "var(--spa-green-bg)", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: 700 }}>BERLANGSUNG</span>;
 }
@@ -353,7 +372,11 @@ function BookingDetailDrawer({ isOpen, onClose, booking, loading, onOpenAssign }
                                                 {booking.therapistName && <div style={{ fontSize: "13px", fontWeight: 600 }}><i className="fa-solid fa-user-md" style={{ color: "var(--spa-green)", marginRight: "6px" }} />Terapis: {booking.therapistName}</div>}
                                                 {booking.roomName && <div style={{ fontSize: "13px", fontWeight: 600, marginTop: "4px" }}><i className="fa-solid fa-door-open" style={{ color: "#d97706", marginRight: "6px" }} />Ruangan: {booking.roomName}</div>}
                                                 <div style={{ marginTop: "8px" }}>
-                                                    <SessionStatus hasSession={true} sessionStatus={booking.sessionStatus ?? booking.session?.status} />
+                                                    <SessionStatus 
+                                                        hasSession={true} 
+                                                        sessionStatus={booking.sessionStatus ?? booking.session?.status} 
+                                                        bookingStatus={booking.status}
+                                                    />
                                                 </div>
                                             </div>
                                         ) : (
