@@ -14,6 +14,7 @@ import BookingTab from "@afx/components/pos/BookingTab";
 import ModalPayment from "@afx/components/pos/ModalPayment";
 import ModalMemberAdd from "@afx/components/pos/ModalMemberAdd";
 import ModalMemberDetail from "@afx/components/pos/ModalMemberDetail";
+import SessionTab from "@afx/components/pos/SessionTab";    
 import {
     CloseCashierSessionService,
     GetRoomsService,
@@ -26,7 +27,7 @@ import {
 // Types
 // ─────────────────────────────────────────────
 
-type PosMode = "session" | "voucher" | "credit" | "redeem" | "sale" | "booking";
+type PosMode = "session" | "voucher" | "credit" | "redeem" | "sale" | "booking" | "session_list";
 type DiscountType = "fixed" | "percent";
 
 interface ValidatedVoucher {
@@ -656,6 +657,7 @@ export default function POSPage() {
         { id: "redeem",  icon: "fa-qrcode",        label: "Redeem"        },
         { id: "sale",    icon: "fa-tag",           label: "Penjualan"     },
         { id: "booking", icon: "fa-calendar-days", label: "Booking"       },
+        { id: "session_list", icon: "fa-bed-pulse",     label: "Daftar Sesi"   },
     ];
 
     // ── Render ─────────────────────────────────────────────────────────────
@@ -1086,6 +1088,20 @@ export default function POSPage() {
                                     }
                                     onToast={showToast}
                                     onBookingCountChange={fetchBookingCount}
+                                />
+                            </div>
+                        )}
+
+                        {/* ── Tab: Daftar Sesi ─────────────────────────────── */}
+                        {mode === "session_list" && (
+                            <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+                                <SessionTab
+                                    branchId={
+                                        (activeBranchId ??
+                                        (session.selectedBranch as any)?.branchId ??
+                                        (currentActiveSession as any)?.branchId) || 0
+                                    }
+                                    onToast={showToast}
                                 />
                             </div>
                         )}

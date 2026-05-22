@@ -10,11 +10,10 @@ import type {
 // Backend menyimpan pesan di: error.response.data.meta.message
 // ============================================
 function extractErrorMessage(error: any, fallback = "Terjadi kesalahan"): string {
-    // Prioritaskan struktur backend: meta.message
     return (
-        error?.response?.data?.meta?.message ||   
+        error?.response?.data?.meta?.message ||
         error?.response?.data?.message        ||
-        error?.data?.meta?.message             || // jika response mentah di-passing
+        error?.data?.meta?.message             ||
         error?.message                         ||
         fallback
     );
@@ -37,8 +36,8 @@ export function GetBranchServicesService(branchId: number, categoryId?: number) 
 }
 
 export function GetActivePaymentMethodsService(branchId?: number) {
-    const url = (branchId !== undefined && branchId !== null) 
-        ? `${rest.posPaymentMethods}?branchId=${branchId}` 
+    const url = (branchId !== undefined && branchId !== null)
+        ? `${rest.posPaymentMethods}?branchId=${branchId}`
         : rest.posPaymentMethods;
     return request<PaymentMethod[]>({ url, method: 'GET' });
 }
@@ -135,7 +134,6 @@ export const GetServiceCategoriesService = async (
 // Member Search & Detail
 // ============================================
 export function SearchMembersPosService(query: string) {
-    console.log("SearchMembersPosService CALLED with query:", query);
     return request<{ items: Member[] }>({
         url: `${rest.member}?search=${encodeURIComponent(query)}&pageSize=10`,
         method: 'GET'
@@ -143,7 +141,6 @@ export function SearchMembersPosService(query: string) {
 }
 
 export function CreateMemberPosService(data: any) {
-    console.log("CreateMemberPosService CALLED with data:", data);
     return request<Member>({
         url: rest.member,
         method: 'POST',
@@ -196,12 +193,8 @@ export const GetMemberVouchersService = async (
     pageSize = 10
 ): Promise<{ success: boolean; data?: any[]; message?: string }> => {
     try {
-        // Buat URL dinamis berbasis query params
         let url = `/members/${memberId}/service-packages?page=${page}&PageSize=${pageSize}`;
-        
-        if (search) {
-            url += `&Search=${encodeURIComponent(search)}`;
-        }
+        if (search) url += `&Search=${encodeURIComponent(search)}`;
 
         const response = await request<any>({ url, method: 'GET' });
         return { success: true, data: response.data?.pageData || response.data || [] };
@@ -238,8 +231,8 @@ export async function CloseCashierSessionService(
         });
 
         const isSuccess =
-            response?.meta?.success !== false &&  
-            response?.success !== false;           
+            response?.meta?.success !== false &&
+            response?.success !== false;
 
         return {
             success: isSuccess,
@@ -247,8 +240,7 @@ export async function CloseCashierSessionService(
             data: response?.data ?? response,
         };
     } catch (error: any) {
-        const message = extractErrorMessage(error, "Gagal menutup sesi");
-        return { success: false, message };
+        return { success: false, message: extractErrorMessage(error, "Gagal menutup sesi") };
     }
 }
 
@@ -286,7 +278,6 @@ export const GetTherapistsTodayService = async (
 // ============================================
 // Validasi Voucher Code untuk POS
 // ============================================
-// Validasi voucher sebelum redeem
 export const ValidateVoucherService = async (code: string) => {
     try {
         const response = await request<any>({ url: `/pos/vouchers/${code}`, method: 'GET' });
@@ -296,12 +287,69 @@ export const ValidateVoucherService = async (code: string) => {
     }
 };
 
-// Eksekusi redeem
 export const RedeemVoucherPosService = async (payload: any) => {
     try {
         const response = await request<any>({ url: `/pos/vouchers/redeem`, method: 'POST', data: payload });
         return { success: true, data: response.data || response };
     } catch (error: any) {
         return { success: false, message: extractErrorMessage(error, "Gagal memproses voucher") };
+    }
+};
+
+// ============================================
+// Sesi Terapi (POS Sessions) — List
+// ============================================
+export const GetSessionsService = async (params: {
+    branchId: number;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+    status?: string;
+    page?: number;
+    pageSize?: number;
+}): Promise<{ success: boolean; data?: any; message?: string }> => {
+    try {
+        let url = `/pos/sessions?branchId=${params.branchId}&Page=${params.page || 1}&PageSize=${params.pageSize || 10}&SortColumn=createdat&SortDirection=desc`;
+
+        if (params.startDate) url += `&StartDate=${params.startDate}`;
+        if (params.endDate)   url += `&EndDate=${params.endDate}`;
+        if (params.search)    url += `&Search=${encodeURIComponent(params.search)}`;
+        if (params.status)    url += `&Status=${params.status}`;
+
+        const response = await request<any>({ url, method: 'GET' });
+        return { success: true, data: response.data || response };
+    } catch (error: any) {
+        return { success: false, message: extractErrorMessage(error, "Gagal memuat daftar sesi") };
+    }
+};
+
+// ============================================
+// Sesi Terapi (POS Sessions) — Ganti Terapis
+// ============================================
+export const GetTherapistsService = async (params: {
+    branchId: number;
+}): Promise<{ success: boolean; data?: any; message?: string }> => {
+    try {
+        const url = `/pos/therapists/today?branchId=${params.branchId}`;
+        const response = await request<any>({ url, method: 'GET' });
+        return { success: true, data: response.data || response };
+    } catch (error: any) {
+        return { success: false, message: extractErrorMessage(error, "Gagal memuat daftar terapis") };
+    }
+};
+
+export const UpdateSessionTherapistService = async (body: {
+    SessionCode: string;
+    TherapistId: number;
+}): Promise<{ success: boolean; data?: any; message?: string }> => {
+    try {
+        const response = await request<any>({
+            url: `/pos/sessions/update-therapist`,
+            method: 'PUT',
+            data: body,
+        });
+        return { success: true, data: response.data || response };
+    } catch (error: any) {
+        return { success: false, message: extractErrorMessage(error, "Gagal memperbarui terapis sesi") };
     }
 };
