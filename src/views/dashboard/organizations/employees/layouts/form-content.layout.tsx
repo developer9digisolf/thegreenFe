@@ -33,8 +33,8 @@ export const EmployeeFormContent = ({
   const [imageUrl, setImageUrl] = useState<string>("");
 
   const { state: employeeStore } = useStore<any, any>("employees");
-  const { state: deptState } = useStore<any, any>("departments");
-  const { state: posState } = useStore<any, any>("positions");
+  const { state: deptState }     = useStore<any, any>("departments");
+  const { state: posState }      = useStore<any, any>("positions");
 
   useEffect(() => {
     if (formType === "update" || formType === "detail") {
@@ -43,12 +43,19 @@ export const EmployeeFormContent = ({
         form.setFieldsValue({
           ...data,
           dateOfBirth: data.dateOfBirth ? dayjs(data.dateOfBirth) : null,
-          hireDate: data.hireDate ? dayjs(data.hireDate) : null,
+          hireDate:    data.hireDate    ? dayjs(data.hireDate)    : null,
+          // Pastikan enum dari BE (0/1/2) langsung dipakai
+          employmentStatus: data.employmentStatus ?? 0,
         });
         setImageUrl(data.photoUrl || "");
       }
     } else if (formType === "create") {
       form.resetFields();
+      // ✅ Default: Active = 0, sesuai enum BE
+      form.setFieldsValue({
+        employmentStatus: 0,
+        gender: 1, // 1=Laki-laki (sesuai Select options di bawah)
+      });
       setImageUrl("");
     }
   }, [formType, employeeStore?.employee, form]);
@@ -59,23 +66,18 @@ export const EmployeeFormContent = ({
       return;
     }
     if (info.file.status === "done") {
-      // The response here comes from onSuccess(res) in customRequest
       const response = info.file.response;
       const path = response?.data?.path || "";
-      const url = response?.data?.url || "";
-
-      setImageUrl(url); // Use the full URL for the UI preview
-      form.setFieldValue("photoUrl", path); // Store only the path in the form payload as requested
+      const url  = response?.data?.url  || "";
+      setImageUrl(url);
+      form.setFieldValue("photoUrl", path);
       setLoading(false);
       message.success("Foto berhasil diunggah");
     }
     if (info.file.status === "error") {
       setLoading(false);
-      // Errors are handled in customRequest, but we can add a fallback here
       if (info.file.error) {
-        message.error(
-          `${info.file.name} file upload failed: ${info.file.error.message}`,
-        );
+        message.error(`${info.file.name} file upload failed: ${info.file.error.message}`);
       }
     }
   };
@@ -83,7 +85,6 @@ export const EmployeeFormContent = ({
   const customRequest = async ({ file, onSuccess, onError }: any) => {
     const formData = new FormData();
     formData.append("file", file);
-
     try {
       setLoading(true);
       const res = await request<any>({
@@ -92,9 +93,7 @@ export const EmployeeFormContent = ({
         data: formData,
         bodyType: "formData",
       });
-
       if (res.success) {
-        // Pass the full response data to onSuccess so handleChange can access it via info.file.response
         onSuccess(res);
       } else {
         onError(new Error(res.message));
@@ -139,15 +138,17 @@ export const EmployeeFormContent = ({
           </Form.Item>
         </Col>
       </Row>
+
       <Form.Item name="employeeCode" hidden>
         <Input />
       </Form.Item>
+
       <Row gutter={16}>
         <Col span={12}>
           <Form.Item
             name="gender"
             label="Jenis Kelamin"
-            rules={[{ required: true }]}
+            rules={[{ required: true, message: "Jenis kelamin wajib dipilih" }]}
           >
             <Select
               options={[
@@ -158,16 +159,23 @@ export const EmployeeFormContent = ({
           </Form.Item>
         </Col>
         <Col span={12}>
-          <Form.Item name="employmentStatus" label="Status" initialValue={1}>
-            <Select
-              options={[
-                { label: "Aktif", value: 1 },
-                { label: "Tidak Aktif", value: 0 },
-              ]}
-            />
-          </Form.Item>
+          {/* 
+            ✅ FIXED: Sesuai BE enum EmploymentStatus
+              0 = Active
+              1 = OnLeave
+              2 = Terminated
+            initialValue diubah dari 1 → 0 (Active)
+          */}
+          <Form.Item name="employmentStatus" label="Status Karyawan" initialValue="active">
+            <Select options={[
+                { label: "Aktif",      value: "active"     },
+                { label: "Cuti",       value: "onleave"    },
+                { label: "Terminated", value: "terminated" },
+            ]} />
+        </Form.Item>
         </Col>
       </Row>
+
       <Divider titlePlacement="left">Organisasi & Kontak</Divider>
       <Row gutter={16}>
         <Col span={12}>
@@ -220,6 +228,7 @@ export const EmployeeFormContent = ({
           </Form.Item>
         </Col>
       </Row>
+
       <Divider titlePlacement="left">Informasi Bank</Divider>
       <Row gutter={16}>
         <Col span={12}>
@@ -233,6 +242,7 @@ export const EmployeeFormContent = ({
           </Form.Item>
         </Col>
       </Row>
+
       <Divider titlePlacement="left">Kontak Darurat</Divider>
       <Row gutter={16}>
         <Col span={8}>
@@ -251,6 +261,7 @@ export const EmployeeFormContent = ({
           </Form.Item>
         </Col>
       </Row>
+
       <Divider titlePlacement="left">Informasi Lainnya</Divider>
       <Row gutter={16}>
         <Col span={24}>

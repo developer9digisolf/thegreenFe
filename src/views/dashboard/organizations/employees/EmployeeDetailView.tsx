@@ -35,19 +35,19 @@ export default function EmployeeDetailView({ id }: EmployeeDetailViewProps) {
     } = useStore<IStateEmployee, IActionEmployee>("employees");
 
     const { useActions: useDeptActions } = useStore<any, any>("departments");
-    const { useActions: usePosActions } = useStore<any, any>("positions");
+    const { useActions: usePosActions }  = useStore<any, any>("positions");
 
     useEffect(() => {
         if (id) {
             useEmployeeActions<"getEmployee">("getEmployee", [id], true);
             useDeptActions<any>("getDepartments", [{}], true);
-            usePosActions<any>("getPositions", [{}], true);
+            usePosActions<any>("getPositions",   [{}], true);
         }
     }, [id]);
 
     const getPathFromUrl = (url: string) => {
         const cdnBase = "https://sin1.contabostorage.com/30e3a2fafcfd4aa0a6af34e9ca6f9492:thegreen-cdn/";
-        if (url && typeof url === 'string' && url.startsWith(cdnBase)) {
+        if (url && typeof url === "string" && url.startsWith(cdnBase)) {
             return url.replace(cdnBase, "");
         }
         return url;
@@ -57,23 +57,27 @@ export default function EmployeeDetailView({ id }: EmployeeDetailViewProps) {
         try {
             const values = await form.validateFields();
             setIsSaving(true);
-            
+
             const payload = {
                 ...values,
-                photoUrl: values.photoUrl ? getPathFromUrl(values.photoUrl) : values.photoUrl,
+                photoUrl:    values.photoUrl    ? getPathFromUrl(values.photoUrl) : values.photoUrl,
                 dateOfBirth: values.dateOfBirth ? values.dateOfBirth.format("YYYY-MM-DD") : null,
-                hireDate: values.hireDate ? values.hireDate.format("YYYY-MM-DD") : null,
+                hireDate:    values.hireDate    ? values.hireDate.format("YYYY-MM-DD")    : null,
             };
 
             useEmployeeActions<"updateEmployee">("updateEmployee", [id, payload, (code: any) => {
-                const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
+                const isSuccess = !code || String(code) === "20000" || String(code).startsWith("2");
                 if (isSuccess) {
+                    // ✅ Refresh detail (buat form di halaman ini)
                     useEmployeeActions<"getEmployee">("getEmployee", [id], true);
+                    // ✅ Refresh list (buat BrowseEmployee ikut update)
+                    useEmployeeActions<"getEmployees">("getEmployees", [{}], true);
                 }
                 setIsSaving(false);
             }], true);
         } catch (err) {
             console.error(err);
+            setIsSaving(false);
         }
     };
 
@@ -132,11 +136,11 @@ export default function EmployeeDetailView({ id }: EmployeeDetailViewProps) {
                     className="mb-4"
                     items={[
                         { 
-                            title: 'Karyawan', 
-                            className: 'cursor-pointer',
+                            title: "Karyawan", 
+                            className: "cursor-pointer",
                             onClick: () => router.push("/dashboard/organizations/employees") 
                         },
-                        { title: 'Detail Karyawan' }
+                        { title: "Detail Karyawan" }
                     ]}
                 />
                 
@@ -167,7 +171,7 @@ export default function EmployeeDetailView({ id }: EmployeeDetailViewProps) {
                         items={items}
                         className="custom-tabs"
                         size="large"
-                        tabBarStyle={{ padding: '0 24px', marginBottom: 0 }}
+                        tabBarStyle={{ padding: "0 24px", marginBottom: 0 }}
                     />
                 </Spin>
             </Card>
@@ -181,7 +185,7 @@ export default function EmployeeDetailView({ id }: EmployeeDetailViewProps) {
                     font-weight: 600 !important;
                     color: #94a3b8 !important;
                 }
-                .custom-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+                .custom-tabs .ant-tabs-tab-active .ant-tabs-tab-btn { 
                     color: #10b981 !important;
                 }
                 .custom-tabs .ant-tabs-ink-bar {

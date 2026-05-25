@@ -20,17 +20,10 @@ export const FormEmployee = ({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>("");
-  const {
-    state: employeeStore,
-  } = useStore<any, any>("employees");
 
-  const {
-    state: deptState,
-  } = useStore<any, any>("departments");
-
-  const {
-    state: posState,
-  } = useStore<any, any>("positions");
+  const { state: employeeStore } = useStore<any, any>("employees");
+  const { state: deptState }     = useStore<any, any>("departments");
+  const { state: posState }      = useStore<any, any>("positions");
 
   useEffect(() => {
     if (formType === "update" || formType === "detail") {
@@ -39,36 +32,41 @@ export const FormEmployee = ({
         forms.setFieldsValue({
           ...data,
           dateOfBirth: data.dateOfBirth ? dayjs(data.dateOfBirth) : null,
-          hireDate: data.hireDate ? dayjs(data.hireDate) : null,
+          hireDate:    data.hireDate    ? dayjs(data.hireDate)    : null,
+          // Pastikan nilai enum dari BE (0/1/2) langsung dipakai tanpa transformasi
+          employmentStatus: data.employmentStatus ?? 0,
         });
         setImageUrl(data.photoUrl || "");
       }
     } else {
+      // CREATE — reset dan set default employmentStatus = 0 (Active)
       forms.resetFields();
+      forms.setFieldsValue({
+          employmentStatus: "active",
+          gender: 1,
+      });
       setImageUrl("");
     }
   }, [formType, employeeStore?.employee, open]);
 
   const handleChange = (info: any) => {
-    if (info.file.status === 'uploading') {
+    if (info.file.status === "uploading") {
       setLoading(true);
       return;
     }
-    if (info.file.status === 'done') {
-      // In a real app, you'd get the URL from the server response
+    if (info.file.status === "done") {
       const url = info.file.response?.data?.url || info.file.url || "";
       setImageUrl(url);
       forms.setFieldValue("photoUrl", url);
       setLoading(false);
     }
-    if (info.file.status === 'error') {
+    if (info.file.status === "error") {
       setLoading(false);
       message.error(`${info.file.name} file upload failed.`);
     }
   };
 
   const customRequest = ({ file, onSuccess }: any) => {
-    // Dummy upload simulation
     setLoading(true);
     setTimeout(() => {
       const reader = new FileReader();
@@ -80,13 +78,6 @@ export const FormEmployee = ({
     }, 1000);
   };
 
-  const uploadButton = (
-    <div>
-      {loading ? <LoadingOutlined /> : <PlusOutlined />}
-      <div style={{ marginTop: 8 }}>Unggah</div>
-    </div>
-  );
-
   const isDetail = formType === "detail";
   const isUpdate = formType === "update";
   const isCreate = formType === "create";
@@ -94,8 +85,8 @@ export const FormEmployee = ({
   return (
     <Modal
       title={
-        isCreate ? "Tambah Karyawan Baru" 
-        : isUpdate ? "Ubah Karyawan" 
+        isCreate ? "Tambah Karyawan Baru"
+        : isUpdate ? "Ubah Karyawan"
         : "Detail Karyawan"
       }
       open={open}
@@ -103,27 +94,32 @@ export const FormEmployee = ({
       onOk={isDetail ? () => setFormType("update") : handleSubmit}
       width={800}
       okText={
-        isCreate ? "Simpan Karyawan" 
-        : isUpdate ? "Simpan Perubahan" 
+        isCreate ? "Simpan Karyawan"
+        : isUpdate ? "Simpan Perubahan"
         : "Ubah Informasi"
       }
       okButtonProps={{
-        style: { 
-          background: isDetail ? '#3b82f6' : '#10b981',
-          borderColor: isDetail ? '#3b82f6' : '#10b981'
-        }
+        style: {
+          background:   isDetail ? "#3b82f6" : "#10b981",
+          borderColor:  isDetail ? "#3b82f6" : "#10b981",
+        },
       }}
       cancelText="Tutup"
       destroyOnHidden
       footer={[
-        <div key="footer-container" className="flex items-center justify-between w-full px-1">
+        <div
+          key="footer-container"
+          className="flex items-center justify-between w-full px-1"
+        >
           <div>
             {isDetail && (
-              <Button 
+              <Button
                 className="rounded-xl border-emerald-200 text-emerald-600 hover:text-emerald-700 hover:border-emerald-400 font-bold"
-                icon={<SyncOutlined />} 
+                icon={<SyncOutlined />}
                 onClick={() => {
-                  router.push(`/dashboard/organizations/employees/recurring-shifts?employeeId=${employeeStore?.employee?.id}`);
+                  router.push(
+                    `/dashboard/organizations/employees/recurring-shifts?employeeId=${employeeStore?.employee?.id}`,
+                  );
                 }}
               >
                 Kelola Jadwal Rutin
@@ -131,23 +127,29 @@ export const FormEmployee = ({
             )}
           </div>
           <div className="flex gap-2">
-            <Button className="rounded-xl font-bold h-10 px-6" onClick={onCancel}>Tutup</Button>
-            <Button 
-              type="primary" 
-              className="rounded-xl font-bold h-10 px-6 border-none" 
-              style={{ background: isDetail ? '#3b82f6' : '#10b981' }}
+            <Button
+              className="rounded-xl font-bold h-10 px-6"
+              onClick={onCancel}
+            >
+              Tutup
+            </Button>
+            <Button
+              type="primary"
+              className="rounded-xl font-bold h-10 px-6 border-none"
+              style={{ background: isDetail ? "#3b82f6" : "#10b981" }}
               onClick={isDetail ? () => setFormType("update") : handleSubmit}
             >
-              {isCreate ? "Simpan Karyawan" : isUpdate ? "Simpan Perubahan" : "Ubah Informasi"}
+              {isCreate
+                ? "Simpan Karyawan"
+                : isUpdate
+                  ? "Simpan Perubahan"
+                  : "Ubah Informasi"}
             </Button>
           </div>
-        </div>
+        </div>,
       ]}
     >
-      <EmployeeFormContent 
-        form={forms} 
-        formType={formType} 
-      />
+      <EmployeeFormContent form={forms} formType={formType} />
     </Modal>
   );
 };
