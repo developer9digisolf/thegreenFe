@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Typography,
@@ -28,6 +28,7 @@ import {
   SolutionOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
+import { customList } from "country-codes-list";
 import {
   GetMembersService,
   CreateMemberService,
@@ -50,6 +51,20 @@ import { UseForm, UseFormItem } from "@afx/components/form/form.layout";
 import UseInput from "@afx/components/ui/input/input.layout";
 import UseInputArea from "@afx/components/ui/input/input-area.layout";
 
+// ─── Country Code List ───────────────────────────────────────────────────────
+const rawCountryList = customList(
+  "countryCode",
+  "{countryCode} (+{countryCallingCode})",
+);
+const countryOptions = Object.entries(rawCountryList)
+  .map(([iso, label]) => {
+    const match = label.match(/\+(\d+)/);
+    return { iso, code: match ? match[1] : "", label };
+  })
+  .filter((c) => c.code)
+  .sort((a, b) => a.iso.localeCompare(b.iso));
+// ─────────────────────────────────────────────────────────────────────────────
+
 const itemLayouts = {
   wrapperCol: { span: 24 },
   labelCol: { span: 24 },
@@ -60,20 +75,14 @@ export function normalizePhoneNumber(phone: string): string {
   let cleaned = phone.trim().replace(/[^\d+]/g, "");
 
   if (cleaned.startsWith("+")) {
-    if (cleaned.startsWith("+62")) {
-      return cleaned;
-    }
     return cleaned;
   }
-
   if (cleaned.startsWith("62")) {
     return "+" + cleaned;
   }
-
   if (cleaned.startsWith("0")) {
     return "+62" + cleaned.slice(1);
   }
-
   return "+62" + cleaned;
 }
 
@@ -88,8 +97,41 @@ export default function MembersView() {
   );
   const [selectedMember, setSelectedMember] = useState<IMember | null>(null);
 
+  // ─── Country Code Dropdown State ─────────────────────────────────────────
+  const [countryCode, setCountryCode] = useState("62"); // default Indonesia
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredCountries = countryOptions.filter(
+    (c) =>
+      c.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.code.includes(searchQuery),
+  );
+
+  const activeCountryLabel =
+    countryCode === "62"
+      ? "ID (+62)"
+      : countryOptions.find((c) => c.code === countryCode)?.label ||
+        `+${countryCode}`;
+  // ─────────────────────────────────────────────────────────────────────────
+
   const memberInitialValues = useMemo(() => {
-    if (!selectedMember) return { isActive: true, status: 1 }; // Default to Active
+    if (!selectedMember) return { isActive: true, status: 1 };
     return {
       ...selectedMember,
       phone: normalizePhoneNumber(selectedMember.phone),
@@ -98,6 +140,7 @@ export default function MembersView() {
         : null,
     };
   }, [selectedMember]);
+
   const [members, setMembers] = useState<IMember[]>([]);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -114,11 +157,7 @@ export default function MembersView() {
     open: boolean;
     id: number | null;
     name: string;
-  }>({
-    open: false,
-    id: null,
-    name: "",
-  });
+  }>({ open: false, id: null, name: "" });
 
   const fetchData = async (
     page = pagination.current,
@@ -160,6 +199,8 @@ export default function MembersView() {
   useEffect(() => {
     if (openForm) {
       if (formType === "create") {
+        // Reset country code to Indonesia on new form
+        setCountryCode("62");
         forms.resetFields();
         forms.setFieldsValue({
           name: "",
@@ -172,9 +213,21 @@ export default function MembersView() {
           notes: "",
         });
       } else if (selectedMember) {
+        // Extract country code from existing phone number
+        const normalized = normalizePhoneNumber(selectedMember.phone);
+        const matched = countryOptions.find((c) =>
+          normalized.startsWith(`+${c.code}`),
+        );
+        setCountryCode(matched?.code ?? "62");
+
+        // Strip country code prefix from the local part for display
+        const localPart = matched
+          ? normalized.slice(matched.code.length + 1) // remove +XX
+          : normalized;
+
         forms.setFieldsValue({
           ...selectedMember,
-          phone: normalizePhoneNumber(selectedMember.phone),
+          phone: localPart,
           birthDate: selectedMember.birthDate
             ? dayjs(selectedMember.birthDate)
             : null,
@@ -196,10 +249,7 @@ export default function MembersView() {
 
   const handleOpenEdit = (member: IMember) => {
     setFormType("update");
-    setSelectedMember({
-      ...member,
-      phone: normalizePhoneNumber(member.phone),
-    });
+    setSelectedMember({ ...member, phone: normalizePhoneNumber(member.phone) });
     setOpenForm(true);
   };
 
@@ -212,9 +262,11 @@ export default function MembersView() {
       const values = await forms.validateFields();
       setSaving(true);
 
+      // Combine country code + local number, then normalise
+      const rawPhone = `+${countryCode}${values.phone}`;
       const payload = {
         ...values,
-        phone: normalizePhoneNumber(values.phone),
+        phone: normalizePhoneNumber(rawPhone),
         birthDate: values.birthDate
           ? values.birthDate.format("YYYY-MM-DD")
           : undefined,
@@ -292,13 +344,12 @@ export default function MembersView() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
       minimumFractionDigits: 0,
     }).format(amount);
-  };
 
   const getStatusTag = (status: number) => {
     const name = getMemberStatusName(status);
@@ -561,6 +612,8 @@ export default function MembersView() {
                   />
                 </UseFormItem>
               </Col>
+
+              {/* ── Phone Number with Country Code Dropdown ── */}
               <Col span={24} md={12}>
                 <UseFormItem
                   name="phone"
@@ -571,13 +624,22 @@ export default function MembersView() {
                     {
                       validator: (_, value) => {
                         if (!value) return Promise.resolve();
-                        const normalized = normalizePhoneNumber(value);
-                        const indonesianPhoneRegex = /^\+628\d{8,11}$/;
-                        if (!indonesianPhoneRegex.test(normalized)) {
+                        const fullNumber = normalizePhoneNumber(
+                          `+${countryCode}${value}`,
+                        );
+                        // For Indonesian numbers enforce the 08xxx pattern
+                        if (countryCode === "62") {
+                          const indonesianPhoneRegex = /^\+628\d{8,11}$/;
+                          if (!indonesianPhoneRegex.test(fullNumber)) {
+                            return Promise.reject(
+                              new Error(
+                                "Format nomor HP tidak valid. Contoh: 812xxxxxxxx",
+                              ),
+                            );
+                          }
+                        } else if (!/^\d{5,15}$/.test(value.replace(/\s/g, ""))) {
                           return Promise.reject(
-                            new Error(
-                              "Format nomor HP tidak valid. Masukkan nomor HP Indonesia yang benar (min 10 digit, cth: 0812xxx)",
-                            ),
+                            new Error("Nomor telepon tidak valid"),
                           );
                         }
                         return Promise.resolve();
@@ -585,13 +647,236 @@ export default function MembersView() {
                     },
                   ]}
                 >
-                  <UseInput
-                    prefix={<PhoneOutlined className="text-slate-300" />}
-                    placeholder="08xxxxxxxxxx"
-                    disabled={formType === "detail"}
-                  />
+                  {/* Wrapper that combines the custom dropdown + text input */}
+                  <div
+                    style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}
+                  >
+                    {/* ── Custom Searchable Country Code Dropdown ── */}
+                    <div
+                      ref={dropdownRef}
+                      style={{ position: "relative", flexShrink: 0, width: "130px" }}
+                    >
+                      {/* Trigger button */}
+                      <div
+                        onClick={() => {
+                          if (formType === "detail") return;
+                          setIsDropdownOpen(!isDropdownOpen);
+                          setSearchQuery("");
+                        }}
+                        style={{
+                          height: "46px",
+                          padding: "0 12px",
+                          borderRadius: "12px",
+                          border: "2px solid",
+                          borderColor: isDropdownOpen ? "#10b981" : "#f1f5f9",
+                          background: isDropdownOpen ? "#ffffff" : "#fafafa",
+                          cursor: formType === "detail" ? "not-allowed" : "pointer",
+                          opacity: formType === "detail" ? 0.6 : 1,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: "6px",
+                          userSelect: "none",
+                          transition: "border-color 0.2s, background 0.2s",
+                          fontSize: "13px",
+                          fontWeight: 700,
+                          color: "#334155",
+                        }}
+                      >
+                        <span
+                          style={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            flex: 1,
+                          }}
+                        >
+                          {activeCountryLabel}
+                        </span>
+                        <i
+                          className={`fa-solid fa-chevron-${isDropdownOpen ? "up" : "down"}`}
+                          style={{ fontSize: "11px", color: "#94a3b8", flexShrink: 0 }}
+                        />
+                      </div>
+
+                      {/* Floating dropdown menu */}
+                      {isDropdownOpen && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "calc(100% + 6px)",
+                            left: 0,
+                            width: "260px",
+                            background: "#ffffff",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "16px",
+                            boxShadow: "0 12px 32px rgba(0,0,0,0.12)",
+                            zIndex: 1100,
+                            overflow: "hidden",
+                            display: "flex",
+                            flexDirection: "column",
+                          }}
+                        >
+                          {/* Search input */}
+                          <div
+                            style={{
+                              padding: "10px",
+                              background: "#f8fafc",
+                              borderBottom: "1px solid #f1f5f9",
+                            }}
+                          >
+                            <div style={{ position: "relative" }}>
+                              <i
+                                className="fa-solid fa-magnifying-glass"
+                                style={{
+                                  position: "absolute",
+                                  left: "10px",
+                                  top: "50%",
+                                  transform: "translateY(-50%)",
+                                  color: "#94a3b8",
+                                  fontSize: "11px",
+                                }}
+                              />
+                              <input
+                                type="text"
+                                placeholder="Cari negara / kode..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                autoFocus
+                                style={{
+                                  width: "100%",
+                                  padding: "8px 8px 8px 30px",
+                                  borderRadius: "10px",
+                                  border: "1.5px solid #e2e8f0",
+                                  background: "#ffffff",
+                                  fontSize: "12px",
+                                  outline: "none",
+                                  color: "#334155",
+                                  boxSizing: "border-box",
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Country list */}
+                          <div style={{ maxHeight: "220px", overflowY: "auto" }}>
+                            {/* Indonesia pinned at top */}
+                            {(!searchQuery ||
+                              "id 62 indonesia".includes(
+                                searchQuery.toLowerCase(),
+                              )) && (
+                              <div
+                                onClick={() => {
+                                  setCountryCode("62");
+                                  setIsDropdownOpen(false);
+                                }}
+                                style={{
+                                  padding: "10px 14px",
+                                  cursor: "pointer",
+                                  fontSize: "13px",
+                                  fontWeight: countryCode === "62" ? 800 : 600,
+                                  background:
+                                    countryCode === "62"
+                                      ? "#ecfdf5"
+                                      : "transparent",
+                                  color:
+                                    countryCode === "62"
+                                      ? "#10b981"
+                                      : "#334155",
+                                  borderBottom: "1px solid #f1f5f9",
+                                  transition: "background 0.15s",
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (countryCode !== "62")
+                                    (e.currentTarget as HTMLDivElement).style.background =
+                                      "#f8fafc";
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (countryCode !== "62")
+                                    (e.currentTarget as HTMLDivElement).style.background =
+                                      "transparent";
+                                }}
+                              >
+                                🇮🇩 ID (+62)
+                              </div>
+                            )}
+
+                            {filteredCountries.length === 0 ? (
+                              <div
+                                style={{
+                                  padding: "20px",
+                                  textAlign: "center",
+                                  fontSize: "12px",
+                                  color: "#94a3b8",
+                                }}
+                              >
+                                Negara tidak ditemukan
+                              </div>
+                            ) : (
+                              filteredCountries.map((c, i) => {
+                                if (c.iso === "ID") return null; // skip duplicate ID
+                                return (
+                                  <div
+                                    key={`${c.iso}-${i}`}
+                                    onClick={() => {
+                                      setCountryCode(c.code);
+                                      setIsDropdownOpen(false);
+                                    }}
+                                    style={{
+                                      padding: "10px 14px",
+                                      cursor: "pointer",
+                                      fontSize: "13px",
+                                      fontWeight:
+                                        countryCode === c.code ? 700 : 400,
+                                      background:
+                                        countryCode === c.code
+                                          ? "#ecfdf5"
+                                          : "transparent",
+                                      color:
+                                        countryCode === c.code
+                                          ? "#10b981"
+                                          : "#334155",
+                                      transition: "background 0.15s",
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      if (countryCode !== c.code)
+                                        (
+                                          e.currentTarget as HTMLDivElement
+                                        ).style.background = "#f8fafc";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      if (countryCode !== c.code)
+                                        (
+                                          e.currentTarget as HTMLDivElement
+                                        ).style.background = "transparent";
+                                    }}
+                                  >
+                                    {c.label}
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {/* ── End Custom Dropdown ── */}
+
+                    {/* Local phone number input — rendered outside UseFormItem's default child slot,
+                        so we use Form.Item's children-as-render-prop pattern via the wrapping div trick.
+                        The actual <input> below is bound to the form via the parent UseFormItem name="phone". */}
+                    <UseInput
+                      placeholder={
+                        countryCode === "62" ? "812xxxxxxxx" : "Nomor lokal"
+                      }
+                      disabled={formType === "detail"}
+                      style={{ flex: 1, height: "46px" }}
+                    />
+                  </div>
                 </UseFormItem>
               </Col>
+              {/* ── End Phone Field ── */}
+
               <Col span={24} md={12}>
                 <UseFormItem name="email" label="Email" {...itemLayouts}>
                   <UseInput
