@@ -1,6 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { customList } from "country-codes-list";
+
+const rawCountryList = customList('countryCode', '{countryCode} (+{countryCallingCode})');
+const countryOptions = Object.entries(rawCountryList)
+    .map(([iso, label]) => {
+        const match = label.match(/\+(\d+)/);
+        return {
+            iso,
+            code: match ? match[1] : "",
+            label
+        };
+    })
+    .filter(c => c.code)
+    .sort((a, b) => a.iso.localeCompare(b.iso));
 
 interface Props {
     onClose: () => void;
@@ -9,22 +23,56 @@ interface Props {
 
 export default function ModalMemberAdd({ onClose, onSave }: Props) {
     const [name, setName] = useState("");
+    const [countryCode, setCountryCode] = useState("62");
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
     const [gender, setGender] = useState("male");
     const [loading, setLoading] = useState(false);
 
+    // State & Ref khusus untuk Custom Searchable Dropdown
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Menutup dropdown jika user mengklik area di luar dropdown
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    // Filter daftar negara berdasarkan input pencarian
+    const filteredCountries = countryOptions.filter(c => 
+        c.label.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        c.code.includes(searchQuery)
+    );
+
+    // Mencari label negara yang sedang aktif untuk ditampilkan
+    const activeCountryLabel = countryCode === "62" 
+        ? "ID (+62)" 
+        : countryOptions.find(c => c.code === countryCode)?.label || `+${countryCode}`;
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name || !phone) return;
+        
+        let cleanPhone = phone.trim();
+        if (cleanPhone.startsWith("0")) {
+            cleanPhone = cleanPhone.substring(1);
+        }
+
+        if (!name || !cleanPhone) return;
 
         setLoading(true);
         const success = await onSave({
             name,
-            phone,
+            phone: cleanPhone,
             email,
             gender,
-            countryCode: "62",
+            countryCode, 
             notes: "Member baru dari POS"
         });
         setLoading(false);
@@ -54,6 +102,10 @@ export default function ModalMemberAdd({ onClose, onSave }: Props) {
                         background: var(--bg-main); color: var(--text-primary); font-size: 15px; transition: all 0.2s;
                     }
                     .form-input:focus { outline: none; border-color: var(--spa-green); background: var(--bg-card); box-shadow: 0 0 0 4px var(--spa-green-bg); }
+                    
+                    /* Efek hover untuk item dropdown */
+                    .country-item { transition: background 0.2s; }
+                    .country-item:hover { background: var(--bg-main) !important; }
                 `}</style>
 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
@@ -84,14 +136,119 @@ export default function ModalMemberAdd({ onClose, onSave }: Props) {
 
                     <div className="form-group">
                         <label className="form-label">No. WhatsApp *</label>
-                        <input
-                            type="tel"
-                            required
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            className="form-input"
-                            placeholder="Contoh: 08123456789"
-                        />
+                        <div style={{ display: "flex", gap: "12px" }}>
+                            
+                            {/* ── CUSTOM SEARCHABLE DROPDOWN ── */}
+                            <div ref={dropdownRef} style={{ position: "relative", width: "140px", flexShrink: 0 }}>
+                                {/* Tombol Pemicu Dropdown */}
+                                <div 
+                                    className="form-input"
+                                    onClick={() => {
+                                        setIsDropdownOpen(!isDropdownOpen);
+                                        setSearchQuery(""); // Reset search saat dibuka
+                                    }}
+                                    style={{ 
+                                        cursor: "pointer", fontWeight: 700, display: "flex", 
+                                        alignItems: "center", justifyContent: "space-between",
+                                        borderColor: isDropdownOpen ? "var(--spa-green)" : "var(--bg-main)",
+                                        background: isDropdownOpen ? "var(--bg-card)" : "var(--bg-main)",
+                                        userSelect: "none"
+                                    }}
+                                >
+                                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                        {activeCountryLabel}
+                                    </span>
+                                    <i className={`fa-solid fa-chevron-${isDropdownOpen ? "up" : "down"}`} style={{ fontSize: "12px", color: "var(--text-muted)" }}></i>
+                                </div>
+
+                                {/* Menu Dropdown Melayang */}
+                                {isDropdownOpen && (
+                                    <div style={{
+                                        position: "absolute", top: "calc(100% + 8px)", left: 0, width: "240px",
+                                        background: "var(--bg-card)", border: "1px solid var(--border-color)",
+                                        borderRadius: "16px", boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+                                        zIndex: 50, overflow: "hidden", display: "flex", flexDirection: "column"
+                                    }}>
+                                        {/* Input Pencarian */}
+                                        <div style={{ padding: "12px", background: "var(--bg-main)", borderBottom: "1px solid var(--border-color)" }}>
+                                            <div style={{ position: "relative" }}>
+                                                <i className="fa-solid fa-magnifying-glass" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", fontSize: "12px" }}></i>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Cari negara/kode..."
+                                                    value={searchQuery}
+                                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                                    autoFocus
+                                                    style={{
+                                                        width: "100%", padding: "10px 10px 10px 32px", borderRadius: "10px",
+                                                        border: "1px solid var(--border-color)", background: "var(--bg-card)",
+                                                        fontSize: "13px", outline: "none", color: "var(--text-primary)"
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Daftar Negara */}
+                                        <div style={{ maxHeight: "220px", overflowY: "auto" }}>
+                                            {/* Prioritas ID (Hanya muncul jika tidak sedang mencari atau mencari "ID") */}
+                                            {(!searchQuery || "id 62 indonesia".includes(searchQuery.toLowerCase())) && (
+                                                <div 
+                                                    className="country-item"
+                                                    onClick={() => { setCountryCode("62"); setIsDropdownOpen(false); }}
+                                                    style={{ 
+                                                        padding: "12px 16px", cursor: "pointer", fontSize: "13px",
+                                                        fontWeight: countryCode === "62" ? 800 : 600,
+                                                        background: countryCode === "62" ? "var(--spa-green-bg)" : "transparent",
+                                                        color: countryCode === "62" ? "var(--spa-green)" : "var(--text-primary)",
+                                                        borderBottom: "1px solid var(--border-color)"
+                                                    }}
+                                                >
+                                                    ID (+62)
+                                                </div>
+                                            )}
+                                            
+                                            {filteredCountries.length === 0 ? (
+                                                <div style={{ padding: "20px", textAlign: "center", fontSize: "12px", color: "var(--text-muted)" }}>
+                                                    Negara tidak ditemukan
+                                                </div>
+                                            ) : (
+                                                filteredCountries.map((c, i) => {
+                                                    // Hindari render duplikat untuk ID (karena sudah di-hardcode di atas)
+                                                    if (c.iso === "ID") return null; 
+
+                                                    return (
+                                                        <div
+                                                            key={`${c.iso}-${i}`}
+                                                            className="country-item"
+                                                            onClick={() => { setCountryCode(c.code); setIsDropdownOpen(false); }}
+                                                            style={{
+                                                                padding: "12px 16px", cursor: "pointer", fontSize: "13px",
+                                                                fontWeight: countryCode === c.code ? 800 : 500,
+                                                                background: countryCode === c.code ? "var(--spa-green-bg)" : "transparent",
+                                                                color: countryCode === c.code ? "var(--spa-green)" : "var(--text-primary)"
+                                                            }}
+                                                        >
+                                                            {c.label}
+                                                        </div>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            {/* ── END CUSTOM SEARCHABLE DROPDOWN ── */}
+
+                            <input
+                                type="tel"
+                                required
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                className="form-input"
+                                style={{ flex: 1 }}
+                                placeholder="8123456789"
+                            />
+                        </div>
                     </div>
 
                     <div className="form-group">

@@ -23,6 +23,7 @@
     "apexcharts": "^5.3.6",
     "axios": "^1.4.0",
     "clsx": "^2.1.1",
+    "country-codes-list": "^2.0.0",
     "crypto-js": "^4.1.1",
     "fast-equals": "^6.0.0",
     "html2pdf.js": "^0.14.0",

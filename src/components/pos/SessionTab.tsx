@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { GetSessionsService, GetTherapistsService, UpdateSessionTherapistService } from "@afx/services/pos.service";
+import { GetSessionsService, GetTherapistsService, GetTherapistsTodayService, UpdateSessionTherapistService } from "@afx/services/pos.service";
 
 // ============================================
 // 1. TYPES & INTERFACES
@@ -355,15 +355,24 @@ function SessionTable({
                                                 </button>
 
                                                 {/* Tombol Ganti Terapis */}
-                                                <button
+                                               <button
                                                     onClick={(e) => { e.stopPropagation(); onChangeTherapist(ses); }}
                                                     title="Ganti Terapis"
                                                     style={{
-                                                        padding: "7px 12px", fontSize: "12px", fontWeight: 700,
-                                                        background: "rgba(99,102,241,0.1)", color: "#4f46e5",
-                                                        border: "1px solid rgba(99,102,241,0.3)", borderRadius: "8px",
-                                                        cursor: "pointer", display: "flex", alignItems: "center", gap: "5px",
+                                                        padding: "7px 12px", 
+                                                        fontSize: "12px", 
+                                                        fontWeight: 600, // Menggunakan 600 agar tulisan tidak terlalu tebal
+                                                        background: "var(--bg-main)", // Warna latar abu-abu sangat muda dari tema Anda
+                                                        color: "var(--text-muted)", 
+                                                        border: "1px solid var(--border-color)", 
+                                                        borderRadius: "8px",
+                                                        cursor: "pointer", 
+                                                        display: "flex", 
+                                                        alignItems: "center", 
+                                                        gap: "6px",
                                                         whiteSpace: "nowrap",
+                                                        boxShadow: "0 1px 2px rgba(0,0,0,0.05)", // Sedikit bayangan agar terlihat timbul
+                                                        transition: "all 0.2s ease"
                                                     }}
                                                 >
                                                     <i className="fa-solid fa-user-pen" /> Terapis
@@ -485,7 +494,8 @@ interface UpdateTherapistModalProps {
 }
 
 function UpdateTherapistModal({ session, branchId, onClose, onSuccess, onToast }: UpdateTherapistModalProps) {
-    const [therapists, setTherapists]         = useState<TherapistOption[]>([]);
+    // Gunakan any atau buat interface baru jika struktur Therapist berbeda
+    const [therapists, setTherapists]         = useState<any[]>([]);
     const [selectedId, setSelectedId]         = useState<number | "">("");
     const [loadingList, setLoadingList]       = useState(false);
     const [loadingSubmit, setLoadingSubmit]   = useState(false);
@@ -497,9 +507,11 @@ function UpdateTherapistModal({ session, branchId, onClose, onSuccess, onToast }
         const fetchTherapists = async () => {
             setLoadingList(true);
             try {
-                const res = await GetTherapistsService({ branchId });
+                // Pastikan fungsi ini memanggil API yang sama seperti saat booking
+                const res = await GetTherapistsTodayService(branchId); 
+                
                 if (res.success) {
-                    const list: TherapistOption[] = res.data?.pageData ?? res.data ?? [];
+                    const list = res.data ?? [];
                     setTherapists(list);
                 } else {
                     onToast(res.message ?? "Gagal memuat daftar terapis", "error");
@@ -644,8 +656,8 @@ function UpdateTherapistModal({ session, branchId, onClose, onSuccess, onToast }
                 {/* Dropdown terapis */}
                 <div style={{ marginBottom: "24px" }}>
                     <label style={{
-                        display: "block", fontSize: "11px",
-                        fontWeight: 600, color: "var(--text-muted)", marginBottom: "6px",
+                        display: "block", fontSize: "12px",
+                        fontWeight: 700, color: "var(--text-muted)", marginBottom: "8px",
                     }}>
                         Terapis <span style={{ color: "#dc2626" }}>*</span>
                     </label>
@@ -653,38 +665,61 @@ function UpdateTherapistModal({ session, branchId, onClose, onSuccess, onToast }
                     {loadingList ? (
                         <div style={{
                             display: "flex", alignItems: "center", gap: "8px",
-                            padding: "10px 14px", borderRadius: "10px",
+                            padding: "12px 16px", borderRadius: "12px",
                             border: "1px solid var(--border-color)",
-                            background: "var(--bg-main)",
+                            background: "#ffffff",
                             color: "var(--text-muted)", fontSize: "13px",
                         }}>
                             <i className="fa-solid fa-spinner fa-spin" /> Memuat daftar terapis...
                         </div>
                     ) : (
-                        <select
-                            value={selectedId}
-                            onChange={(e) => setSelectedId(e.target.value ? Number(e.target.value) : "")}
-                            style={{
-                                width: "100%",
-                                padding: "10px 14px",
-                                borderRadius: "10px",
-                                border: `1px solid ${selectedId ? "#4f46e5" : "var(--border-color)"}`,
-                                background: "var(--bg-main)",
-                                color: selectedId ? "var(--text-primary)" : "var(--text-muted)",
-                                fontSize: "13px",
-                                fontWeight: selectedId ? 600 : 400,
-                                cursor: "pointer",
-                                outline: "none",
-                                appearance: "auto",
-                            }}
-                        >
-                            <option value="">-- Pilih terapis --</option>
-                            {therapists.map((t) => (
-                                <option key={t.id} value={t.id}>
-                                    {t.name}{t.id === session.therapistId ? " (Saat ini)" : ""}
-                                </option>
-                            ))}
-                        </select>
+                        <div style={{ position: "relative" }}>
+                            {/* Ikon Panah Kustom */}
+                            <i className="fa-solid fa-chevron-down" style={{
+                                position: "absolute",
+                                right: "16px",
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                color: selectedId ? "var(--spa-green)" : "#64748b",
+                                pointerEvents: "none",
+                                fontSize: "12px",
+                                transition: "color 0.2s ease"
+                            }} />
+                            
+                            <select
+                                value={selectedId}
+                                onChange={(e) => setSelectedId(e.target.value ? Number(e.target.value) : "")}
+                                style={{
+                                    width: "100%",
+                                    padding: "12px 40px 12px 16px",
+                                    borderRadius: "12px",
+                                    border: `1.5px solid ${selectedId ? "var(--spa-green)" : "var(--border-color)"}`,
+                                    background: "#ffffff", 
+                                    color: selectedId ? "#1e293b" : "#64748b", 
+                                    fontSize: "14px",
+                                    fontWeight: selectedId ? 600 : 500,
+                                    cursor: "pointer",
+                                    outline: "none",
+                                    appearance: "none",
+                                    transition: "all 0.2s ease",
+                                    boxShadow: selectedId ? "0 0 0 4px rgba(16, 185, 129, 0.1)" : "none",
+                                    // KUNCI: Memaksa OS merender menu opsi dengan tema terang (putih)
+                                    colorScheme: "light" 
+                                }}
+                            >
+                                <option value="" disabled style={{ color: "#64748b" }}>— Pilih terapis —</option>
+                                {therapists.map((t) => (
+                                    <option 
+                                        key={t.id} 
+                                        value={t.id} 
+                                        style={{ background: "#ffffff", color: "#1e293b" }}
+                                    >
+                                        {t.employeeName ?? `Terapis #${t.id}`}
+                                        {t.id === session.therapistId ? " (Saat ini)" : ""}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     )}
                 </div>
 
