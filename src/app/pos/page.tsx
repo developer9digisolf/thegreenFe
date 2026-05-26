@@ -621,17 +621,16 @@ export default function POSPage() {
                         (s) => s != null
                     );
                     if (alreadyHasSession) {
-                        showToast(
-                            "Masih ada sesi aktif. Silahkan lanjutkan atau tutup sesi terlebih dahulu.",
-                            "error"
-                        );
+                        showToast("Masih ada sesi aktif.", "error");
                         return;
                     }
-                    await session.handleOpenSession((branchId: number) =>
-                        pos.loadInitData(branchId)
-                    );
-                    showToast("Sesi baru berhasil dibuka. Menyiapkan kasir...", "success");
-                    setTimeout(() => window.location.reload(), 1000);
+
+                    await session.handleOpenSession(async (branchId: number) => {
+                        session.setGateState("READY"); // ← pindah ke sini, sebelum loadInitData
+                        await pos.loadInitData(branchId);
+                    });
+
+                    showToast("Sesi baru berhasil dibuka.", "success");
                 }}
                 onContinueSession={async (branch: any) => {
                     const bId = branch.branchId ?? branch.id;

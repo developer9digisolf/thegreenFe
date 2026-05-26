@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { formatCurrency } from "@afx/utils/format";
 import type { Branch, GateState, Toast } from "@afx/interfaces/pos.iface";
 import "@afx/styles/pos.css";
@@ -175,7 +175,10 @@ export default function GatekeeperScreen({
      * Sebelumnya: hanya pakai `activeSession` prop → bisa null → panel blank.
      * Sekarang: pakai fallback chain agar selalu ada data.
      */
-    const forceCloseSession = getActiveSessionForBranch(selectedBranch);
+    const forceCloseSession = useMemo(() => {
+    // Memberikan prioritas pada sesi yang aktif di cabang terpilih
+    return getActiveSessionForBranch(selectedBranch) || activeSession;
+    }, [selectedBranch, activeSession, activeSessionsMap]);
 
     // ── Handlers ─────────────────────────────────────────────────────────────
 

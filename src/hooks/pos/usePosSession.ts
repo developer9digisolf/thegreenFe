@@ -231,6 +231,39 @@ export function usePosSession(
 
             if (res.success) {
                 setOpeningCash("");
+
+                // [FIX] Opsi 2: populate activeSession & activeSessionsMap agar
+                // currentActiveSession di POSPage langsung tersedia saat render
+                // pertama setelah setGateState("READY"), tanpa perlu refresh.
+                //
+                // Priority:
+                //   1. Gunakan res.data jika API mengembalikan object sesi
+                //   2. Fallback: fetch ulang dari server (sama seperti handleSelectBranch)
+                let newSession = res.data ?? null;
+
+                if (!newSession) {
+                    // Fallback: API sukses tapi tidak mengembalikan data sesi
+                    try {
+                        const activeRes = await get(
+                            `cashier-sessions/branch/${selectedBranch.branchId}/active`
+                        );
+                        if (activeRes.success && activeRes.data) {
+                            newSession = activeRes.data;
+                        }
+                    } catch {
+                        // Fallback gagal — state tetap kosong, UI masih bisa lanjut
+                        // tapi tombol tutup sesi baru akan muncul setelah next render
+                    }
+                }
+
+                if (newSession) {
+                    setActiveSession(newSession);
+                    setActiveSessionsMap((prev) => ({
+                        ...prev,
+                        [selectedBranch.branchId]: newSession,
+                    }));
+                }
+
                 setGateState("READY");
                 onReady(selectedBranch.branchId);
             } else {
