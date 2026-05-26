@@ -30,7 +30,6 @@ export interface BookingRow {
     isPaid: boolean;
     notes: string | null;
     createdAt?: string;
-    // Fields for session tracking
     sessionCode?: string | null;
     sessionStatus?: string | null;
     session?: {
@@ -93,6 +92,97 @@ function SessionStatus({ hasSession, sessionStatus, bookingStatus }: { hasSessio
 // ============================================
 // 3. SUB-COMPONENTS
 // ============================================
+
+// --- BARU: Komponen QR Code yang bisa diklik dan diperbesar ---
+function EnlargeableQRCode({ sessionCode }: { sessionCode: string }) {
+    const [isZoomed, setIsZoomed] = useState(false);
+
+    // URL skala 2 untuk thumbnail (kecil), skala 5 untuk gambar besar
+    const smallQrUrl = `https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(sessionCode)}&scale=2&backgroundcolor=ffffff`;
+    const largeQrUrl = `https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(sessionCode)}&scale=6&backgroundcolor=ffffff`;
+
+    return (
+        <>
+            {/* Tampilan Thumbnail (Kecil) */}
+            <div 
+                onClick={() => setIsZoomed(true)}
+                title="Klik untuk memperbesar QR Code"
+                style={{ 
+                    textAlign: "center", background: "#fff", padding: "8px", 
+                    borderRadius: "12px", border: "1px solid var(--border-color)",
+                    cursor: "zoom-in", transition: "transform 0.2s, box-shadow 0.2s" 
+                }}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "scale(1.05)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.boxShadow = "none";
+                }}
+            >
+                <img 
+                    src={smallQrUrl}
+                    alt="Session QR"
+                    style={{ width: "80px", height: "80px", objectFit: "contain" }}
+                />
+                <div style={{ fontSize: "10px", fontWeight: 700, marginTop: "4px", color: "var(--text-muted)", fontFamily: "monospace" }}>
+                    {sessionCode}
+                </div>
+            </div>
+
+            {/* Modal Perbesar (Lightbox) */}
+            {isZoomed && (
+                <div 
+                    onClick={(e) => { e.stopPropagation(); setIsZoomed(false); }} 
+                    style={{ 
+                        position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.8)", 
+                        display: "flex", alignItems: "center", justifyContent: "center", 
+                        zIndex: 9999, backdropFilter: "blur(4px)" 
+                    }}
+                >
+                    <div 
+                        onClick={(e) => e.stopPropagation()} 
+                        style={{ 
+                            background: "var(--bg-card)", borderRadius: "24px", padding: "32px", 
+                            textAlign: "center", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)", 
+                            animation: "modalScale 0.2s ease-out", display: "flex", 
+                            flexDirection: "column", alignItems: "center" 
+                        }}
+                    >
+                        <div style={{ display: "flex", justifyContent: "flex-end", width: "100%", marginBottom: "16px" }}>
+                            <button 
+                                onClick={() => setIsZoomed(false)} 
+                                style={{ 
+                                    background: "var(--bg-main)", border: "none", borderRadius: "50%", 
+                                    width: "36px", height: "36px", cursor: "pointer", color: "var(--text-muted)", 
+                                    display: "flex", alignItems: "center", justifyContent: "center" 
+                                }}
+                            >
+                                <i className="fa-solid fa-xmark" style={{ fontSize: "16px" }} />
+                            </button>
+                        </div>
+                        
+                        <div style={{ background: "#fff", padding: "16px", borderRadius: "16px", border: "1px solid var(--border-color)" }}>
+                            <img 
+                                src={largeQrUrl} 
+                                alt="Session QR Large" 
+                                style={{ width: "260px", height: "260px", objectFit: "contain" }} 
+                            />
+                        </div>
+                        
+                        <h3 style={{ margin: "20px 0 8px", fontSize: "22px", fontWeight: 800, color: "var(--spa-green)", fontFamily: "monospace", letterSpacing: "2px" }}>
+                            {sessionCode}
+                        </h3>
+                        <p style={{ margin: 0, fontSize: "14px", color: "var(--text-muted)", fontWeight: 500 }}>
+                            Arahkan scanner ke layar untuk melakukan scan
+                        </p>
+                    </div>
+                </div>
+            )}
+        </>
+    );
+}
 
 function BookingFilterBar({ filter, setFilter, onSearch, onReset, loading }: any) {
     return (
@@ -259,11 +349,8 @@ function BookingTable({ bookings, loading, onOpenAssign, onRowClick, selectedBoo
 function BookingDetailDrawer({ isOpen, onClose, booking, loading, onOpenAssign }: any) {
     if (!isOpen) return null;
     
-    // Check if session already exists
     const hasSession = !!(booking.sessionCode || booking.session?.sessionCode || booking.status === "InProgress" || booking.status === "Completed");
     const sessionCode = booking.sessionCode || booking.session?.sessionCode || "";
-    
-    // Check if booking is paid
     const isPaid = !!booking.isPaid;
     const canCreateSession = isPaid && !hasSession && (booking.status === "Confirmed" || booking.status === "Pending");
 
@@ -303,14 +390,7 @@ function BookingDetailDrawer({ isOpen, onClose, booking, loading, onOpenAssign }
                                     </div>
                                 </div>
                                 {sessionCode && (
-                                    <div style={{ textAlign: "center", background: "#fff", padding: "8px", borderRadius: "12px", border: "1px solid var(--border-color)" }}>
-                                        <img 
-                                            src={`https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(sessionCode)}&scale=2&backgroundcolor=ffffff`}
-                                            alt="Session QR"
-                                            style={{ width: "80px", height: "80px" }}
-                                        />
-                                        <div style={{ fontSize: "10px", fontWeight: 700, marginTop: "4px", color: "var(--text-muted)", fontFamily: "monospace" }}>{sessionCode}</div>
-                                    </div>
+                                    <EnlargeableQRCode sessionCode={sessionCode} />
                                 )}
                             </div>
 
