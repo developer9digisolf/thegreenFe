@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useCallback, useState } from "react";
+import React, { useEffect, useCallback, useState, useRef } from "react";
 import { Plus, MapPin, DollarSign } from "lucide-react";
 import { UseForm, UseFormItem } from "@afx/components/form/form.layout";
 import UseInput from "@afx/components/ui/input/input.layout";
@@ -64,7 +64,7 @@ import { IBranchPaymentMethod } from "@afx/interfaces/master/branch-payment-meth
 const MapPicker = dynamic(() => import("@afx/components/ui/maps/MapPicker"), {
   ssr: false,
   loading: () => (
-    <div className="h-[300px] bg-slate-100 animate-pulse rounded-xl flex items-center justify-center">
+    <div className="h-[300px] bg-slate-100 animate-pulse rounded-xl flex items-center justify-center text-slate-400 text-sm font-medium">
       Memuat Peta...
     </div>
   ),
@@ -84,25 +84,22 @@ export function FormBranch(props: IPropsFormBranch) {
   const loading =
     isLoading("createBranch") || isLoading("updateBranch") || false;
 
-  // State untuk map position
+  // Map position state — used to pass value into MapPicker
   const [mapPosition, setMapPosition] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
 
-  // Watch form values
-  const formLat = Form.useWatch("latitude", props.forms);
-  const formLng = Form.useWatch("longitude", props.forms);
+  // ─── KEY FIX ───────────────────────────────────────────────────────────────
+  // Stable map key: only changes when the form opens/closes or formType changes.
+  // NOT tied to mapPosition, so dragging the map NEVER causes a remount/refetch.
+  const mapKey = `map-${props.formType}-${props.open ? "open" : "closed"}`;
+  // ──────────────────────────────────────────────────────────────────────────
 
   // SET FORM VALUES WHEN BRANCH DATA IS AVAILABLE
   useEffect(() => {
-    console.log("FormBranch useEffect - props.open:", props?.open);
-    console.log("FormBranch useEffect - formType:", props?.formType);
-    console.log("FormBranch useEffect - branch:", branch);
-
     if (props?.open) {
       if (props?.formType === "create") {
-        // Reset untuk create
         props.forms.resetFields();
         props.forms.setFieldsValue({
           imageGaleries: [],
@@ -115,11 +112,7 @@ export function FormBranch(props: IPropsFormBranch) {
         setMapPosition(null);
         setFileList([]);
       } else if (props?.formType === "update" || props?.formType === "detail") {
-        // Set data branch ke form
         if (branch && branch.id) {
-          console.log("Setting branch data to form:", branch);
-
-          // Set all form values
           props.forms.setFieldsValue({
             code: branch.code,
             name: branch.name,
@@ -141,7 +134,6 @@ export function FormBranch(props: IPropsFormBranch) {
             commissionBonusAmount: branch.commissionBonusAmount || 5,
           });
 
-          // Set map position
           if (branch.latitude && branch.longitude) {
             const lat =
               typeof branch.latitude === "string"
@@ -153,61 +145,78 @@ export function FormBranch(props: IPropsFormBranch) {
                 : branch.longitude;
 
             if (!isNaN(lat) && !isNaN(lng)) {
-              console.log("Setting map position:", { lat, lng });
               setMapPosition({ lat, lng });
             }
           }
-        } else {
-          console.warn("No branch data available for update/detail");
         }
       }
     }
   }, [props?.open, props?.formType, branch, props.forms]);
 
-  // Update map position when form latitude/longitude changes (from manual input)
-  useEffect(() => {
-    if (formLat && formLng) {
-      const lat = typeof formLat === "string" ? parseFloat(formLat) : formLat;
-      const lng = typeof formLng === "string" ? parseFloat(formLng) : formLng;
-
-      if (!isNaN(lat) && !isNaN(lng)) {
-        console.log("Form changed, updating map position:", { lat, lng });
-        setMapPosition({ lat, lng });
-      }
-    }
-  }, [formLat, formLng]);
-
-  // Handle map change
+  // Handle map click/drag change → update form fields
   const handleMapChange = useCallback(
     (coords: { lat: number; lng: number }) => {
-      console.log("Map changed, updating form:", coords);
-
-      // Update form values
       props.forms.setFieldsValue({
         latitude: coords.lat.toFixed(8),
         longitude: coords.lng.toFixed(8),
       });
-
-      // Update map position state
+      // Update state only here — not from the lat/lng watch useEffect below
       setMapPosition(coords);
     },
     [props.forms],
   );
 
-  // Handle manual input changes
+  // Watch form lat/lng to update map when user types manually
+  const formLat = Form.useWatch("latitude", props.forms);
+  const formLng = Form.useWatch("longitude", props.forms);
+
+  // Track last coords set BY the map, to avoid circular update
+  const lastMapCoords = useRef<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    if (!formLat || !formLng) return;
+
+    const lat = typeof formLat === "string" ? parseFloat(formLat) : formLat;
+    const lng = typeof formLng === "string" ? parseFloat(formLng) : formLng;
+
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    // Skip if this update originated from the map itself (circular guard)
+    if (
+      lastMapCoords.current &&
+      Math.abs(lastMapCoords.current.lat - lat) < 0.00000001 &&
+      Math.abs(lastMapCoords.current.lng - lng) < 0.00000001
+    ) {
+      return;
+    }
+
+    // Only update mapPosition if meaningfully different
+    if (
+      !mapPosition ||
+      Math.abs(mapPosition.lat - lat) > 0.00000001 ||
+      Math.abs(mapPosition.lng - lng) > 0.00000001
+    ) {
+      setMapPosition({ lat, lng });
+    }
+  }, [formLat, formLng]);
+
+  // Sync lastMapCoords when map changes position
+  const handleMapChangeWithRef = useCallback(
+    (coords: { lat: number; lng: number }) => {
+      lastMapCoords.current = coords;
+      handleMapChange(coords);
+    },
+    [handleMapChange],
+  );
+
   const handleLatitudeChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
-      if (value && formLng) {
-        const lat = parseFloat(value);
-        const lng = typeof formLng === "string" ? parseFloat(formLng) : formLng;
-
-        if (!isNaN(lat) && !isNaN(lng)) {
-          props.forms.setFieldsValue({
-            latitude: lat.toFixed(8),
-          });
-          setMapPosition({ lat, lng });
-        }
+      const lat = parseFloat(value);
+      const lng =
+        typeof formLng === "string" ? parseFloat(formLng) : (formLng ?? 0);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        props.forms.setFieldsValue({ latitude: value });
       }
     },
     [formLng, props.forms],
@@ -216,21 +225,17 @@ export function FormBranch(props: IPropsFormBranch) {
   const handleLongitudeChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
-      if (value && formLat) {
-        const lat = typeof formLat === "string" ? parseFloat(formLat) : formLat;
-        const lng = parseFloat(value);
-
-        if (!isNaN(lat) && !isNaN(lng)) {
-          props.forms.setFieldsValue({
-            longitude: lng.toFixed(8),
-          });
-          setMapPosition({ lat, lng });
-        }
+      const lat =
+        typeof formLat === "string" ? parseFloat(formLat) : (formLat ?? 0);
+      const lng = parseFloat(value);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        props.forms.setFieldsValue({ longitude: value });
       }
     },
     [formLat, props.forms],
   );
 
+  // ─── Payment methods state ────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<string>("general");
   const [branchPaymentMethods, setBranchPaymentMethods] = useState<
     IBranchPaymentMethod[]
@@ -245,6 +250,7 @@ export function FormBranch(props: IPropsFormBranch) {
   );
   const [addPMForm] = Form.useForm();
 
+  // ─── Gallery state ────────────────────────────────────────────────────────
   const [fileList, setFileList] = useState<any[]>([]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState("");
@@ -282,7 +288,6 @@ export function FormBranch(props: IPropsFormBranch) {
   const handleChangeUpload = ({ fileList: newFileList }: any) => {
     setFileList(newFileList);
 
-    // Update form values with successful uploads
     const urls = newFileList
       .filter((f: any) => f.status === "done")
       .map((f: any) => f.url || f.response?.data?.[0]?.url)
@@ -294,7 +299,6 @@ export function FormBranch(props: IPropsFormBranch) {
         urls.length > 0 ? urls[0] : props.forms.getFieldValue("imageUrl"),
     });
 
-    // Auto-update if in detail/update mode and a new file just finished uploading
     if (
       props.handleUpdateGallery &&
       (props.formType === "detail" || props.formType === "update")
@@ -314,17 +318,12 @@ export function FormBranch(props: IPropsFormBranch) {
 
   const customRequest = async (options: any) => {
     const { file, onSuccess, onError, onProgress } = options;
-
     try {
-      // Create a fake progress
       onProgress({ percent: 50 });
-
       const res = await UploadMultipleImageService([file as File]);
       if (res.success) {
         onProgress({ percent: 100 });
         onSuccess(res);
-
-        // We don't update form here because handleChangeUpload will catch it when status is 'done'
       } else {
         onError(new Error(res.message || "Upload failed"));
         antdNotification.error({
@@ -339,14 +338,13 @@ export function FormBranch(props: IPropsFormBranch) {
     }
   };
 
+  // ─── Payment methods helpers ──────────────────────────────────────────────
   const fetchBranchPaymentMethods = useCallback(async () => {
     if (branch?.id) {
       setLoadingPaymentMethods(true);
       try {
         const res = await GetBranchPaymentMethodsService(branch.id);
-        if (res.success) {
-          setBranchPaymentMethods(res.data);
-        }
+        if (res.success) setBranchPaymentMethods(res.data);
       } catch (err) {
         console.error("Failed to fetch branch payment methods", err);
       } finally {
@@ -358,29 +356,16 @@ export function FormBranch(props: IPropsFormBranch) {
   const fetchAllPaymentMethods = useCallback(async () => {
     try {
       const res = await GetGroupedPaymentMethodsService();
-      console.log("Grouped Payment Methods Response:", res);
-
-      let groups = [];
-      if (res && res.groups) {
-        groups = res.groups;
-      } else if (Array.isArray(res)) {
-        groups = res;
-      }
-
+      let groups = res?.groups ?? (Array.isArray(res) ? res : []);
       if (groups.length > 0) {
-        const flatList = groups.flatMap(
-          (group: any) => group.paymentMethods || [],
+        setAllPaymentMethods(
+          groups.flatMap((group: any) => group.paymentMethods || []),
         );
-        console.log("Flattened Payment Methods:", flatList);
-        setAllPaymentMethods(flatList);
       } else {
-        // Fallback to active payment methods if grouped is empty or structured differently
         const activeRes = await GetActivePaymentMethodsService();
-        if (activeRes && Array.isArray(activeRes)) {
-          setAllPaymentMethods(activeRes);
-        } else if (activeRes && activeRes.data) {
-          setAllPaymentMethods(activeRes.data);
-        }
+        setAllPaymentMethods(
+          Array.isArray(activeRes) ? activeRes : (activeRes?.data ?? []),
+        );
       }
     } catch (err) {
       console.error("Failed to fetch all payment methods", err);
@@ -413,23 +398,20 @@ export function FormBranch(props: IPropsFormBranch) {
           sortOrder: values.sortOrder || 0,
           notes: values.notes || null,
         });
-        if (res.success) {
+        if (res.success)
           antdNotification.success({
             message: "Berhasil menambahkan metode pembayaran",
           });
-        }
       } else if (selectedBPM) {
         const res = await UpdateBranchPaymentMethodService(selectedBPM.id, {
           sortOrder: values.sortOrder,
           notes: values.notes,
         });
-        if (res.success) {
+        if (res.success)
           antdNotification.success({
             message: "Berhasil memperbarui metode pembayaran",
           });
-        }
       }
-
       setIsModalPMOpen(false);
       addPMForm.resetFields();
       fetchBranchPaymentMethods();
@@ -470,9 +452,7 @@ export function FormBranch(props: IPropsFormBranch) {
   const handleTogglePM = async (id: number) => {
     try {
       const res = await ToggleBranchPaymentMethodStatusService(id);
-      if (res.success) {
-        fetchBranchPaymentMethods();
-      }
+      if (res.success) fetchBranchPaymentMethods();
     } catch (err: any) {
       antdNotification.error({
         message: err?.message || "Gagal mengubah status",
@@ -480,6 +460,7 @@ export function FormBranch(props: IPropsFormBranch) {
     }
   };
 
+  // ─── Render helpers ───────────────────────────────────────────────────────
   const renderPaymentMethods = () => (
     <div className="flex flex-col gap-4">
       <div className="flex justify-between items-center mb-2">
@@ -526,16 +507,6 @@ export function FormBranch(props: IPropsFormBranch) {
                     className="w-8 h-8 object-contain rounded border border-slate-100"
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = "none";
-                      const parent = (e.target as HTMLImageElement)
-                        .parentElement;
-                      if (parent) {
-                        const placeholder = document.createElement("div");
-                        placeholder.className =
-                          "w-8 h-8 rounded bg-slate-100 flex items-center justify-center text-slate-400";
-                        placeholder.innerHTML =
-                          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-credit-card"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>';
-                        parent.prepend(placeholder);
-                      }
                     }}
                   />
                 ) : (
@@ -626,11 +597,10 @@ export function FormBranch(props: IPropsFormBranch) {
             >
               {allPaymentMethods
                 .filter((pm) => {
-                  if (modalPMMode === "update") {
+                  if (modalPMMode === "update")
                     return (
                       Number(pm.id) === Number(selectedBPM?.paymentMethodId)
                     );
-                  }
                   return !branchPaymentMethods.find(
                     (bpm) => Number(bpm.paymentMethodId) === Number(pm.id),
                   );
@@ -646,16 +616,6 @@ export function FormBranch(props: IPropsFormBranch) {
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display =
                               "none";
-                            const parent = (e.target as HTMLImageElement)
-                              .parentElement;
-                            if (parent) {
-                              const placeholder = document.createElement("div");
-                              placeholder.className =
-                                "w-5 h-5 flex items-center justify-center text-slate-400";
-                              placeholder.innerHTML =
-                                '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-credit-card"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>';
-                              parent.prepend(placeholder);
-                            }
                           }}
                         />
                       ) : (
@@ -797,7 +757,7 @@ export function FormBranch(props: IPropsFormBranch) {
   );
 
   const renderFormContent = () => (
-    <Spin spinning={loading} size="small">
+    <Spin spinning={loading} size="small" classNames={{ root: "w-full" }}>
       <UseForm form={props?.forms} onFinish={props.handleSubmit}>
         <Form.Item name="imageUrl" noStyle>
           <Input type="hidden" />
@@ -1003,7 +963,7 @@ export function FormBranch(props: IPropsFormBranch) {
           <Col xs={24} lg={12}>
             {/* Card 4: Lokasi */}
             <Card
-              className="mb-4 border-0 shadow-sm rounded-2xl"
+              className="mb-4 border-0 shadow-sm rounded-2xl overflow-visible"
               title={
                 <div className="flex items-center gap-2">
                   <MapPin size={16} className="text-emerald-500" />
@@ -1012,16 +972,23 @@ export function FormBranch(props: IPropsFormBranch) {
               }
             >
               <Row gutter={[16, 8]}>
-                <Col span={24}>
+                <Col span={24} className="relative">
                   <Typography.Text className="text-xs font-medium text-slate-500 mb-2 block text-left">
                     Pilih Lokasi di Peta
                   </Typography.Text>
-                  <MapPicker
-                    key={`map-${props.formType}-${mapPosition?.lat}-${mapPosition?.lng}`}
-                    value={mapPosition || undefined}
-                    onChange={handleMapChange}
-                    disabled={props?.formType === "detail"}
-                  />
+                  {/*
+                   * KEY FIX: mapKey hanya berubah saat open/formType berubah,
+                   * BUKAN saat mapPosition berubah. Ini mencegah re-mount/re-fetch
+                   * tiles setiap kali user drag atau klik peta.
+                   */}
+                  <div className="relative w-full">
+                    <MapPicker
+                      key={mapKey}
+                      value={mapPosition || undefined}
+                      onChange={handleMapChangeWithRef}
+                      disabled={props?.formType === "detail"}
+                    />
+                  </div>
                 </Col>
                 <Col span={12}>
                   <UseFormItem
@@ -1194,9 +1161,7 @@ export function FormBranch(props: IPropsFormBranch) {
             <div className="flex justify-end mt-6 border-t border-slate-100 pt-6">
               <button
                 type="button"
-                onClick={() => {
-                  props?.setFormType("update");
-                }}
+                onClick={() => props?.setFormType("update")}
                 disabled={loading}
                 className={`w-full lg:w-[200px] px-6 py-3 rounded-xl font-bold text-base text-white transition-all shadow-md hover:shadow-emerald-500/20 active:scale-95 ${
                   loading
