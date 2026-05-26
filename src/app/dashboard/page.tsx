@@ -1,21 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import Link from "next/link";
-import {
-  DatePicker,
-  Spin,
-  Empty,
-  Table,
-  Badge,
-  Card,
-  Row,
-  Col,
-  Space,
-  Typography,
-  Select,
-} from "antd";
-import type { RangePickerProps } from "antd/es/date-picker";
+import { DatePicker, Spin, Empty, Table, Badge } from "antd";
 import dayjs from "dayjs";
 import { DynamicChart } from "@afx/components/dynamic/chart-loader";
 import {
@@ -44,7 +30,104 @@ import {
 } from "@afx/interfaces/dashboard.iface";
 
 const { RangePicker } = DatePicker;
-const { Title, Text } = Typography;
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+function fmt(value: number) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(value);
+}
+
+function fmtShort(value: number) {
+  if (value >= 1_000_000) return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
+  if (value >= 1_000) return `Rp ${(value / 1_000).toFixed(0)} rb`;
+  return `Rp ${value}`;
+}
+
+function initials(name: string) {
+  return (name || "?")
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+// ─── sub-components ────────────────────────────────────────────────────────────
+
+function KpiCard({
+  label,
+  value,
+  growth,
+  icon,
+  accent,
+}: {
+  label: string;
+  value: string | number;
+  growth?: number;
+  icon: string;
+  accent: "teal" | "blue" | "purple" | "amber";
+}) {
+  const accentMap = {
+    teal: { bg: "#E1F5EE", text: "#0F6E56" },
+    blue: { bg: "#E6F1FB", text: "#185FA5" },
+    purple: { bg: "#EEEDFE", text: "#534AB7" },
+    amber: { bg: "#FAEEDA", text: "#854F0B" },
+  };
+  const a = accentMap[accent];
+  return (
+    <div className="kpi-card">
+      <div
+        className="kpi-icon-wrap"
+        style={{ background: a.bg, color: a.text }}
+      >
+        <i className={`fa-solid ${icon}`} />
+      </div>
+      <div className="kpi-label">{label}</div>
+      <div className="kpi-value">{value}</div>
+      {growth !== undefined && (
+        <div className={`kpi-badge ${growth >= 0 ? "up" : "dn"}`}>
+          <i
+            className={`fa-solid ${growth >= 0 ? "fa-arrow-trend-up" : "fa-arrow-trend-down"}`}
+          />
+          {Math.abs(growth)}%
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Avatar({
+  name,
+  variant,
+}: {
+  name: string;
+  variant: "teal" | "blue" | "purple";
+}) {
+  const styles = {
+    teal: { background: "#E1F5EE", color: "#0F6E56" },
+    blue: { background: "#E6F1FB", color: "#185FA5" },
+    purple: { background: "#EEEDFE", color: "#534AB7" },
+  };
+  return (
+    <div className="avatar" style={styles[variant]}>
+      {initials(name)}
+    </div>
+  );
+}
+
+const AVATAR_VARIANTS: ("teal" | "blue" | "purple")[] = [
+  "teal",
+  "blue",
+  "purple",
+  "teal",
+  "blue",
+];
+
+// ─── main component ────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs]>([
@@ -67,13 +150,37 @@ export default function Dashboard() {
     useState<ICustomerSegmentation | null>(null);
   const [topServices, setTopServices] = useState<ITopService[]>([]);
 
+  // Helper: hitung dateRange berdasarkan period
+  function getDateRangeForPeriod(
+    p: "daily" | "weekly" | "monthly",
+  ): [dayjs.Dayjs, dayjs.Dayjs] {
+    const end = dayjs();
+    if (p === "daily") return [end.subtract(7, "day"), end];
+    if (p === "weekly") return [end.subtract(4, "week"), end];
+    return [end.subtract(6, "month"), end];
+  }
+
+  // Saat period berubah → update dateRange (fetchData akan terpanggil otomatis via useEffect dateRange)
+  function handlePeriodChange(p: "daily" | "weekly" | "monthly") {
+    setPeriod(p);
+    setDateRange(getDateRangeForPeriod(p));
+  }
+
+  // Satu useEffect untuk semua perubahan
+  useEffect(() => {
+    fetchData();
+  }, [dateRange, period]);
+
   const fetchData = async () => {
     setLoading(true);
-    const params = {
+
+    const baseParams = {
       startDate: dateRange[0].format("YYYY-MM-DD"),
       endDate: dateRange[1].format("YYYY-MM-DD"),
-      period: period,
     };
+
+    // Only sales performance uses period
+    const salesParams = { ...baseParams, period };
 
     try {
       const [
@@ -89,149 +196,151 @@ export default function Dashboard() {
         topServicesRes,
       ] = await Promise.all([
         GetSummaryRevenueService(),
-        GetSalesPerformanceService(params),
-        GetTopTherapistsService(params),
-        GetPaymentMethodTotalsService(params),
-        GetRecentSalesService(params),
-        GetRecentSessionsService(params),
-        GetTopMembersService(params),
-        GetPeakHoursService(params),
-        GetCustomerSegmentationService(params),
-        GetTopServicesService(params),
+        GetSalesPerformanceService(salesParams),
+        GetTopTherapistsService(baseParams),
+        GetPaymentMethodTotalsService(baseParams),
+        GetRecentSalesService(baseParams),
+        GetRecentSessionsService(baseParams),
+        GetTopMembersService(baseParams),
+        GetPeakHoursService(baseParams),
+        GetCustomerSegmentationService(baseParams),
+        GetTopServicesService(baseParams),
       ]);
 
       if (summaryRes.meta.success) setSummary(summaryRes.data);
       if (salesRes.meta.success) setSalesPerf(salesRes.data);
       if (therapistsRes.meta.success) {
-        // Handle both array and paginated response
-        const therapistsData =
+        const d =
           typeof therapistsRes.data === "object" &&
           therapistsRes.data !== null &&
           "pageData" in therapistsRes.data
             ? therapistsRes.data.pageData
             : therapistsRes.data;
-        const filtered = therapistsData.filter(
-          (t: ITopTherapist) => t.name && t.employeeCode,
+        setTopTherapists(
+          d.filter((t: ITopTherapist) => t.name && t.employeeCode),
         );
-        setTopTherapists(filtered);
       }
       if (paymentMethodsRes.meta.success)
         setPaymentMethods(paymentMethodsRes.data);
       if (salesRecentRes.meta.success) {
-        // Handle both array and paginated response
-        const salesData =
+        const d =
           typeof salesRecentRes.data === "object" &&
           salesRecentRes.data !== null &&
           "pageData" in salesRecentRes.data
             ? salesRecentRes.data.pageData
             : salesRecentRes.data;
-        setRecentSales(salesData);
+        setRecentSales(d);
       }
       if (sessionsRecentRes.meta.success) {
-        // Handle both array and paginated response
-        const sessionsData =
+        const d =
           typeof sessionsRecentRes.data === "object" &&
           sessionsRecentRes.data !== null &&
           "pageData" in sessionsRecentRes.data
             ? sessionsRecentRes.data.pageData
             : sessionsRecentRes.data;
-        setRecentSessions(sessionsData);
+        setRecentSessions(d);
       }
       if (membersRes.meta.success) {
-        // Handle both array and paginated response
-        const membersData =
+        const d =
           typeof membersRes.data === "object" &&
           membersRes.data !== null &&
           "pageData" in membersRes.data
             ? membersRes.data.pageData
             : membersRes.data;
-        setTopMembers(membersData);
+        setTopMembers(d);
       }
       if (peakRes.meta.success) setPeakHours(peakRes.data);
       if (segmentRes.meta.success) setCustomerSegmentation(segmentRes.data);
       if (topServicesRes.meta.success) {
-        // Handle both array and paginated response
-        const servicesData =
+        const d =
           typeof topServicesRes.data === "object" &&
           topServicesRes.data !== null &&
           "pageData" in topServicesRes.data
             ? topServicesRes.data.pageData
             : topServicesRes.data;
-        setTopServices(servicesData);
+        setTopServices(d);
       }
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err);
     } finally {
       setLoading(false);
     }
   };
 
+  // Re-fetch when dateRange changes (all widgets)
   useEffect(() => {
     fetchData();
-  }, [dateRange, period]);
+  }, [dateRange]);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(value);
+  // Re-fetch only sales performance when period changes
+  const fetchSalesOnly = async () => {
+    const salesParams = {
+      startDate: dateRange[0].format("YYYY-MM-DD"),
+      endDate: dateRange[1].format("YYYY-MM-DD"),
+      period,
+    };
+    try {
+      const salesRes = await GetSalesPerformanceService(salesParams);
+      if (salesRes.meta.success) setSalesPerf(salesRes.data);
+    } catch (err) {
+      console.error("Error fetching sales performance:", err);
+    }
   };
+
+  useEffect(() => {
+    fetchSalesOnly();
+  }, [period]);
+
+  // ─── chart options ──────────────────────────────────────────────────────────
 
   const salesChartOptions = useMemo(
     () => ({
       chart: {
         id: "sales-performance",
         toolbar: { show: false },
-        fontFamily: "Inter, sans-serif",
+        fontFamily: "inherit",
       },
       xaxis: {
         categories: salesPerf?.labels || [],
         axisBorder: { show: false },
         axisTicks: { show: false },
+        labels: { style: { colors: "#94a3b8", fontSize: "11px" } },
       },
       yaxis: [
         {
           title: {
             text: "Revenue",
-            style: { fontWeight: 600, color: "#64748b" },
+            style: { fontWeight: 500, color: "#94a3b8", fontSize: "11px" },
           },
           labels: {
-            style: { fontWeight: 500, colors: "#64748b" },
-            formatter: (val: number) => {
-              if (val >= 1000000) return `Rp ${(val / 1000000).toFixed(1)}jt`;
-              if (val >= 1000) return `Rp ${(val / 1000).toFixed(0)}rb`;
-              return `Rp ${val}`;
-            },
+            style: { colors: "#94a3b8", fontSize: "11px" },
+            formatter: (val: number) => fmtShort(val),
           },
         },
         {
           opposite: true,
           title: {
-            text: "Quantity",
-            style: { fontWeight: 600, color: "#64748b" },
+            text: "Qty sesi",
+            style: { fontWeight: 500, color: "#94a3b8", fontSize: "11px" },
           },
-          labels: { style: { fontWeight: 500, colors: "#64748b" } },
+          labels: {
+            style: { colors: "#94a3b8", fontSize: "11px" },
+            formatter: (val: number) => `${val}`,
+          },
         },
       ],
-      colors: ["#3d6b5f", "#3b82f6"],
+      colors: ["#1D9E75", "#FBBF24"],
       plotOptions: {
-        bar: {
-          borderRadius: 6,
-          columnWidth: "35%",
-          dataLabels: { position: "top" },
-        },
+        bar: { borderRadius: 5, columnWidth: "40%" },
       },
       dataLabels: { enabled: false },
-      stroke: { width: [0, 2] },
-      grid: { borderColor: "#f1f5f9" },
-      legend: { position: "top" as const },
+      stroke: { width: [0, 0], curve: "smooth" as const },
+      grid: { borderColor: "#f1f5f9", strokeDashArray: 3 },
+      legend: { show: false },
       tooltip: {
         y: {
-          formatter: (val: number, opts: any) => {
-            if (opts.seriesIndex === 0) return formatCurrency(val); // Revenue
-            return val + " qty"; // Quantity
-          },
+          formatter: (val: number, opts: any) =>
+            opts.seriesIndex === 0 ? fmt(val) : `${val} sesi`,
         },
       },
     }),
@@ -240,65 +349,44 @@ export default function Dashboard() {
 
   const salesChartSeries = useMemo(
     () => [
-      {
-        name: "Revenue",
-        type: "bar",
-        data: salesPerf?.sales || [],
-      },
-      {
-        name: "Quantity",
-        type: "line",
-        data: salesPerf?.quantities || [],
-      },
+      { name: "Revenue", type: "bar", data: salesPerf?.sales || [] },
+      { name: "Qty Sesi", type: "bar", data: salesPerf?.quantities || [] },
     ],
     [salesPerf],
   );
 
   const paymentChartOptions = useMemo(
     () => ({
-      chart: { id: "payment-methods" },
+      chart: { id: "payment-methods", fontFamily: "inherit" },
       labels: paymentMethods?.labels || [],
-      colors: ["#3d6b5f", "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444"],
-      legend: {
-        position: "bottom" as const,
-        fontFamily: "Inter, sans-serif",
-        fontWeight: 600,
-        labels: { colors: "#64748b" },
-        formatter: (seriesName: string, opts: any) => {
-          const val = opts.w.globals.series[opts.seriesIndex];
-          return `${seriesName}: ${formatCurrency(val)}`;
-        },
-      },
+      colors: ["#1D9E75", "#378ADD", "#7F77DD", "#BA7517", "#D85A30"],
+      legend: { show: false },
       stroke: { show: false },
       dataLabels: {
         enabled: true,
-        formatter: (val: any, opts: any) => {
-          // Show percentage in data labels but could also show absolute value
-          return val.toFixed(1) + "%";
-        },
+        formatter: (val: number) => `${val.toFixed(0)}%`,
+        style: { fontSize: "12px", fontWeight: 500 },
         dropShadow: { enabled: false },
       },
-      tooltip: {
-        y: {
-          formatter: (val: number) => formatCurrency(val),
-        },
-      },
+      tooltip: { y: { formatter: (val: number) => fmt(val) } },
       plotOptions: {
         pie: {
           donut: {
-            size: "75%",
+            size: "72%",
             labels: {
               show: true,
               total: {
                 show: true,
                 label: "Total",
-                formatter: (w: any) => {
-                  const sum = w.globals.seriesTotals.reduce(
-                    (a: number, b: number) => a + b,
-                    0,
-                  );
-                  return formatCurrency(sum);
-                },
+                fontSize: "12px",
+                color: "#94a3b8",
+                formatter: (w: any) =>
+                  fmtShort(
+                    w.globals.seriesTotals.reduce(
+                      (a: number, b: number) => a + b,
+                      0,
+                    ),
+                  ),
               },
             },
           },
@@ -314,49 +402,59 @@ export default function Dashboard() {
         id: "peak-hours",
         toolbar: { show: false },
         zoom: { enabled: false },
+        fontFamily: "inherit",
       },
       xaxis: {
         categories: peakHours?.labels || [],
         axisBorder: { show: false },
         axisTicks: { show: false },
+        labels: { style: { colors: "#94a3b8", fontSize: "11px" } },
       },
       yaxis: {
-        title: { text: "Jumlah Sesi" },
+        labels: {
+          style: { colors: "#94a3b8", fontSize: "11px" },
+        },
       },
-      colors: ["#8b5cf6"],
-      stroke: { curve: "smooth", width: 3 },
+      colors: ["#7F77DD"],
+      stroke: { curve: "smooth" as const, width: 2 },
       fill: {
         type: "gradient",
         gradient: {
           shadeIntensity: 1,
-          opacityFrom: 0.45,
-          opacityTo: 0.05,
-          stops: [50, 100],
+          opacityFrom: 0.35,
+          opacityTo: 0.02,
+          stops: [40, 100],
         },
       },
-      grid: { borderColor: "#f1f5f9" },
-      markers: { size: 4, strokeWidth: 2 },
+      grid: { borderColor: "#f1f5f9", strokeDashArray: 3 },
+      markers: { size: 3, strokeWidth: 0 },
+      dataLabels: { enabled: false },
+      legend: { show: false },
+      tooltip: { y: { formatter: (val: number) => `${val} sesi` } },
     }),
     [peakHours],
   );
 
   const segmentChartOptions = useMemo(
     () => ({
-      chart: { id: "customer-segmentation" },
-      labels: ["Baru", "Kembali"],
-      colors: ["#3d6b5f", "#f59e0b"],
-      legend: { position: "bottom" as const },
+      chart: { id: "segmentation", fontFamily: "inherit" },
+      labels: ["Pelanggan Baru", "Pelanggan Kembali"],
+      colors: ["#1D9E75", "#378ADD"],
+      legend: { show: false },
       stroke: { show: false },
+      dataLabels: { enabled: false },
       plotOptions: {
         pie: {
           donut: {
-            size: "75%",
+            size: "72%",
             labels: {
               show: true,
               total: {
                 show: true,
                 label: "Total",
-                formatter: () => customerSegmentation?.totalCustomers || 0,
+                fontSize: "12px",
+                color: "#94a3b8",
+                formatter: () => `${customerSegmentation?.totalCustomers ?? 0}`,
               },
             },
           },
@@ -371,62 +469,47 @@ export default function Dashboard() {
       chart: {
         id: "top-services",
         toolbar: { show: false },
-        fontFamily: "Inter, sans-serif",
+        fontFamily: "inherit",
       },
       plotOptions: {
         bar: {
-          borderRadius: 12,
+          borderRadius: 5,
           horizontal: true,
           distributed: true,
-          barHeight: "55%",
-          dataLabels: {
-            position: "top", // Inside the bar at the end
-          },
+          barHeight: "50%",
         },
       },
-      colors: ["#3d6b5f", "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444"],
+      colors: ["#1D9E75", "#378ADD", "#7F77DD", "#BA7517", "#D85A30"],
       xaxis: {
         categories: topServices.slice(0, 5).map((s) => s.serviceName),
         labels: {
-          style: { fontWeight: 600, colors: "#64748b" },
-          formatter: (val: number) => {
-            if (val >= 1000000) return `Rp ${(val / 1000000).toFixed(1)}jt`;
-            if (val >= 1000) return `Rp ${(val / 1000).toFixed(0)}rb`;
-            return `Rp ${val}`;
-          },
+          style: { colors: "#94a3b8", fontSize: "11px" },
+          formatter: (val: number) => fmtShort(val),
         },
         axisBorder: { show: false },
         axisTicks: { show: false },
       },
       yaxis: {
         labels: {
-          style: { fontWeight: 700, colors: "#1e293b" },
+          style: { colors: "#1e293b", fontSize: "12px", fontWeight: 500 },
         },
       },
       dataLabels: {
         enabled: true,
-        textAnchor: "end",
-        style: {
-          colors: ["#fff"],
-          fontWeight: 800,
-          fontSize: "12px",
-        },
-        formatter: (val: number) => formatCurrency(val),
-        offsetX: -10,
-        dropShadow: { enabled: true, opacity: 0.3 },
+        textAnchor: "end" as const,
+        style: { colors: ["#fff"], fontWeight: 500, fontSize: "11px" },
+        formatter: (val: number) => fmtShort(val),
+        offsetX: -8,
+        dropShadow: { enabled: false },
       },
       grid: {
         borderColor: "#f1f5f9",
+        strokeDashArray: 3,
         xaxis: { lines: { show: true } },
         yaxis: { lines: { show: false } },
       },
-      tooltip: {
-        theme: "dark",
-        y: {
-          formatter: (val: number) => formatCurrency(val),
-        },
-      },
       legend: { show: false },
+      tooltip: { y: { formatter: (val: number) => fmt(val) } },
     }),
     [topServices],
   );
@@ -441,166 +524,99 @@ export default function Dashboard() {
     [topServices],
   );
 
-  const summaryCards = [
-    {
-      title: "Revenue Hari Ini",
-      value: formatCurrency(summary?.todayRevenue || 0),
-      growth: summary?.todayGrowth,
-      icon: "fa-money-bill-wave",
-      color: "blue",
-    },
-    {
-      title: "Revenue Bulan Ini",
-      value: formatCurrency(summary?.monthRevenue || 0),
-      growth: summary?.monthGrowth,
-      icon: "fa-chart-line",
-      color: "emerald",
-    },
-    {
-      title: "Rata-rata Transaksi",
-      value: formatCurrency(summary?.avgTransaction || 0),
-      growth: summary?.avgGrowth,
-      icon: "fa-hand-holding-dollar",
-      color: "purple",
-    },
-    {
-      title: "Total Transaksi",
-      value: summary?.totalTransactions || 0,
-      growth: summary?.transactionGrowth,
-      icon: "fa-receipt",
-      color: "orange",
-    },
-  ];
-
-  const colorMap: Record<string, any> = {
-    blue: {
-      bg: "bg-blue-50",
-      text: "text-blue-500",
-      hover: "hover:shadow-blue-500/5",
-      blob: "bg-blue-500/5",
-      blobHover: "group-hover:bg-blue-500/10",
-    },
-    emerald: {
-      bg: "bg-emerald-50",
-      text: "text-emerald-500",
-      hover: "hover:shadow-emerald-500/5",
-      blob: "bg-emerald-500/5",
-      blobHover: "group-hover:bg-emerald-500/10",
-    },
-    purple: {
-      bg: "bg-purple-50",
-      text: "text-purple-500",
-      hover: "hover:shadow-purple-500/5",
-      blob: "bg-purple-500/5",
-      blobHover: "group-hover:bg-purple-500/10",
-    },
-    orange: {
-      bg: "bg-orange-50",
-      text: "text-orange-500",
-      hover: "hover:shadow-orange-500/5",
-      blob: "bg-orange-500/5",
-      blobHover: "group-hover:bg-orange-500/10",
-    },
-  };
+  // ─── render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8 overflow-hidden">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div className="gs-dash">
+      {/* ── top bar ── */}
+      <div className="gs-topbar">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 mb-1 tracking-tight">
-            Dashboard
-          </h1>
-          <p className="text-slate-500 text-sm">
-            Selamat datang di The Green Spa Management System
-          </p>
+          <h1 className="gs-heading">Dashboard</h1>
+          <p className="gs-subheading">The Green Spa Management System</p>
         </div>
-        <div className="flex items-center gap-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
-          <div className="text-xs font-bold text-slate-400 px-2 uppercase tracking-wider">
-            Filter Periode
-          </div>
+        <div className="gs-topbar-right">
           <RangePicker
             value={dateRange}
             onChange={(dates) => dates && setDateRange([dates[0]!, dates[1]!])}
             allowClear={false}
-            className="dashboard-range-picker !bg-slate-50 !border-none"
+            className="gs-rangepicker"
           />
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        {summaryCards.map((card, index) => {
-          const styles = colorMap[card.color];
-          return (
-            <div
-              key={index}
-              className={`bg-white rounded-[2rem] p-5 sm:p-7 shadow-sm border border-slate-100 hover:shadow-xl ${styles.hover} hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden`}
-            >
-              <div
-                className={`w-12 h-12 rounded-2xl ${styles.bg} ${styles.text} flex items-center justify-center text-xl mb-6 group-hover:scale-110 transition-transform`}
-              >
-                <i className={`fa-solid ${card.icon}`}></i>
-              </div>
-              <div className="text-2xl sm:text-3xl font-black text-slate-900 mb-1 tracking-tighter truncate">
-                {card.value}
-              </div>
-              <div className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">
-                {card.title}
-              </div>
-              {card.growth !== undefined && (
-                <div
-                  className={`flex items-center gap-1.5 text-[10px] sm:text-xs font-bold ${card.growth >= 0 ? "text-emerald-500 bg-emerald-50" : "text-red-500 bg-red-50"} mt-4 w-fit px-2 py-1 rounded-full`}
-                >
-                  <i
-                    className={`fa-solid ${card.growth >= 0 ? "fa-arrow-up" : "fa-arrow-down"}`}
-                  ></i>{" "}
-                  {Math.abs(card.growth)}%
-                  <span className="font-normal text-slate-400 ml-1 hidden sm:inline">
-                    vs periode lalu
-                  </span>
-                </div>
-              )}
-              <div
-                className={`absolute top-0 right-0 w-32 h-32 ${styles.blob} rounded-full -mr-16 -mt-16 blur-2xl ${styles.blobHover} transition-colors`}
-              ></div>
-            </div>
-          );
-        })}
+      {/* ── KPI cards ── */}
+      <div className="gs-kpi-grid">
+        <KpiCard
+          label="Revenue hari ini"
+          value={fmt(summary?.todayRevenue ?? 0)}
+          growth={summary?.todayGrowth}
+          icon="fa-money-bill-wave"
+          accent="teal"
+        />
+        <KpiCard
+          label="Revenue bulan ini"
+          value={fmt(summary?.monthRevenue ?? 0)}
+          growth={summary?.monthGrowth}
+          icon="fa-chart-line"
+          accent="blue"
+        />
+        <KpiCard
+          label="Rata-rata transaksi"
+          value={fmt(summary?.avgTransaction ?? 0)}
+          growth={summary?.avgGrowth}
+          icon="fa-hand-holding-dollar"
+          accent="purple"
+        />
+        <KpiCard
+          label="Total transaksi"
+          value={summary?.totalTransactions ?? 0}
+          growth={summary?.transactionGrowth}
+          icon="fa-receipt"
+          accent="amber"
+        />
       </div>
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-        <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-5 sm:p-8 shadow-sm border border-slate-100 overflow-hidden">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <div className="flex flex-col">
-              <h3 className="text-xl font-extrabold text-slate-900 m-0">
-                Performa Penjualan
-              </h3>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <Select
-                value={period}
-                onChange={(val: "daily" | "weekly" | "monthly") => {
-                  setPeriod(val);
-                  const end = dayjs();
-                  let start = dayjs();
-                  if (val === "daily") start = end.subtract(7, "day");
-                  else if (val === "weekly") start = end.subtract(1, "month");
-                  else if (val === "monthly") start = end.subtract(3, "month");
-                  setDateRange([start, end]);
-                }}
-                className="period-select"
-                variant="borderless"
-                options={[
-                  { value: "daily", label: "Harian" },
-                  { value: "weekly", label: "Mingguan" },
-                  { value: "monthly", label: "Bulanan" },
-                ]}
-              />
+      {/* ── row 1: sales chart + payment donut ── */}
+      <div className="gs-row gs-row-2-1">
+        {/* Sales chart */}
+        <div className="gs-card">
+          <div className="gs-card-header">
+            <span className="gs-card-title">Performa penjualan</span>
+            <div className="gs-legend">
+              <span className="gs-legend-item">
+                <span
+                  className="gs-legend-dot"
+                  style={{ background: "#1D9E75" }}
+                />
+                Revenue
+              </span>
+              <span className="gs-legend-item">
+                <span
+                  className="gs-legend-dot"
+                  style={{ background: "#FBBF24" }}
+                />
+                Qty sesi
+              </span>
+
+              <div className="gs-period-tabs">
+                {(["daily", "weekly", "monthly"] as const).map((p) => (
+                  <button
+                    key={p}
+                    className={`gs-period-btn${period === p ? " active" : ""}`}
+                    onClick={() => handlePeriodChange(p)}
+                  >
+                    {p === "daily"
+                      ? "Harian"
+                      : p === "weekly"
+                        ? "Mingguan"
+                        : "Bulanan"}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           {loading ? (
-            <div className="h-[350px] flex items-center justify-center">
+            <div className="gs-spin-wrap">
               <Spin />
             </div>
           ) : salesPerf && salesPerf.labels.length > 0 ? (
@@ -608,41 +624,64 @@ export default function Dashboard() {
               type="bar"
               options={salesChartOptions}
               series={salesChartSeries}
-              height={350}
+              height={280}
             />
           ) : (
             <Empty description="Tidak ada data penjualan" />
           )}
         </div>
-        <div className="bg-white rounded-[2.5rem] p-5 sm:p-8 shadow-sm border border-slate-100 overflow-hidden">
-          <h3 className="text-xl font-extrabold text-slate-900 mb-6">
-            Metode Pembayaran
-          </h3>
+
+        {/* Payment donut */}
+        <div className="gs-card">
+          <div className="gs-card-title mb-3">Metode pembayaran</div>
           {loading ? (
-            <div className="h-[350px] flex items-center justify-center">
+            <div className="gs-spin-wrap">
               <Spin />
             </div>
           ) : paymentMethods && paymentMethods.labels.length > 0 ? (
-            <DynamicChart
-              type="donut"
-              options={paymentChartOptions}
-              series={paymentMethods.values}
-              height={350}
-            />
+            <>
+              <DynamicChart
+                type="donut"
+                options={paymentChartOptions}
+                series={paymentMethods.values}
+                height={240}
+              />
+              <div className="flex flex-wrap items-center justify-center gap-4 mt-4 text-sm text-gray-600">
+                {paymentMethods.labels.map((label, i) => {
+                  const colors = [
+                    "#1D9E75",
+                    "#378ADD",
+                    "#7F77DD",
+                    "#BA7517",
+                    "#D85A30",
+                  ];
+                  return (
+                    <div key={i} className="flex items-center gap-2">
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: colors[i] }}
+                      />
+                      <span>{label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           ) : (
             <Empty description="Tidak ada data pembayaran" />
           )}
         </div>
       </div>
 
-      {/* Row 3: Peak Hours & Customer Segmentation */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-        <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-5 sm:p-8 shadow-sm border border-slate-100 overflow-hidden">
-          <h3 className="text-xl font-extrabold text-slate-900 mb-6">
-            Jam Sibuk
-          </h3>
+      {/* ── row 2: peak hours + segmentation ── */}
+      <div className="gs-row gs-row-2-1">
+        {/* Peak hours */}
+        <div className="gs-card">
+          <div className="gs-card-title" style={{ marginBottom: "0.75rem" }}>
+            Jam sibuk
+          </div>
           {loading ? (
-            <div className="h-[350px] flex items-center justify-center">
+            <div className="gs-spin-wrap">
               <Spin />
             </div>
           ) : peakHours && peakHours.labels.length > 0 ? (
@@ -650,23 +689,25 @@ export default function Dashboard() {
               type="area"
               options={peakChartOptions}
               series={[{ name: "Sesi", data: peakHours.values }]}
-              height={350}
+              height={240}
             />
           ) : (
             <Empty description="Tidak ada data jam sibuk" />
           )}
         </div>
-        <div className="bg-white rounded-[2.5rem] p-5 sm:p-8 shadow-sm border border-slate-100 overflow-hidden">
-          <h3 className="text-xl font-extrabold text-slate-900 mb-6">
-            Segmentasi Pelanggan
-          </h3>
+
+        {/* Customer segmentation */}
+        <div className="gs-card">
+          <div className="gs-card-title" style={{ marginBottom: "0.75rem" }}>
+            Segmentasi pelanggan
+          </div>
           {loading ? (
-            <div className="h-[350px] flex items-center justify-center">
+            <div className="gs-spin-wrap">
               <Spin />
             </div>
           ) : customerSegmentation &&
             customerSegmentation.totalCustomers > 0 ? (
-            <div className="flex flex-col items-center">
+            <>
               <DynamicChart
                 type="donut"
                 options={segmentChartOptions}
@@ -674,299 +715,50 @@ export default function Dashboard() {
                   customerSegmentation.newCustomers,
                   customerSegmentation.returningCustomers,
                 ]}
-                height={350}
+                height={200}
               />
-              <div className="grid grid-cols-2 gap-4 w-full mt-4">
-                <div className="p-3 bg-emerald-50 rounded-2xl text-center">
-                  <div className="text-xs font-bold text-emerald-600 uppercase">
-                    Baru
-                  </div>
-                  <div className="text-lg font-black text-slate-900">
+              <div className="gs-seg-grid">
+                <div
+                  className="gs-seg-box"
+                  style={{ color: "#0F6E56", background: "#E1F5EE" }}
+                >
+                  <div className="gs-seg-label">Baru</div>
+                  <div className="gs-seg-val">
                     {customerSegmentation.newPercentage}%
                   </div>
-                </div>
-                <div className="p-3 bg-amber-50 rounded-2xl text-center">
-                  <div className="text-xs font-bold text-amber-600 uppercase">
-                    Kembali
+                  <div className="gs-seg-count">
+                    {customerSegmentation.newCustomers} pelanggan
                   </div>
-                  <div className="text-lg font-black text-slate-900">
+                </div>
+                <div
+                  className="gs-seg-box"
+                  style={{ color: "#185FA5", background: "#E6F1FB" }}
+                >
+                  <div className="gs-seg-label">Kembali</div>
+                  <div className="gs-seg-val">
                     {customerSegmentation.returningPercentage}%
+                  </div>
+                  <div className="gs-seg-count">
+                    {customerSegmentation.returningCustomers} pelanggan
                   </div>
                 </div>
               </div>
-            </div>
+            </>
           ) : (
-            <div className="h-[350px] flex items-center justify-center">
-              <Empty description="Tidak ada data pelanggan pada periode ini" />
-            </div>
+            <Empty description="Tidak ada data pelanggan" />
           )}
         </div>
       </div>
 
-      {/* Detailed Info Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        {/* Recent Sales */}
-        <div className="lg:col-span-3 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-          <div className="p-5 sm:p-8 pb-4 sm:pb-6 flex items-center justify-between">
-            <h3 className="text-xl font-extrabold text-slate-900 m-0">
-              Penjualan Terbaru
-            </h3>
-            {/* <Link href="/dashboard/sales" className="text-emerald-500 text-sm font-bold no-underline hover:underline">Lihat Semua</Link> */}
-          </div>
-          <div className="p-0 overflow-x-auto table-wrapper">
-            <Table
-              dataSource={recentSales.slice(0, 5)}
-              loading={loading}
-              pagination={false}
-              rowKey="id"
-              className="dashboard-table"
-              columns={[
-                {
-                  title: "Kode",
-                  dataIndex: "saleCode",
-                  key: "saleCode",
-                  render: (text) => (
-                    <span className="font-bold text-slate-700">
-                      {text.split("-")[0]}
-                    </span>
-                  ),
-                },
-                {
-                  title: "Member",
-                  dataIndex: "memberName",
-                  key: "memberName",
-                  render: (text, record) => (
-                    <div>
-                      <div className="font-bold text-slate-900">{text}</div>
-                      <div className="text-[10px] text-slate-400">
-                        {record.memberPhone}
-                      </div>
-                    </div>
-                  ),
-                },
-                {
-                  title: "Total",
-                  dataIndex: "grandTotal",
-                  key: "grandTotal",
-                  render: (val) => (
-                    <span className="font-black text-slate-900">
-                      {formatCurrency(val)}
-                    </span>
-                  ),
-                },
-                {
-                  title: "Status",
-                  dataIndex: "paymentStatusName",
-                  key: "paymentStatus",
-                  render: (text, record) => (
-                    <Badge
-                      color={
-                        record.paymentStatus === "paid" ? "#3d6b5f" : "#f59e0b"
-                      }
-                      text={text}
-                      className="text-[10px] font-bold uppercase tracking-wider"
-                    />
-                  ),
-                },
-              ]}
-            />
-          </div>
-        </div>
-
-        {/* Top Members */}
-        <div className="lg:col-span-2 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-          <div className="p-5 sm:p-8 pb-4 sm:pb-6 flex items-center justify-between">
-            <h3 className="text-xl font-extrabold text-slate-900 m-0">
-              Top Member Loyal
-            </h3>
-          </div>
-          <div className="p-5 sm:p-8 pt-0 flex flex-col gap-4 sm:gap-6">
-            {loading ? (
-              <Spin className="mt-4" />
-            ) : topMembers.length > 0 ? (
-              topMembers.slice(0, 5).map((member, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-5 p-4 rounded-3xl hover:bg-slate-50 transition-all group border border-transparent hover:border-slate-100"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-blue-500 text-white flex items-center justify-center font-bold text-xl shrink-0 shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
-                    {member.name
-                      ? member.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                      : "?"}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-lg font-black text-slate-900 truncate">
-                      {member.name || "Unknown Member"}
-                    </div>
-                    <div className="text-[10px] font-bold text-slate-400 mb-2">
-                      {member.phone}
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
-                        <i className="fa-solid fa-crown text-[10px]"></i>
-                        <span className="text-xs font-black">
-                          {member.transactionCount} Transaksi
-                        </span>
-                      </div>
-                      <div className="text-xs font-bold text-slate-400">
-                        Total{" "}
-                        <span className="text-slate-900">
-                          {formatCurrency(member.totalAmountSpent)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <Empty description="Belum ada data member" />
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Detailed Info Grid Row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mt-8">
-        {/* Recent Sessions */}
-        <div className="lg:col-span-3 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-          <div className="p-5 sm:p-8 pb-4 sm:pb-6 flex items-center justify-between">
-            <h3 className="text-xl font-extrabold text-slate-900 m-0">
-              Sesi Terkini
-            </h3>
-            {/* <Link href="/dashboard/bookings" className="text-emerald-500 text-sm font-bold no-underline hover:underline">Lihat Semua</Link> */}
-          </div>
-          <div className="p-0 overflow-x-auto table-wrapper">
-            <Table
-              dataSource={recentSessions.slice(0, 5)}
-              loading={loading}
-              pagination={false}
-              rowKey="id"
-              className="dashboard-table"
-              columns={[
-                {
-                  title: "Waktu",
-                  dataIndex: "scheduledTime",
-                  key: "scheduledTime",
-                  render: (text, record) => (
-                    <div>
-                      <div className="font-bold text-slate-900">
-                        {dayjs(record.sessionDate).format("DD MMM")}
-                      </div>
-                      <div className="text-[10px] text-slate-400">
-                        {text.split(".")[0]}
-                      </div>
-                    </div>
-                  ),
-                },
-                {
-                  title: "Member",
-                  dataIndex: "memberName",
-                  key: "memberName",
-                  render: (text) => (
-                    <span className="font-bold text-slate-700">{text}</span>
-                  ),
-                },
-                {
-                  title: "Layanan",
-                  dataIndex: "serviceName",
-                  key: "serviceName",
-                  render: (text) => (
-                    <span className="text-sm text-slate-600 truncate max-w-[120px] inline-block">
-                      {text}
-                    </span>
-                  ),
-                },
-                {
-                  title: "Status",
-                  dataIndex: "statusName",
-                  key: "status",
-                  render: (text, record) => (
-                    <div
-                      className={`px-2 py-0.5 rounded-full w-fit text-[10px] font-extrabold uppercase tracking-widest border ${
-                        record.status === "completed"
-                          ? "bg-emerald-50 text-emerald-600 border-emerald-100"
-                          : record.status === "claimed"
-                            ? "bg-blue-50 text-blue-600 border-blue-100"
-                            : "bg-amber-50 text-amber-600 border-amber-100"
-                      }`}
-                    >
-                      {text}
-                    </div>
-                  ),
-                },
-              ]}
-            />
-          </div>
-        </div>
-
-        {/* Top Therapists */}
-        <div className="lg:col-span-2 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-          <div className="p-5 sm:p-8 pb-4 sm:pb-6 flex items-center justify-between">
-            <h3 className="text-xl font-extrabold text-slate-900 m-0">
-              Top Therapist
-            </h3>
-          </div>
-          <div className="p-5 sm:p-8 pt-0 flex flex-col gap-4 sm:gap-6">
-            {loading ? (
-              <Spin className="mt-4" />
-            ) : topTherapists.length > 0 ? (
-              topTherapists.slice(0, 5).map((therapist, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-5 p-4 rounded-3xl hover:bg-slate-50 transition-all group border border-transparent hover:border-slate-100"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-bold text-xl shrink-0 shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
-                    {therapist.name
-                      ? therapist.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                      : "?"}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-lg font-black text-slate-900 truncate">
-                      {therapist.name || "Unknown Therapist"}
-                    </div>
-                    <div className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-2">
-                      {therapist.employeeCode}
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-100">
-                        <i className="fa-solid fa-star text-[10px]"></i>
-                        <span className="text-xs font-black">
-                          {therapist.averageRate}
-                        </span>
-                      </div>
-                      <div className="text-xs font-bold text-slate-400">
-                        <span className="text-slate-900">
-                          {therapist.totalSession}
-                        </span>{" "}
-                        Sesi Selesai
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <Empty description="Belum ada data terapis" />
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Detailed Info Grid Row 3: Top Services */}
-      <div className="grid grid-cols-1 gap-8 mt-8">
-        <div className="bg-white rounded-[2.5rem] p-5 sm:p-8 shadow-sm border border-slate-100 overflow-hidden">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-extrabold text-slate-900 m-0">
-              Top 5 Performa Layanan
-            </h3>
+      {/* ── row 3: top services (full width) ── */}
+      <div className="gs-row">
+        <div className="gs-card">
+          <div className="gs-card-header">
+            <span className="gs-card-title">Top 5 layanan</span>
+            <span className="gs-card-hint">berdasarkan revenue</span>
           </div>
           {loading ? (
-            <div className="h-[400px] flex items-center justify-center">
+            <div className="gs-spin-wrap">
               <Spin />
             </div>
           ) : topServices.length > 0 ? (
@@ -974,7 +766,7 @@ export default function Dashboard() {
               type="bar"
               options={topServicesChartOptions}
               series={topServicesSeries}
-              height={400}
+              height={280}
             />
           ) : (
             <Empty description="Tidak ada data layanan" />
@@ -982,57 +774,591 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* ── row 4: recent sales + top members ── */}
+      <div className="gs-row gs-row-2">
+        {/* Recent sales */}
+        <div className="gs-card gs-card-flush">
+          <div className="gs-card-header gs-card-header-pad">
+            <span className="gs-card-title">Penjualan terbaru</span>
+          </div>
+          <Table
+            dataSource={recentSales.slice(0, 5)}
+            loading={loading}
+            pagination={false}
+            rowKey="id"
+            className="gs-table"
+            columns={[
+              {
+                title: "Kode",
+                dataIndex: "saleCode",
+                key: "saleCode",
+                render: (text) => (
+                  <span className="gs-code">{text.split("-")[0]}</span>
+                ),
+              },
+              {
+                title: "Member",
+                dataIndex: "memberName",
+                key: "memberName",
+                render: (text, record) => (
+                  <div>
+                    <div className="gs-name">{text}</div>
+                    <div className="gs-muted">{record.memberPhone}</div>
+                  </div>
+                ),
+              },
+              {
+                title: "Total",
+                dataIndex: "grandTotal",
+                key: "grandTotal",
+                render: (val) => <span className="gs-amount">{fmt(val)}</span>,
+              },
+              {
+                title: "Status",
+                dataIndex: "paymentStatusName",
+                key: "paymentStatus",
+                render: (text, record) => (
+                  <Badge
+                    color={
+                      record.paymentStatus === "paid" ? "#1D9E75" : "#BA7517"
+                    }
+                    text={<span className="gs-badge-text">{text}</span>}
+                  />
+                ),
+              },
+            ]}
+          />
+        </div>
+
+        {/* Top members */}
+        <div className="gs-card">
+          <div className="gs-card-title" style={{ marginBottom: "1rem" }}>
+            Member loyal
+          </div>
+          {loading ? (
+            <div className="gs-spin-wrap">
+              <Spin />
+            </div>
+          ) : topMembers.length > 0 ? (
+            <div className="gs-list">
+              {topMembers.slice(0, 5).map((member, idx) => (
+                <div key={idx} className="gs-list-item">
+                  <Avatar
+                    name={member.name || "?"}
+                    variant={AVATAR_VARIANTS[idx]}
+                  />
+                  <div className="gs-list-body">
+                    <div className="gs-name">
+                      {member.name || "Unknown Member"}
+                    </div>
+                    <div className="gs-muted">{member.phone}</div>
+                  </div>
+                  <div className="gs-list-right">
+                    <div className="gs-amount">
+                      {fmt(member.totalAmountSpent)}
+                    </div>
+                    <div className="gs-muted">
+                      {member.transactionCount} transaksi
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Empty description="Belum ada data member" />
+          )}
+        </div>
+      </div>
+
+      {/* ── row 5: recent sessions + top therapists ── */}
+      <div className="gs-row gs-row-2">
+        {/* Recent sessions */}
+        <div className="gs-card gs-card-flush">
+          <div className="gs-card-header gs-card-header-pad">
+            <span className="gs-card-title">Sesi terkini</span>
+          </div>
+          <Table
+            dataSource={recentSessions.slice(0, 5)}
+            loading={loading}
+            pagination={false}
+            rowKey="id"
+            className="gs-table"
+            columns={[
+              {
+                title: "Waktu",
+                dataIndex: "scheduledTime",
+                key: "scheduledTime",
+                render: (text, record) => (
+                  <div>
+                    <div className="gs-name">
+                      {dayjs(record.sessionDate).format("DD MMM")}
+                    </div>
+                    <div className="gs-muted">{text.split(".")[0]}</div>
+                  </div>
+                ),
+              },
+              {
+                title: "Member",
+                dataIndex: "memberName",
+                key: "memberName",
+                render: (text) => <span className="gs-name">{text}</span>,
+              },
+              {
+                title: "Layanan",
+                dataIndex: "serviceName",
+                key: "serviceName",
+                render: (text) => (
+                  <span className="gs-muted gs-truncate">{text}</span>
+                ),
+              },
+              {
+                title: "Status",
+                dataIndex: "statusName",
+                key: "status",
+                render: (text, record) => {
+                  const cls =
+                    record.status === "completed"
+                      ? "gs-pill gs-pill-green"
+                      : record.status === "claimed"
+                        ? "gs-pill gs-pill-blue"
+                        : "gs-pill gs-pill-amber";
+                  return <span className={cls}>{text}</span>;
+                },
+              },
+            ]}
+          />
+        </div>
+
+        {/* Top therapists */}
+        <div className="gs-card">
+          <div className="gs-card-title" style={{ marginBottom: "1rem" }}>
+            Top therapist
+          </div>
+          {loading ? (
+            <div className="gs-spin-wrap">
+              <Spin />
+            </div>
+          ) : topTherapists.length > 0 ? (
+            <div className="gs-list">
+              {topTherapists.slice(0, 5).map((therapist, idx) => (
+                <div key={idx} className="gs-list-item">
+                  <Avatar
+                    name={therapist.name || "?"}
+                    variant={AVATAR_VARIANTS[idx]}
+                  />
+                  <div className="gs-list-body">
+                    <div className="gs-name">
+                      {therapist.name || "Unknown Therapist"}
+                    </div>
+                    <div className="gs-muted gs-code-small">
+                      {therapist.employeeCode}
+                    </div>
+                  </div>
+                  <div className="gs-list-right">
+                    <div className="gs-rating">
+                      <i className="fa-solid fa-star" />
+                      {therapist.averageRate}
+                    </div>
+                    <div className="gs-muted">
+                      {therapist.totalSession} sesi
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Empty description="Belum ada data terapis" />
+          )}
+        </div>
+      </div>
+
+      {/* ── global styles ── */}
       <style jsx global>{`
-        .dashboard-table .ant-table {
-          background: transparent;
+        .gs-dash {
+          max-width: 1600px;
+          margin: 0 auto;
+          padding: 1.5rem 1.75rem;
+          min-height: 100vh;
         }
-        .dashboard-table .ant-table-thead > tr > th {
-          background: #f8fafc;
-          color: #64748b;
-          font-size: 11px;
+
+        /* top bar */
+        .gs-topbar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-bottom: 1.5rem;
+        }
+        .gs-heading {
+          font-size: 22px;
+          font-weight: 700;
+          color: #0f172a;
+          letter-spacing: -0.5px;
+          margin: 0;
+        }
+        .gs-subheading {
+          font-size: 13px;
+          color: #94a3b8;
+          margin: 2px 0 0;
+        }
+        .gs-topbar-right {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+        .gs-period-tabs {
+          display: flex;
+          gap: 2px;
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 3px;
+        }
+        .gs-period-btn {
+          border: none;
+          background: none;
+          padding: 5px 14px;
+          border-radius: 7px;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          color: #94a3b8;
+          transition: all 0.15s;
+          white-space: nowrap;
+        }
+        .gs-period-btn.active {
+          background: #f1f5f9;
+          color: #1d9e75;
+        }
+        .gs-rangepicker {
+          background: #fff !important;
+          border: 1px solid #e2e8f0 !important;
+          border-radius: 10px !important;
+          font-size: 13px !important;
+        }
+
+        /* KPI grid */
+        .gs-kpi-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 10px;
+          margin-bottom: 1rem;
+        }
+        .kpi-card {
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 1.1rem 1.25rem;
+          position: relative;
+          overflow: hidden;
+        }
+        .kpi-icon-wrap {
+          width: 36px;
+          height: 36px;
+          border-radius: 9px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 15px;
+          margin-bottom: 0.75rem;
+        }
+        .kpi-label {
+          font-size: 12px;
+          color: #94a3b8;
+          font-weight: 500;
+          margin-bottom: 4px;
           text-transform: uppercase;
-          font-weight: 800;
+          letter-spacing: 0.04em;
+        }
+        .kpi-value {
+          font-size: 20px;
+          font-weight: 700;
+          color: #0f172a;
+          letter-spacing: -0.5px;
+        }
+        .kpi-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 11px;
+          font-weight: 600;
+          padding: 3px 9px;
+          border-radius: 100px;
+          margin-top: 10px;
+        }
+        .kpi-badge.up {
+          background: #e1f5ee;
+          color: #0f6e56;
+        }
+        .kpi-badge.dn {
+          background: #fcebeb;
+          color: #a32d2d;
+        }
+
+        /* layout rows */
+        .gs-row {
+          display: grid;
+          gap: 10px;
+          margin-bottom: 1rem;
+        }
+        .gs-row-2-1 {
+          grid-template-columns: 2fr 1fr;
+        }
+        .gs-row-2 {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        /* cards */
+        .gs-card {
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 1.25rem 1.5rem;
+          overflow: hidden;
+        }
+        .gs-card-flush {
+          padding: 0;
+        }
+        .gs-card-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 0.75rem;
+        }
+        .gs-card-header-pad {
+          padding: 1.25rem 1.5rem 0.75rem;
+        }
+        .gs-card-title {
+          font-size: 14px;
+          font-weight: 700;
+          color: #0f172a;
+        }
+        .gs-card-hint {
+          font-size: 11px;
+          color: #94a3b8;
+        }
+        .gs-spin-wrap {
+          height: 200px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        /* legend */
+        .gs-legend {
+          display: flex;
+          gap: 12px;
+        }
+        .gs-legend-item {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 12px;
+          color: #94a3b8;
+        }
+        .gs-legend-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          display: inline-block;
+          flex-shrink: 0;
+        }
+
+        /* segmentation grid */
+        .gs-seg-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+          margin-top: 12px;
+        }
+        .gs-seg-box {
+          border-radius: 10px;
+          padding: 10px 12px;
+          text-align: center;
+        }
+        .gs-seg-label {
+          font-size: 11px;
+          font-weight: 600;
+          opacity: 0.7;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          margin-bottom: 4px;
+        }
+        .gs-seg-val {
+          font-size: 20px;
+          font-weight: 700;
+          letter-spacing: -0.5px;
+        }
+        .gs-seg-count {
+          font-size: 10px;
+          opacity: 0.6;
+          margin-top: 2px;
+        }
+
+        /* list rows */
+        .gs-list {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        .gs-list-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 6px;
+          border-radius: 10px;
+          transition: background 0.15s;
+        }
+        .gs-list-item:hover {
+          background: #f8fafc;
+        }
+        .avatar {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          font-weight: 600;
+          flex-shrink: 0;
+        }
+        .gs-list-body {
+          flex: 1;
+          min-width: 0;
+        }
+        .gs-list-right {
+          text-align: right;
+          flex-shrink: 0;
+        }
+
+        /* text styles */
+        .gs-name {
+          font-size: 13px;
+          font-weight: 600;
+          color: #0f172a;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .gs-muted {
+          font-size: 11px;
+          color: #94a3b8;
+        }
+        .gs-amount {
+          font-size: 13px;
+          font-weight: 600;
+          color: #0f172a;
+        }
+        .gs-code {
+          font-size: 12px;
+          font-weight: 600;
+          color: #64748b;
+          font-family: monospace;
+        }
+        .gs-code-small {
+          font-size: 10px;
+          font-weight: 600;
+          color: #1d9e75;
+          text-transform: uppercase;
           letter-spacing: 0.05em;
+        }
+        .gs-badge-text {
+          font-size: 11px;
+          font-weight: 600;
+        }
+        .gs-truncate {
+          display: block;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 140px;
+        }
+        .gs-rating {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 12px;
+          font-weight: 600;
+          color: #ba7517;
+        }
+        .gs-rating i {
+          font-size: 10px;
+        }
+
+        /* status pills */
+        .gs-pill {
+          font-size: 10px;
+          font-weight: 700;
+          padding: 2px 8px;
+          border-radius: 100px;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          display: inline-block;
+          white-space: nowrap;
+        }
+        .gs-pill-green {
+          background: #e1f5ee;
+          color: #0f6e56;
+        }
+        .gs-pill-blue {
+          background: #e6f1fb;
+          color: #185fa5;
+        }
+        .gs-pill-amber {
+          background: #faeeda;
+          color: #854f0b;
+        }
+
+        /* table overrides */
+        .gs-table .ant-table {
+          background: transparent;
+          font-size: 13px;
+        }
+        .gs-table .ant-table-thead > tr > th {
+          background: #f8fafc;
+          color: #94a3b8;
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
           border-bottom: 1px solid #f1f5f9;
-          padding: 16px 24px;
+          padding: 10px 20px;
         }
-        .dashboard-table .ant-table-tbody > tr > td {
-          padding: 16px 24px;
-          border-bottom: 1px solid #f1f5f9;
+        .gs-table .ant-table-tbody > tr > td {
+          padding: 10px 20px;
+          border-bottom: 1px solid #f8fafc;
         }
-        .dashboard-table .ant-table-tbody > tr:hover > td {
-          background: #f1f5f9/30 !important;
+        .gs-table .ant-table-tbody > tr:last-child > td {
+          border-bottom: none;
         }
-        /* Hide scrollbars for tables and their wrappers */
-        .dashboard-table ::-webkit-scrollbar,
-        .table-wrapper ::-webkit-scrollbar {
+        .gs-table .ant-table-tbody > tr:hover > td {
+          background: #f8fafc !important;
+        }
+        .gs-table ::-webkit-scrollbar {
           display: none;
         }
-        .dashboard-table,
-        .table-wrapper {
+        .gs-table {
           -ms-overflow-style: none;
           scrollbar-width: none;
         }
-        .period-select {
-          background: #f8fafc;
-          border-radius: 12px;
-          padding: 4px 8px;
-          font-weight: 700;
-          color: #3d6b5f;
+
+        /* responsive */
+        @media (max-width: 900px) {
+          .gs-row-2-1,
+          .gs-row-2 {
+            grid-template-columns: 1fr;
+          }
         }
-        .period-select .ant-select-selection-item {
-          color: #3d6b5f !important;
-        }
-        .dashboard-range-picker {
-          background: #f8fafc;
-          border: none;
-          border-radius: 12px;
-          padding: 6px 12px;
-        }
-        .dashboard-range-picker:hover,
-        .dashboard-range-picker-focused {
-          background: #f1f5f9;
-          box-shadow: none;
+        @media (max-width: 640px) {
+          .gs-dash {
+            padding: 1rem;
+          }
+          .gs-kpi-grid {
+            grid-template-columns: 1fr 1fr;
+          }
         }
       `}</style>
     </div>
