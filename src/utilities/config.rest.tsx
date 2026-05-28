@@ -246,5 +246,15 @@ export const rest = {
     attendance: {
       timesheets: "attendance/timesheets",
     },
+    branchAdditionalCosts: {
+      index: "master/branch-additional-costs/branch/:branchId",
+      show: "master/branch-additional-costs/:ID",
+      create: "master/branch-additional-costs/branch/:branchId",
+      update: "master/branch-additional-costs/:ID/branch/:branchId",
+      delete: "master/branch-additional-costs/:ID/branch/:branchId",
+    },
+    additionalCosts: {
+      active: "master/additional-costs",
+    },
   },
 };
