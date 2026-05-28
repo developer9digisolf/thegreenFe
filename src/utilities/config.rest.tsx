@@ -246,5 +246,12 @@ export const rest = {
     attendance: {
       timesheets: "attendance/timesheets",
     },
+    additionalCosts: {
+      index: "master/additional-costs",
+      show: "master/additional-costs/:ID",
+      create: "master/additional-costs",
+      update: "master/additional-costs/:ID",
+      delete: "master/additional-costs/:ID",
+    },
   },
 };

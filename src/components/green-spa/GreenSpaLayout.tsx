@@ -156,6 +156,12 @@ const menuConfig: MenuSection[] = [
             icon: "fa-solid fa-coins",
             path: "/dashboard/master/credit-packages",
           },
+          {
+            key: "additional-cost",
+            label: "Biaya Tambahan",
+            icon: "fa-solid fa-dollar-sign",
+            path: "/dashboard/master/additional-costs",
+          },
         ],
       },
       {
