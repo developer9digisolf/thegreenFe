@@ -102,16 +102,19 @@ export default function ShiftsView() {
         setFormType("create");
         setSelectedShift(null);
         forms.resetFields();
+        forms.setFieldsValue({ breakMinutes: 60 });
         setOpenForm(true);
     };
 
     const handleOpenEdit = (shift: IResShift) => {
         setFormType("update");
         setSelectedShift(shift);
+        forms.resetFields();
         forms.setFieldsValue({
             ...shift,
             startTime: shift.startTime ? dayjs(shift.startTime, "HH:mm") : null,
             endTime: shift.endTime ? dayjs(shift.endTime, "HH:mm") : null,
+            breakMinutes: shift.breakMinutes ?? 0,
         });
         setOpenForm(true);
     };
@@ -119,10 +122,12 @@ export default function ShiftsView() {
     const handleOpenDetail = (shift: IResShift) => {
         setFormType("detail");
         setSelectedShift(shift);
+        forms.resetFields();
         forms.setFieldsValue({
             ...shift,
             startTime: shift.startTime ? dayjs(shift.startTime, "HH:mm") : null,
             endTime: shift.endTime ? dayjs(shift.endTime, "HH:mm") : null,
+            breakMinutes: shift.breakMinutes ?? 0,
         });
         setOpenForm(true);
     };
@@ -324,7 +329,7 @@ export default function ShiftsView() {
                 className="custom-modal"
             >
                 <Spin spinning={saving}>
-                    <UseForm form={forms} initialValues={{ breakMinutes: 60 }}>
+                    <UseForm form={forms}>
                         <Row gutter={[24, 0]} className="mt-6">
                             <Col span={24} md={12}>
                                 <UseFormItem name="code" label="Kode Shift" {...itemLayouts} rules={[{ required: true, message: "Kode wajib diisi" }]}>
