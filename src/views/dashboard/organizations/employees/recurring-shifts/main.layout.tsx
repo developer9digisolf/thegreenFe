@@ -140,6 +140,12 @@ export default function RecurringShiftsView({ employeeId }: RecurringShiftsViewP
             icon={<EditOutlined className="text-emerald-600" />} 
             onClick={() => {
               setEditingId(record.id);
+              form.resetFields();
+              form.setFieldsValue({
+                employeeId: record.employeeId,
+                dayOfWeek: record.dayOfWeek,
+                shiftId: record.shiftId,
+              });
               setIsModalOpen(true);
             }}
             className="hover:bg-emerald-50 rounded-lg"
@@ -193,6 +199,7 @@ export default function RecurringShiftsView({ employeeId }: RecurringShiftsViewP
               className="flex items-center gap-2 h-11 px-6 rounded-xl bg-emerald-600 border-none font-bold shadow-lg shadow-emerald-200"
               onClick={() => {
                 setEditingId(null);
+                form.resetFields();
                 form.setFieldsValue({ employeeId: selectedEmployeeId });
                 setIsModalOpen(true);
               }}
@@ -232,7 +239,11 @@ export default function RecurringShiftsView({ employeeId }: RecurringShiftsViewP
           </div>
         }
         open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
+        onCancel={() => {
+          setIsModalOpen(false);
+          setEditingId(null);
+          form.resetFields();
+        }}
         footer={null}
         width={500}
         centered
@@ -284,7 +295,11 @@ export default function RecurringShiftsView({ employeeId }: RecurringShiftsViewP
 
 
           <div className="flex justify-end gap-3">
-            <Button size="large" className="rounded-xl px-6 border-slate-200 font-bold h-12" onClick={() => setIsModalOpen(false)}>Batal</Button>
+            <Button size="large" className="rounded-xl px-6 border-slate-200 font-bold h-12" onClick={() => {
+              setIsModalOpen(false);
+              setEditingId(null);
+              form.resetFields();
+            }}>Batal</Button>
             <Button size="large" type="primary" htmlType="submit" loading={isLoadingShift("createRecurringShift")} className="rounded-xl px-8 bg-emerald-600 border-none font-bold h-12 shadow-lg shadow-emerald-200">Simpan Pola</Button>
           </div>
         </Form>
