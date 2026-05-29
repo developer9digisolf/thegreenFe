@@ -10,10 +10,9 @@ import {
   Form,
   Select,
   InputNumber,
-  Tag,
   notification as antdNotification,
 } from "antd";
-import { Plus, Edit3, Trash2, Receipt } from "lucide-react";
+import { Plus, Edit3, Trash2 } from "lucide-react";
 import { IBranchAdditionalCost } from "@afx/interfaces/master/branch-additional-cost.iface";
 import {
   GetBranchAdditionalCostsService,
@@ -21,6 +20,7 @@ import {
   UpdateBranchAdditionalCostService,
   DeleteBranchAdditionalCostService,
   GetMasterAdditionalCostsService,
+  UpdateBranchAdditionalCostStatusService,
 } from "@afx/services/master/branch-additional-cost.service";
 
 interface Props {
@@ -78,11 +78,6 @@ export default function BranchAdditionalCostsTab({ branchId, isOpen }: Props) {
       const payload = {
         additionalCostId: values.additionalCostId,
         price: values.price,
-        isMandatory: values.isMandatory ?? true,
-        isApplicableToServices: values.isApplicableToServices ?? true,
-        isApplicableToProducts: values.isApplicableToProducts ?? false,
-        minimumTransactionAmount: values.minimumTransactionAmount || 0,
-        maximumTransactionAmount: values.maximumTransactionAmount || null,
       };
 
       if (modalMode === "create") {
@@ -120,11 +115,6 @@ export default function BranchAdditionalCostsTab({ branchId, isOpen }: Props) {
     form.setFieldsValue({
       additionalCostId: record.additionalCostId,
       price: record.price,
-      isMandatory: record.isMandatory,
-      isApplicableToServices: record.isApplicableToServices,
-      isApplicableToProducts: record.isApplicableToProducts,
-      minimumTransactionAmount: record.minimumTransactionAmount,
-      maximumTransactionAmount: record.maximumTransactionAmount,
     });
     setIsModalOpen(true);
   };
@@ -142,6 +132,32 @@ export default function BranchAdditionalCostsTab({ branchId, isOpen }: Props) {
     } catch (err: any) {
       antdNotification.error({
         message: err?.message || "Gagal menghapus data",
+      });
+    }
+  };
+
+  // Handle Update Status (Toggle Active/Inactive)
+  const handleStatusChange = async (
+    checked: boolean,
+    record: IBranchAdditionalCost,
+  ) => {
+    try {
+      const res = await UpdateBranchAdditionalCostStatusService(
+        record.id,
+        branchId!,
+        checked,
+      );
+      if (res.success || res.meta?.success) {
+        antdNotification.success({
+          message: checked
+            ? "Biaya tambahan diaktifkan"
+            : "Biaya tambahan dinonaktifkan",
+        });
+        fetchData();
+      }
+    } catch (err: any) {
+      antdNotification.error({
+        message: err?.message || "Gagal mengubah status",
       });
     }
   };
@@ -220,27 +236,15 @@ export default function BranchAdditionalCostsTab({ branchId, isOpen }: Props) {
             ),
           },
           {
-            title: "Tipe",
-            key: "isMandatory",
-            render: (_, record) =>
-              record.isMandatory ? (
-                <Tag color="red">Wajib (Mandatory)</Tag>
-              ) : (
-                <Tag color="blue">Opsional</Tag>
-              ),
-          },
-          {
-            title: "Berlaku Untuk",
-            key: "applicable",
+            title: "Status",
+            key: "status",
+            width: 100,
+            align: "center",
             render: (_, record) => (
-              <Space>
-                {record.isApplicableToServices && (
-                  <Tag color="purple">Layanan</Tag>
-                )}
-                {record.isApplicableToProducts && (
-                  <Tag color="cyan">Produk</Tag>
-                )}
-              </Space>
+              <Switch
+                checked={record.isActive}
+                onChange={(checked) => handleStatusChange(checked, record)}
+              />
             ),
           },
           {
@@ -276,17 +280,7 @@ export default function BranchAdditionalCostsTab({ branchId, isOpen }: Props) {
         destroyOnHidden
         width={600}
       >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSave}
-          initialValues={{
-            isMandatory: true,
-            isApplicableToServices: true,
-            isApplicableToProducts: false,
-            minimumTransactionAmount: 0,
-          }}
-        >
+        <Form form={form} layout="vertical" onFinish={handleSave}>
           <div className="grid grid-cols-2 gap-x-4">
             <Form.Item
               className="col-span-2"
@@ -324,47 +318,6 @@ export default function BranchAdditionalCostsTab({ branchId, isOpen }: Props) {
               rules={[{ required: true, message: "Wajib diisi" }]}
             >
               <InputNumber className="w-full h-10" min={0} />
-            </Form.Item>
-
-            <Form.Item
-              name="minimumTransactionAmount"
-              label="Min. Transaksi (Rp)"
-            >
-              <InputNumber className="w-full h-10" min={0} />
-            </Form.Item>
-
-            <Form.Item
-              name="maximumTransactionAmount"
-              label="Maks. Transaksi (Rp) - Opsional"
-            >
-              <InputNumber className="w-full h-10" min={0} />
-            </Form.Item>
-          </div>
-
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-4 grid grid-cols-2 gap-4">
-            <Form.Item
-              name="isMandatory"
-              valuePropName="checked"
-              label="Wajib Dikenakan?"
-              className="mb-0"
-            >
-              <Switch />
-            </Form.Item>
-            <Form.Item
-              name="isApplicableToServices"
-              valuePropName="checked"
-              label="Berlaku u/ Layanan?"
-              className="mb-0"
-            >
-              <Switch />
-            </Form.Item>
-            <Form.Item
-              name="isApplicableToProducts"
-              valuePropName="checked"
-              label="Berlaku u/ Produk?"
-              className="mb-0"
-            >
-              <Switch />
             </Form.Item>
           </div>
 
