@@ -310,6 +310,11 @@ export function usePosData(
 
     // ── Cart handlers ──────────────────────────────────────────────────────────
     const addServiceToCart = useCallback((variant: ServiceVariant) => {
+        const hasNonServices = cartItems.some(i => i.itemType !== 0);
+        if (hasNonServices) {
+            showToast("Tidak dapat menggabungkan Layanan dengan Voucher atau Paket Kredit dalam satu transaksi.", "error");
+            return;
+        }
         const key = `service-${variant.id}`;
         setCartItems(prev => {
             const existing = prev.find(i => i.cartKey === key);
@@ -320,9 +325,14 @@ export function usePosData(
                 duration: variant.duration, unitPrice: variant.price, quantity: 1, icon: variant.icon,
             }];
         });
-    }, []);
+    }, [cartItems, showToast]);
 
     const addPackageToCart = useCallback((pkg: Package) => {
+        const hasNonPackages = cartItems.some(i => i.itemType !== 1);
+        if (hasNonPackages) {
+            showToast("Tidak dapat menggabungkan Voucher dengan Layanan atau Paket Kredit dalam satu transaksi.", "error");
+            return;
+        }
         if (!selectedMember) {
             showToast("Pilih Member terlebih dahulu", "error");
             return;
@@ -337,9 +347,14 @@ export function usePosData(
                 duration: 0, unitPrice: pkg.price, quantity: 1,
             }];
         });
-    }, [selectedMember, showToast]);
+    }, [cartItems, selectedMember, showToast]);
 
     const addCreditPackageToCart = useCallback((cp: any) => {
+        const hasNonCredits = cartItems.some(i => i.itemType !== 2);
+        if (hasNonCredits) {
+            showToast("Tidak dapat menggabungkan Paket Kredit dengan Layanan atau Voucher dalam satu transaksi.", "error");
+            return;
+        }
         if (!selectedMember) {
             showToast("Pilih Member terlebih dahulu", "error");
             return;
@@ -354,7 +369,7 @@ export function usePosData(
                 duration: 0, unitPrice: cp.payAmount, quantity: 1,
             }];
         });
-    }, [selectedMember, showToast]);
+    }, [cartItems, selectedMember, showToast]);
 
     const updateCartItemQuantity = useCallback((key: string, delta: number) => {
         setCartItems(prev =>
