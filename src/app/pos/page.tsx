@@ -544,7 +544,10 @@ export default function POSPage() {
             return;
         }
 
-        if ((mode === "voucher" || mode === "credit") && !pos.selectedMember) {
+        const hasPackagesOrCredits = pos.cartItems.some(
+            (item: any) => item.itemType === 1 || item.itemType === 2
+        );
+        if (hasPackagesOrCredits && !pos.selectedMember) {
             showToast("Pilih Member terlebih dahulu", "error");
             setIsCheckoutProcessing(false);
             return;
@@ -1019,10 +1022,12 @@ export default function POSPage() {
                                             className={`package-card ${idx === 0 ? "hemat" : "premium"} ${selectedPackage === pkg.id ? "selected" : ""}`}
                                             onClick={() => { setSelectedPackage(pkg.id); pos.addPackageToCart(pkg); }}
                                         >
-                                            {(pkg.savings ?? 0) > 0 && (
-                                                <div className="package-badge">Hemat {formatCurrency(pkg.savings ?? 0)}</div>
-                                            )}
-                                            <div className="package-name">{pkg.name}</div>
+                                            <div className="package-header">
+                                                <div className="package-name">{pkg.name}</div>
+                                                {(pkg.savings ?? 0) > 0 && (
+                                                    <div className="package-badge">Hemat {formatCurrency(pkg.savings ?? 0)}</div>
+                                                )}
+                                            </div>
                                             <div className="package-desc">{pkg.serviceVariantName ?? pkg.description}</div>
                                             <div className="package-price">{formatCurrency(pkg.price)}</div>
                                         </div>
@@ -1037,8 +1042,10 @@ export default function POSPage() {
                                 <div className="package-grid">
                                     {pos.initData?.creditPackages.map((cp) => (
                                         <div key={cp.id} className="package-card premium" onClick={() => pos.addCreditPackageToCart(cp)}>
-                                            <div className="package-badge">Bonus {cp.bonusPercentage?.toFixed(0) ?? 0}%</div>
-                                            <div className="package-name">{cp.name}</div>
+                                            <div className="package-header">
+                                                <div className="package-name">{cp.name}</div>
+                                                <div className="package-badge">Bonus {cp.bonusPercentage?.toFixed(0) ?? 0}%</div>
+                                            </div>
                                             <div className="package-desc">{cp.description}</div>
                                             <div className="package-price">{formatCurrency(cp.payAmount)}</div>
                                         </div>
@@ -1183,6 +1190,13 @@ export default function POSPage() {
                     <button
                         className="action-btn primary"
                         onClick={() => {
+                            const hasPackagesOrCredits = pos.cartItems.some(
+                                (item: any) => item.itemType === 1 || item.itemType === 2
+                            );
+                            if (hasPackagesOrCredits && !pos.selectedMember) {
+                                showToast("Pilih Member terlebih dahulu", "error");
+                                return;
+                            }
                             payment.setPaymentAmount(pos.cartGrandTotal.toString());
                             payment.openPaymentModal();
                         }}

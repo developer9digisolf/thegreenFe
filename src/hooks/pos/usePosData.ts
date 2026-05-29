@@ -323,6 +323,10 @@ export function usePosData(
     }, []);
 
     const addPackageToCart = useCallback((pkg: Package) => {
+        if (!selectedMember) {
+            showToast("Pilih Member terlebih dahulu", "error");
+            return;
+        }
         const key = `package-${pkg.id}`;
         setCartItems(prev => {
             const existing = prev.find(i => i.cartKey === key);
@@ -333,9 +337,13 @@ export function usePosData(
                 duration: 0, unitPrice: pkg.price, quantity: 1,
             }];
         });
-    }, []);
+    }, [selectedMember, showToast]);
 
     const addCreditPackageToCart = useCallback((cp: any) => {
+        if (!selectedMember) {
+            showToast("Pilih Member terlebih dahulu", "error");
+            return;
+        }
         const key = `credit-${cp.id}`;
         setCartItems(prev => {
             const existing = prev.find(i => i.cartKey === key);
@@ -346,7 +354,7 @@ export function usePosData(
                 duration: 0, unitPrice: cp.payAmount, quantity: 1,
             }];
         });
-    }, []);
+    }, [selectedMember, showToast]);
 
     const updateCartItemQuantity = useCallback((key: string, delta: number) => {
         setCartItems(prev =>

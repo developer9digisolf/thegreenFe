@@ -352,6 +352,18 @@ function SaleTable({ sales, loading, onRowClick, selectedSaleId, isPanelOpen }: 
 
 function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign }: any) {
     if (!isOpen) return null;
+
+    const getItemName = (item: any) => {
+        if (item.itemType === "service" || item.itemTypeName === "Service") {
+            return `${item.serviceName} (${item.serviceVariantName || "Standard"})`;
+        } else if (item.itemType === "servicePackage" || item.itemTypeName === "ServicePackage") {
+            return item.packageName || item.serviceName || "Paket Voucher";
+        } else if (item.itemType === "creditPackage" || item.itemTypeName === "CreditPackage") {
+            return item.creditPackageName || "Top-up Kredit";
+        }
+        return item.itemName || item.serviceName || item.packageName || item.creditPackageName || "Item";
+    };
+
     return (
         <>
             <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.25)", zIndex: 1100, backdropFilter: "blur(2px)" }} />
@@ -403,33 +415,40 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign }: any)
                                         <i className="fa-solid fa-spa" style={{ color: "var(--spa-green)" }} /> Item Layanan
                                     </div>
                                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                                        {sale.items.map((item: any) => (
-                                            <div key={item.id} style={{ background: "var(--bg-main)", borderRadius: "12px", padding: "14px 16px", border: "1px solid var(--border-color)", display: "flex", alignItems: "center", gap: "12px" }}>
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ fontWeight: 700, fontSize: "14px" }}>{item.itemName}</div>
-                                                    <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "3px" }}>
-                                                        {item.duration > 0 && <span>{item.duration} mnt • </span>}
-                                                        ×{item.quantity} • <span style={{ color: "var(--spa-green)", fontWeight: 600 }}>{formatCurrency(item.subtotal)}</span>
+                                        {sale.items.map((item: any) => {
+                                            const isService = item.itemType === "service" || item.itemTypeName === "Service";
+                                            return (
+                                                <div key={item.id} style={{ background: "var(--bg-main)", borderRadius: "12px", padding: "14px 16px", border: "1px solid var(--border-color)", display: "flex", alignItems: "center", gap: "12px" }}>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ fontWeight: 700, fontSize: "14px" }}>{getItemName(item)}</div>
+                                                        <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "3px" }}>
+                                                            {item.duration > 0 && <span>{item.duration} mnt • </span>}
+                                                            ×{item.quantity} • <span style={{ color: "var(--spa-green)", fontWeight: 600 }}>{formatCurrency(item.subtotal)}</span>
+                                                        </div>
+                                                        {isService && (
+                                                            <div style={{ marginTop: "6px" }}>
+                                                                <SessionStatus hasSession={item.hasSession} sessionStatus={item.session?.status ?? item.sessionStatus} />
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    <div style={{ marginTop: "6px" }}>
-                                                        <SessionStatus hasSession={item.hasSession} sessionStatus={item.session?.status ?? item.sessionStatus} />
-                                                    </div>
+                                                    {isService && (
+                                                        !item.hasSession ? (
+                                                            <button
+                                                                onClick={() => onOpenAssign({ type: "item", saleItemId: item.id, label: getItemName(item) })}
+                                                                style={{ padding: "7px 14px", fontSize: "12px", fontWeight: 700, background: "var(--spa-green-bg)", color: "var(--spa-green)", border: "1px solid var(--spa-green-border)", borderRadius: "8px", cursor: "pointer", whiteSpace: "nowrap" }}
+                                                            >
+                                                                <i className="fa-solid fa-play" /> Buat Sesi
+                                                            </button>
+                                                        ) : (
+                                                            item.session?.sessionCode && (
+                                                                /* PENGGUNAAN KOMPONEN QR CODE BARU DISINI UNTUK ITEM */
+                                                                <EnlargeableQRCode sessionCode={item.session.sessionCode} isSmall={true} />
+                                                            )
+                                                        )
+                                                    )}
                                                 </div>
-                                                {!item.hasSession ? (
-                                                    <button
-                                                        onClick={() => onOpenAssign({ type: "item", saleItemId: item.id, label: item.itemName })}
-                                                        style={{ padding: "7px 14px", fontSize: "12px", fontWeight: 700, background: "var(--spa-green-bg)", color: "var(--spa-green)", border: "1px solid var(--spa-green-border)", borderRadius: "8px", cursor: "pointer", whiteSpace: "nowrap" }}
-                                                    >
-                                                        <i className="fa-solid fa-play" /> Buat Sesi
-                                                    </button>
-                                                ) : (
-                                                    item.session?.sessionCode && (
-                                                        /* PENGGUNAAN KOMPONEN QR CODE BARU DISINI UNTUK ITEM */
-                                                        <EnlargeableQRCode sessionCode={item.session.sessionCode} isSmall={true} />
-                                                    )
-                                                )}
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </section>
                             )}

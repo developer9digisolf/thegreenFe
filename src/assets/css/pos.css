@@ -1140,15 +1140,23 @@
     box-shadow: 0 0 0 4px var(--spa-green-bg);
 }
 
+.package-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
+    width: 100%;
+}
+
 .package-badge {
-    position: absolute;
-    top: 24px;
-    right: 24px;
     padding: 8px 16px;
     border-radius: 25px;
     font-size: 12px;
     font-weight: 700;
     color: white;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .package-card.hemat .package-badge {
@@ -1171,8 +1179,8 @@
 .package-name {
     font-size: 22px;
     font-weight: 800;
-    margin-bottom: 8px;
     color: var(--text-primary);
+    flex: 1;
 }
 
 .package-desc {
