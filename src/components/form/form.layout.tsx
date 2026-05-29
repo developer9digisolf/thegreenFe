@@ -47,7 +47,11 @@ export function UseForm(props: FormProps) {
     if (payloads.length > 0) props?.form?.setFieldsValue(initialValues);
   }, [payloads]);
 
-  return <Form {...others}>{props?.children as any}</Form>;
+  return (
+    <Form {...others} component={false}>
+      {props?.children as any}
+    </Form>
+  );
 }
 
 export function UseFormItem(props: FormItemProps) {
@@ -56,14 +60,14 @@ export function UseFormItem(props: FormItemProps) {
       {...props}
       style={{ padding: "6px 0px", margin: 0 }}
       label={
-        props.label ?
+        props.label ? (
           <span
             className="font-display font-AndikaReg"
             style={{ fontSize: 13 }}
           >
             {props.label}
           </span>
-        : null
+        ) : null
       }
       className="text-xs"
     >

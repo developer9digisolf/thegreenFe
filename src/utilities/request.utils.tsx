@@ -50,7 +50,20 @@ export default async function request<T = any, R = any>({
     };
   }
 
-  return new Promise((resolve, reject) =>
+  return new Promise((resolve, reject) => {
+    // Validate url parameter
+    if (!url) {
+      const errorMessage = `[API Error] URL is undefined. Please check your API configuration.`;
+      if (process.env.NODE_ENV === "development") {
+        console.error(errorMessage);
+      }
+      return reject({
+        success: false,
+        message: "Invalid API endpoint configuration",
+        data: null,
+      });
+    }
+
     axios
       .request({
         url: `${baseUrl.replace(/\/$/, "")}/${url.replace(/^\//, "")}`,
@@ -69,6 +82,15 @@ export default async function request<T = any, R = any>({
       .then((response) => {
         // Axios might have failed to parse if the body was empty but content-type was JSON
         const payload = response.data;
+
+        // Debug: Log the full payload structure
+        if (process.env.NODE_ENV === "development") {
+          console.log(`[API Response] ${method} ${url}`, {
+            payload,
+            hasMeta: !!payload?.meta,
+            hasData: !!payload?.data,
+          });
+        }
 
         // Ensure we have a valid payload object
         if (payload && typeof payload === "object" && payload.meta) {
@@ -179,6 +201,6 @@ export default async function request<T = any, R = any>({
             "Terjadi kesalahan pada server",
           data: null,
         });
-      }),
-  );
+      });
+  });
 }

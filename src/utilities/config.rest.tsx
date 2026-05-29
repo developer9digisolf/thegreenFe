@@ -248,12 +248,19 @@ export const rest = {
     },
     branchAdditionalCosts: {
       index: "master/branch-additional-costs/branch/:branchId",
-      show: "master/branch-additional-costs/:ID",
+      show: "master/branch-additional-costs/:id",
       create: "master/branch-additional-costs/branch/:branchId",
-      update: "master/branch-additional-costs/:ID/branch/:branchId",
-      delete: "master/branch-additional-costs/:ID/branch/:branchId",
+      update: "master/branch-additional-costs/:id/branch/:branchId",
+      delete: "master/branch-additional-costs/:id/branch/:branchId",
+      updateStatus:
+        "master/branch-additional-costs/:id/status/branch/:branchId",
     },
     additionalCosts: {
+      index: "master/additional-costs",
+      show: "master/additional-costs/:ID",
+      create: "master/additional-costs",
+      update: "master/additional-costs/:ID",
+      delete: "master/additional-costs/:ID",
       active: "master/additional-costs",
     },
   },

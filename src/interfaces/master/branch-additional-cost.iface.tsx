@@ -15,11 +15,6 @@ export interface IBranchAdditionalCost {
   branchId: number;
   additionalCostId: number;
   price: number;
-  isMandatory: boolean;
-  isApplicableToServices: boolean;
-  isApplicableToProducts: boolean;
-  minimumTransactionAmount: number;
-  maximumTransactionAmount: number | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -29,9 +24,4 @@ export interface IBranchAdditionalCost {
 export interface IBranchAdditionalCostPayload {
   additionalCostId: number;
   price: number;
-  isMandatory: boolean;
-  isApplicableToServices: boolean;
-  isApplicableToProducts: boolean;
-  minimumTransactionAmount: number;
-  maximumTransactionAmount: number | null;
 }
