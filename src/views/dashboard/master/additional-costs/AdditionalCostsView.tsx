@@ -98,6 +98,11 @@ export default function AdditionalCostsView() {
       if (search) params.search = search;
 
       const res = await AdditionalCostGetAllService(params);
+      console.log("[AdditionalCostsView] API Response:", res);
+      console.log("[AdditionalCostsView] Data:", res.data);
+      console.log("[AdditionalCostsView] Pagination:", res.pagination);
+      console.log("[AdditionalCostsView] Raw Data:", res.rawData);
+
       if (res.success) {
         setAdditionalCosts(res.data);
         setPagination({
@@ -105,6 +110,8 @@ export default function AdditionalCostsView() {
           pageSize: res.pagination?.pageSize || 10,
           total: res.pagination?.total || 0,
         });
+      } else {
+        console.error("[AdditionalCostsView] API call failed:", res.message);
       }
     } catch (err: any) {
       console.error("Failed to fetch additional costs", err);
