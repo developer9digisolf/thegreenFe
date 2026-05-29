@@ -184,7 +184,7 @@ export default function BranchView() {
         "updateBranch",
         [
           branch.id,
-          payload,
+          payload as any,
           (code: any) => {
             const isSuccess =
               !code || String(code) === "20000" || String(code).startsWith("2");
@@ -238,11 +238,6 @@ export default function BranchView() {
             setOpenFormCreate(true);
           }}
           handleToDetail={(v: number) => handleDetail(v)}
-          handleEdit={(id: number) => {
-            useActions<"getBranch">("getBranch", [id], true);
-            setFormType("update");
-            setOpenFormCreate(true);
-          }}
           handleDelete={(id: number, name: string) =>
             setDeleteConfirm({ open: true, id, name })
           }

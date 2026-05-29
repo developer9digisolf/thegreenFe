@@ -32,6 +32,7 @@ export function FormBranch(props: IPropsFormBranch) {
           commissionAmount: 25,
           commissionBonusType: "percentage",
           commissionBonusAmount: 5,
+          isActive: true,
         });
       } else if (props?.formType === "update" || props?.formType === "detail") {
         if (branch && branch.id) {
@@ -47,6 +48,7 @@ export function FormBranch(props: IPropsFormBranch) {
             latitude: branch.latitude,
             longitude: branch.longitude,
             isMainBranch: branch.isMainBranch,
+            isActive: branch.isActive !== false,
             description: branch.description,
             imageUrl: branch.imageUrl,
             imageGaleries: branch.imageGaleries || [],

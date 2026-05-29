@@ -87,9 +87,14 @@ export default function BranchGeneralTab({ forms, formType, isOpen }: Props) {
                 <UseInput standart={false} placeholder="BR001" disabled={formType === "detail"} />
               </UseFormItem>
             </Col>
-            <Col span={12}>
+            <Col span={6}>
               <UseFormItem name="isMainBranch" label="Cabang Pusat" {...itemLayouts} valuePropName="checked">
                 <Switch disabled={formType === "detail"} />
+              </UseFormItem>
+            </Col>
+            <Col span={6}>
+              <UseFormItem name="isActive" label="Status Aktif" {...itemLayouts} valuePropName="checked">
+                <Switch checkedChildren="Aktif" unCheckedChildren="Nonaktif" disabled={formType === "detail"} />
               </UseFormItem>
             </Col>
             <Col span={24}>

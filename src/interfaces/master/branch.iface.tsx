@@ -17,6 +17,7 @@ export interface IResBranch {
   latitude: number;
   longitude: number;
   isMainBranch: boolean;
+  isActive?: boolean;
   imageUrl: string;
   imageGaleries: string[];
   commissionType: string;
@@ -40,6 +41,7 @@ export interface IReqFormBranch {
   latitude: number;
   longitude: number;
   isMainBranch: boolean;
+  isActive?: boolean;
   imageUrl: string;
   imageGaleries: string[];
   commissionType: string;

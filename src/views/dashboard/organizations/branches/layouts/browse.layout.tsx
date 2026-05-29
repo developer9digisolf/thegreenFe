@@ -116,6 +116,17 @@ export const BrowseBranch = ({
             )
         },
         {
+            title: 'STATUS',
+            dataIndex: 'isActive',
+            key: 'status',
+            align: 'center' as const,
+            render: (isActive: boolean) => (
+                <Tag color={isActive ? "green" : "red"} style={{ borderRadius: '6px', fontWeight: 600 }}>
+                    {isActive ? "Aktif" : "Nonaktif"}
+                </Tag>
+            )
+        },
+        {
             title: 'AKSI',
             key: 'action',
             align: 'center' as const,
