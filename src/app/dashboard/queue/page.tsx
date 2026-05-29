@@ -572,8 +572,12 @@ export default function TherapistSlide() {
       }
       setCurrent(0);
     };
-    signalROn("SessionCreated", handleSessionCreated);
-    return () => signalROff("SessionCreated", handleSessionCreated);
+    // Dynamic event name based on branch: SessionCreated-{branchId}
+    const eventName = selectedBranch
+      ? `SessionCreated-${selectedBranch}`
+      : "SessionCreated";
+    signalROn(eventName, handleSessionCreated);
+    return () => signalROff(eventName, handleSessionCreated);
   }, [
     signalROn,
     signalROff,
