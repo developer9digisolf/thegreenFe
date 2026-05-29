@@ -225,6 +225,27 @@ export default function BranchView() {
     });
   };
 
+  const handleToggleStatus = (id: number, checked: boolean) => {
+    const payload = {
+      isActive: checked,
+    };
+    useActions<"updateBranch">(
+      "updateBranch",
+      [
+        id,
+        payload as any,
+        (code: any) => {
+          const isSuccess =
+            !code || String(code) === "20000" || String(code).startsWith("2");
+          if (isSuccess) {
+            getBranches();
+          }
+        },
+      ],
+      true,
+    );
+  };
+
   return (
     <>
       {!openFormCreate && (
@@ -242,6 +263,7 @@ export default function BranchView() {
             setDeleteConfirm({ open: true, id, name })
           }
           handleOperatingHours={handleOperatingHours}
+          handleToggleStatus={handleToggleStatus}
         />
       )}
 

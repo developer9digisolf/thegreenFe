@@ -62,6 +62,7 @@ export interface IPropsBranch {
   setSearchText: (text: string) => void;
   onSearch: (text: string) => void;
   handleOperatingHours: (record: any) => void;
+  handleToggleStatus: (id: number, isActive: boolean, record: any) => void;
 }
 
 export interface IPropsFormBranch {

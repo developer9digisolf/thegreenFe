@@ -7,7 +7,8 @@ import {
     Pagination, 
     Tooltip, 
     Input,
-    Popconfirm
+    Popconfirm,
+    Switch
 } from "antd";
 import { 
     PlusOutlined, 
@@ -37,7 +38,8 @@ export const BrowseBranch = ({
     setOpenFormCreate,
     handleToDetail,
     handleDelete,
-    handleOperatingHours
+    handleOperatingHours,
+    handleToggleStatus
 }: IPropsBranch) => {
     const {
         state: branchState,
@@ -120,10 +122,13 @@ export const BrowseBranch = ({
             dataIndex: 'isActive',
             key: 'status',
             align: 'center' as const,
-            render: (isActive: boolean) => (
-                <Tag color={isActive ? "green" : "red"} style={{ borderRadius: '6px', fontWeight: 600 }}>
-                    {isActive ? "Aktif" : "Nonaktif"}
-                </Tag>
+            render: (isActive: boolean, record: any) => (
+                <Switch 
+                    checked={isActive}
+                    checkedChildren="Aktif"
+                    unCheckedChildren="Nonaktif"
+                    onChange={(checked) => handleToggleStatus(record.id, checked, record)}
+                />
             )
         },
         {

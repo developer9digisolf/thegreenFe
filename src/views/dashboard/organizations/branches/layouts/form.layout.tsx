@@ -5,7 +5,7 @@ import { UseForm } from "@afx/components/form/form.layout";
 import { IPropsFormBranch } from "@afx/interfaces/master/branch.iface";
 import { IActionBranch, IStateBranch } from "@afx/models/dashboard/master/branches.model";
 import { useStore } from "@afx/store/core";
-import { Col, Spin, Typography, Form, Card, Button, Tabs, Input } from "antd";
+import { Col, Spin, Typography, Form, Card, Button, Tabs, Input, notification } from "antd";
 import { ArrowLeft, Plus, MapPin, ListChecks, Info, Image as ImageIcon, Receipt } from "lucide-react";
 
 // Impor komponen terpisah
@@ -80,7 +80,7 @@ export function FormBranch(props: IPropsFormBranch) {
     <Col span={24}>
       {props?.formType === "create" && (
         <div className="flex justify-end mt-6 border-t border-slate-100 pt-6">
-          <button type="submit" disabled={loading} className={`w-full lg:w-[200px] px-6 py-3 rounded-xl font-bold text-base text-white transition-all shadow-md hover:shadow-emerald-500/20 active:scale-95 ${loading ? "bg-slate-400 cursor-not-allowed" : "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"}`}>
+          <button type="submit" onClick={() => props.forms.submit()} disabled={loading} className={`w-full lg:w-[200px] px-6 py-3 rounded-xl font-bold text-base text-white transition-all shadow-md hover:shadow-emerald-500/20 active:scale-95 ${loading ? "bg-slate-400 cursor-not-allowed" : "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"}`}>
             {loading ? "Memproses..." : "Simpan Cabang"}
           </button>
         </div>
@@ -95,7 +95,7 @@ export function FormBranch(props: IPropsFormBranch) {
       {props?.formType === "update" && (
         <div className="flex items-center gap-4 justify-end mt-6 border-t border-slate-100 pt-6">
           <button type="button" className="px-6 py-3 rounded-xl text-slate-500 bg-slate-50 hover:bg-slate-100 font-bold transition-all" onClick={() => props?.setFormType("detail")}>Batal</button>
-          <button type="submit" disabled={loading} className={`w-full lg:w-[200px] px-6 py-3 rounded-xl font-bold text-base text-white transition-all shadow-md hover:shadow-emerald-500/20 active:scale-95 ${loading ? "bg-slate-400 cursor-not-allowed" : "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"}`}>
+          <button type="submit" onClick={() => props.forms.submit()} disabled={loading} className={`w-full lg:w-[200px] px-6 py-3 rounded-xl font-bold text-base text-white transition-all shadow-md hover:shadow-emerald-500/20 active:scale-95 ${loading ? "bg-slate-400 cursor-not-allowed" : "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"}`}>
             {loading ? "Menyimpan..." : "Simpan Perubahan"}
           </button>
         </div>
@@ -110,7 +110,19 @@ export function FormBranch(props: IPropsFormBranch) {
       children: (
         <div className="max-w-[100%] mx-auto py-4">
           <Spin spinning={loading} size="small" classNames={{ root: "w-full" }}>
-            <UseForm form={props?.forms} onFinish={props.handleSubmit}>
+            <UseForm
+              form={props?.forms}
+              onFinish={props.handleSubmit}
+              onFinishFailed={(errorInfo: any) => {
+                console.log("❌ [Form Validation Failed]:", errorInfo);
+                const firstError = errorInfo?.errorFields?.[0]?.errors?.[0] || "Lengkapi semua field wajib";
+                notification.warning({
+                  message: "Validasi Gagal",
+                  description: firstError,
+                  duration: 4,
+                });
+              }}
+            >
               {/* Field tersembunyi yang datanya diisi oleh Gallery */}
               <Form.Item name="imageUrl" noStyle><Input type="hidden" /></Form.Item>
               <Form.Item name="imageGaleries" noStyle><Input type="hidden" /></Form.Item>
