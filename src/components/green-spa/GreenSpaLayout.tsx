@@ -254,6 +254,12 @@ const menuConfig: MenuSection[] = [
             icon: "fa-solid fa-file-invoice-dollar",
             path: "/dashboard/reports/sales",
           },
+          {
+            key: "cashier-session-report",
+            label: "Cashier Session",
+            icon: "fa-solid fa-cash-register",
+            path: "/dashboard/reports/cashier-session",
+          },
         ],
       },
     ],

@@ -1,6 +1,13 @@
 import { IReqPagination } from "../common.iface";
 
-export interface IReqBranch extends IReqPagination {}
+export interface IReqBranch extends IReqPagination {
+  // API expects uppercase parameters, include both for compatibility
+  Page?: number;
+  PageSize?: number;
+  Search?: string;
+  SortColumn?: string;
+  SortDirection?: "asc" | "desc";
+}
 
 export interface IResBranch {
   id: number;
