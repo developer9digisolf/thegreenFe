@@ -138,6 +138,9 @@ export const rest = {
   salesDetail: "sales/:id",
   salesExport: "export/excel/sales",
 
+  // Cashier Session Reports
+  cashierSessionReport: "cashier-session/reports",
+
   master: {
     companies: {
       index: "master/companies",
