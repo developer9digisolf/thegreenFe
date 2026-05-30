@@ -845,14 +845,15 @@ export default function POSPage() {
                                                         >
                                                             <i className="fa-regular fa-eye" />
                                                         </button>
-                                                        <div
+                                                    <div
                                                             style={{
                                                                 width: "24px", height: "24px", borderRadius: "50%",
                                                                 background: "rgba(255,255,255,0.2)",
                                                                 display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px",
                                                             }}
                                                         >
-                                                            <i className="fa-solid fa-check" />
+                                                            {/* Mengganti fa-check menjadi fa-xmark */}
+                                                            <i className="fa-solid fa-xmark" />
                                                         </div>
                                                     </div>
                                                 )}
@@ -1190,11 +1191,10 @@ export default function POSPage() {
                     <button
                         className="action-btn primary"
                         onClick={() => {
-                            const hasPackagesOrCredits = pos.cartItems.some(
-                                (item: any) => item.itemType === 1 || item.itemType === 2
-                            );
-                            if (hasPackagesOrCredits && !pos.selectedMember) {
-                                showToast("Pilih Member terlebih dahulu", "error");
+                            // Validasi: Wajib pilih member untuk SEMUA jenis item di keranjang
+                            // (termasuk Layanan, Paket Voucher, dan Top Up Kredit)
+                            if (!pos.selectedMember) {
+                                showToast("Pilih Member terlebih dahulu sebelum melakukan pembayaran", "error");
                                 return;
                             }
                             payment.setPaymentAmount(pos.cartGrandTotal.toString());
