@@ -169,9 +169,11 @@ export default function BranchView() {
     if (branch?.id) {
       const galleryUrls =
         values.imageGaleries || forms.getFieldValue("imageGaleries") || [];
+      const newImageUrl =
+        values.imageUrl !== undefined ? values.imageUrl : (galleryUrls.length > 0 ? galleryUrls[0] : null);
 
-      // Send ONLY ImageGaleries for the gallery update request
       const payload = {
+        imageUrl: newImageUrl ? getPathFromUrl(newImageUrl) : null,
         ImageGaleries: galleryUrls.map((url: any) => getPathFromUrl(url)),
       };
 

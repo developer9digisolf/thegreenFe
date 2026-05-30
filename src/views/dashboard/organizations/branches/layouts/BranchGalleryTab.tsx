@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Typography, Upload as AntUpload, Modal as AntModal, FormInstance, notification as antdNotification } from "antd";
 import { Plus, Image as ImageIcon, Info } from "lucide-react";
-import { UploadMultipleImageService } from "@afx/services/image.service";
+import { UploadMultipleImageService, DeleteImageService } from "@afx/services/image.service";
 
 interface Props {
   branch: any;
@@ -16,23 +16,28 @@ export default function BranchGalleryTab({ branch, forms, formType, isOpen, hand
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState("");
   const [previewTitle, setPreviewTitle] = useState("");
+  const lastSavedUrls = useRef<string[] | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       if (branch?.imageGaleries && formType !== "create") {
+        const initialUrls = branch.imageGaleries.map((item: any) => typeof item === "string" ? item : item?.imageUrl || "");
+        lastSavedUrls.current = initialUrls;
         setFileList(
           branch.imageGaleries.map((item: any, index: number) => {
             const urlStr = typeof item === "string" ? item : item?.imageUrl || "";
             return {
-              uid: `-${index}`,
+              uid: typeof item === "string" ? `-${index}` : String(item?.id || `-${index}`),
               name: typeof urlStr === "string" ? urlStr.split("/").pop() || `image-${index}` : `image-${index}`,
               status: "done",
               url: urlStr,
+              id: typeof item === "string" ? undefined : item?.id,
             };
           })
         );
       } else {
         setFileList([]);
+        lastSavedUrls.current = [];
       }
     }
   }, [branch?.imageGaleries, isOpen, formType]);
@@ -43,26 +48,64 @@ export default function BranchGalleryTab({ branch, forms, formType, isOpen, hand
     setPreviewTitle(file.name || file.url.substring(file.url.lastIndexOf("/") + 1));
   };
 
-  const handleChangeUpload = ({ fileList: newFileList }: any) => {
-    setFileList(newFileList);
+  const handleRemove = async (file: any) => {
+    const targetId = file.id;
+    if (targetId) {
+      try {
+        const res = await DeleteImageService(targetId);
+        if (res.success) {
+          return true;
+        } else {
+          antdNotification.error({ message: res.message || "Gagal menghapus gambar dari server" });
+          return false;
+        }
+      } catch (err: any) {
+        antdNotification.error({ message: err?.message || "Terjadi kesalahan saat menghapus gambar" });
+        return false;
+      }
+    }
+    return true;
+  };
 
-    const urls = newFileList
+  const handleChangeUpload = ({ fileList: newFileList }: any) => {
+    const updatedFileList = newFileList.map((f: any) => {
+      if (f.status === "done" && f.response?.data?.[0]) {
+        const resData = f.response.data[0];
+        return {
+          ...f,
+          url: f.url || resData.url || resData.imageUrl,
+          id: f.id || resData.id || resData.Id,
+        };
+      }
+      return f;
+    });
+
+    setFileList(updatedFileList);
+
+    const urls = updatedFileList
       .filter((f: any) => f.status === "done")
-      .map((f: any) => f.url || f.response?.data?.[0]?.url)
+      .map((f: any) => f.url)
       .filter((url: string) => !!url);
 
     forms.setFieldsValue({
       imageGaleries: urls,
-      imageUrl: urls.length > 0 ? urls[0] : forms.getFieldValue("imageUrl"),
+      imageUrl: urls.length > 0 ? urls[0] : null,
     });
 
     if (handleUpdateGallery && (formType === "detail" || formType === "update")) {
-      const isAnyUploading = newFileList.some((f: any) => f.status === "uploading");
-      if (!isAnyUploading && urls.length > 0) {
-        handleUpdateGallery({
-          imageGaleries: urls,
-          imageUrl: urls.length > 0 ? urls[0] : forms.getFieldValue("imageUrl"),
-        });
+      const isAnyUploading = updatedFileList.some((f: any) => f.status === "uploading");
+      if (!isAnyUploading) {
+        const hasChanged = !lastSavedUrls.current || 
+          urls.length !== lastSavedUrls.current.length ||
+          urls.some((url: string, idx: number) => url !== lastSavedUrls.current?.[idx]);
+
+        if (hasChanged) {
+          lastSavedUrls.current = urls;
+          handleUpdateGallery({
+            imageGaleries: urls,
+            imageUrl: urls.length > 0 ? urls[0] : null,
+          });
+        }
       }
     }
   };
@@ -105,6 +148,7 @@ export default function BranchGalleryTab({ branch, forms, formType, isOpen, hand
           fileList={fileList}
           onPreview={handlePreview}
           onChange={handleChangeUpload}
+          onRemove={handleRemove}
           customRequest={customRequest}
           multiple={true}
           className="branch-gallery-upload"
