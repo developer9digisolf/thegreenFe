@@ -755,120 +755,128 @@ export default function POSPage() {
                 <div className="pos-content">
 
                     {/* LEFT: Member Panel */}
-                    <aside className="member-panel">
-                        <div className="member-search" style={{ position: "relative" }}>
-                            <div className="member-search-row">
-                                <div className="search-input-wrapper" style={{ position: "relative", width: "100%" }}>
-                                    <i className="fa-solid fa-magnifying-glass" />
-                                    <input
-                                        type="text"
-                                        className="search-input"
-                                        placeholder="Cari member..."
-                                        value={pos.memberSearch}
-                                        onChange={(e) => pos.setMemberSearch(e.target.value)}
-                                        onFocus={() => pos.setShowMemberDropdown(true)}
-                                        style={{ width: "100%", paddingLeft: "40px" }}
-                                    />
+                        <aside className="member-panel">
+                            <div className="member-search" style={{ position: "relative" }}>
+                                <div className="member-search-row">
+                                    <div className="search-input-wrapper" style={{ position: "relative", width: "100%" }}>
+                                        <i className="fa-solid fa-magnifying-glass" />
+                                        <input
+                                            type="text"
+                                            className="search-input"
+                                            placeholder="Cari member..."
+                                            value={pos.memberSearch}
+                                            onChange={(e) => pos.setMemberSearch(e.target.value)}
+                                            onFocus={() => pos.setShowMemberDropdown(true)}
+                                            style={{ width: "100%", paddingLeft: "40px" }}
+                                        />
+                                    </div>
+                                    <button
+                                        className="btn-add-member"
+                                        onClick={() => setShowMemberModal(true)}
+                                        title="Tambah Member Baru"
+                                    >
+                                        <i className="fa-solid fa-plus" />
+                                    </button>
                                 </div>
-                                <button
-                                    className="btn-add-member"
-                                    onClick={() => setShowMemberModal(true)}
-                                    title="Tambah Member Baru"
+                            </div>
+
+                            <div className="member-info" style={{ padding: "0 16px", flex: 1, overflowY: "auto" }}>
+                                <div
+                                    style={{
+                                        fontSize: "11px", fontWeight: 700, color: "var(--text-muted)",
+                                        textTransform: "uppercase", letterSpacing: "0.5px",
+                                        marginBottom: "12px", marginTop: "10px",
+                                    }}
                                 >
-                                    <i className="fa-solid fa-plus" />
-                                </button>
-                            </div>
-                        </div>
+                                    {pos.memberSearch ? "Hasil Pencarian" : "Member Terdaftar"}
+                                </div>
 
-                        <div className="member-info" style={{ padding: "0 16px", flex: 1, overflowY: "auto" }}>
-                            <div
-                                style={{
-                                    fontSize: "11px", fontWeight: 700, color: "var(--text-muted)",
-                                    textTransform: "uppercase", letterSpacing: "0.5px",
-                                    marginBottom: "12px", marginTop: "10px",
-                                }}
-                            >
-                                {pos.memberSearch ? "Hasil Pencarian" : "Member Terdaftar"}
-                            </div>
-
-                            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                                {pos.memberResults.length > 0 ? (
-                                    pos.memberResults.map((member) => {
-                                        const isActive = pos.selectedMember?.id === member.id;
-                                        const displayName = member.name || (member as any).fullName || "M";
-                                        return (
-                                            <div
-                                                key={member.id}
-                                                onClick={() => pos.setSelectedMember(isActive ? null : member)}
-                                                className={`member-mini-card ${isActive ? "active" : ""}`}
-                                                style={{
-                                                    padding: "12px", borderRadius: "16px",
-                                                    background: isActive ? "var(--gradient-spa)" : "var(--bg-card)",
-                                                    border: isActive ? "none" : "1px solid var(--border-color)",
-                                                    color: isActive ? "white" : "var(--text-primary)",
-                                                    cursor: "pointer", transition: "all 0.2s ease",
-                                                    display: "flex", alignItems: "center", gap: "12px",
-                                                    boxShadow: isActive ? "0 8px 16px rgba(61,107,95,0.25)" : "none",
-                                                }}
-                                            >
+                                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                                    {pos.memberResults.length > 0 ? (
+                                        pos.memberResults.map((member) => {
+                                            const isActive = pos.selectedMember?.id === member.id;
+                                            const displayName = member.name || (member as any).fullName || "M";
+                                            return (
                                                 <div
+                                                    key={member.id}
+                                                    onClick={() => pos.setSelectedMember(isActive ? null : member)}
+                                                    className={`member-mini-card ${isActive ? "active" : ""}`}
                                                     style={{
-                                                        width: "40px", height: "40px", borderRadius: "12px",
-                                                        background: isActive ? "rgba(255,255,255,0.2)" : "var(--spa-green-bg)",
-                                                        color: isActive ? "white" : "var(--spa-green)",
-                                                        display: "flex", alignItems: "center", justifyContent: "center",
-                                                        fontWeight: 800, fontSize: "16px",
+                                                        padding: "12px", borderRadius: "16px",
+                                                        background: isActive ? "var(--gradient-spa)" : "var(--bg-card)",
+                                                        border: isActive ? "none" : "1px solid var(--border-color)",
+                                                        color: isActive ? "white" : "var(--text-primary)",
+                                                        cursor: "pointer", transition: "all 0.2s ease",
+                                                        display: "flex", alignItems: "center", gap: "12px",
+                                                        boxShadow: isActive ? "0 8px 16px rgba(61,107,95,0.25)" : "none",
                                                     }}
                                                 >
-                                                    {displayName.charAt(0).toUpperCase()}
-                                                </div>
-                                                <div style={{ flex: 1, minWidth: 0 }}>
-                                                    <div style={{ fontWeight: 700, fontSize: "14px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                                        {displayName === "M" ? "No Name" : displayName}
-                                                    </div>
-                                                    <div style={{ fontSize: "12px", opacity: isActive ? 0.8 : 1, color: isActive ? "white" : "var(--text-muted)" }}>
-                                                        {member.phone || "No phone"}
-                                                    </div>
-                                                </div>
-                                                {isActive && (
-                                                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); setDetailMemberId(member.id as number); }}
-                                                            title="Lihat Detail & Voucher"
-                                                            style={{
-                                                                width: "28px", height: "28px", borderRadius: "8px",
-                                                                background: "white", color: "var(--spa-green)",
-                                                                border: "none", display: "flex", alignItems: "center",
-                                                                justifyContent: "center", fontSize: "12px",
-                                                                cursor: "pointer", boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                                                            }}
-                                                        >
-                                                            <i className="fa-regular fa-eye" />
-                                                        </button>
                                                     <div
-                                                            style={{
-                                                                width: "24px", height: "24px", borderRadius: "50%",
-                                                                background: "rgba(255,255,255,0.2)",
-                                                                display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px",
-                                                            }}
-                                                        >
-                                                            {/* Mengganti fa-check menjadi fa-xmark */}
-                                                            <i className="fa-solid fa-xmark" />
+                                                        style={{
+                                                            width: "40px", height: "40px", borderRadius: "12px",
+                                                            background: isActive ? "rgba(255,255,255,0.2)" : "var(--spa-green-bg)",
+                                                            color: isActive ? "white" : "var(--spa-green)",
+                                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                                            fontWeight: 800, fontSize: "16px",
+                                                        }}
+                                                    >
+                                                        {displayName.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                                        <div style={{ fontWeight: 700, fontSize: "14px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                            {displayName === "M" ? "No Name" : displayName}
+                                                        </div>
+                                                        <div style={{ 
+                                                            fontSize: "12px", 
+                                                            opacity: isActive ? 0.8 : 1, 
+                                                            color: isActive ? "white" : "var(--text-muted)",
+                                                            overflow: "hidden", 
+                                                            textOverflow: "ellipsis", 
+                                                            whiteSpace: "nowrap" 
+                                                        }}>
+                                                            {/* MENGUBAH BAGIAN INI: Menampilkan phone, kalau kosong tampilkan email, kalau kosong juga "No phone / email" */}
+                                                            {member.phone || member.email || "No phone / email"}
                                                         </div>
                                                     </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })
-                                ) : (
-                                    <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-muted)" }}>
-                                        <i className="fa-solid fa-user-slash" style={{ fontSize: "32px", marginBottom: "12px", opacity: 0.3 }} />
-                                        <p style={{ fontSize: "12px" }}>Tidak ada member ditemukan</p>
-                                    </div>
-                                )}
+                                                    {isActive && (
+                                                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); setDetailMemberId(member.id as number); }}
+                                                                title="Lihat Detail & Voucher"
+                                                                style={{
+                                                                    width: "28px", height: "28px", borderRadius: "8px",
+                                                                    background: "white", color: "var(--spa-green)",
+                                                                    border: "none", display: "flex", alignItems: "center",
+                                                                    justifyContent: "center", fontSize: "12px",
+                                                                    cursor: "pointer", boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                                                                }}
+                                                            >
+                                                                <i className="fa-regular fa-eye" />
+                                                            </button>
+                                                        <div
+                                                                style={{
+                                                                    width: "24px", height: "24px", borderRadius: "50%",
+                                                                    background: "rgba(255,255,255,0.2)",
+                                                                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px",
+                                                                }}
+                                                            >
+                                                                {/* Mengganti fa-check menjadi fa-xmark */}
+                                                                <i className="fa-solid fa-xmark" />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
+                                        <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-muted)" }}>
+                                            <i className="fa-solid fa-user-slash" style={{ fontSize: "32px", marginBottom: "12px", opacity: 0.3 }} />
+                                            <p style={{ fontSize: "12px" }}>Tidak ada member ditemukan</p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    </aside>
+                        </aside>
 
                     {/* CENTER: Main Area */}
                     <div className="service-area">

@@ -23,6 +23,7 @@ export interface BookingRow {
     memberPhone: string;
     therapistId: number | null;
     therapistName: string | null;
+    isVipRoom?: boolean | null;
     roomId: number | null;
     roomName: string | null;
     saleId: number;
@@ -300,6 +301,25 @@ function BookingTable({ bookings, loading, onOpenAssign, onRowClick, selectedBoo
                                         </div>
                                     </td>
                                     <td style={{ padding: "14px 16px", fontSize: "12px" }}>
+                                        {/* --- PENANDA VIP --- */}
+                                        {bk.isVipRoom && (
+                                            <div style={{ marginBottom: "6px" }}>
+                                                <span style={{ 
+                                                    background: "linear-gradient(135deg, #f59e0b, #fbbf24)", 
+                                                    color: "#fff", 
+                                                    padding: "2px 6px", 
+                                                    borderRadius: "4px", 
+                                                    fontSize: "10px", 
+                                                    fontWeight: 800, 
+                                                    letterSpacing: "0.5px",
+                                                    display: "inline-block"
+                                                }}>
+                                                    <i className="fa-solid fa-crown" style={{ marginRight: "4px" }} /> VIP
+                                                </span>
+                                            </div>
+                                        )}
+                                        {/* ------------------- */}
+
                                         {bk.therapistName || bk.roomName ? (
                                             <div>
                                                 {bk.therapistName && <div><i className="fa-solid fa-user-md" style={{ color: "var(--spa-green)", marginRight: "5px" }} />{bk.therapistName}</div>}
@@ -698,31 +718,30 @@ export default function BookingTab({ branchId, onToast, onBookingCountChange }: 
         
         setLoading(true);
         try {
+            // 1. TAMBAHKAN PARAMETER SEARCH KE URL JIKA ADA
             let url = `pos/bookings?StartDate=${f.startDate}&EndDate=${f.endDate}&BranchId=${branchId}`;
+            
             if (f.statuses) {
                 url += `&Statuses=${f.statuses}`;
             }
+            
+            // Memastikan spasi aman saat dikirim via URL menggunakan encodeURIComponent
+            if (f.search?.trim()) {
+                url += `&Search=${encodeURIComponent(f.search.trim())}`; 
+            }
+            
             const res = await get(url);
             
             if (res.success || res.meta?.success) {
-            const list = res.data?.pageData ?? res.data ?? [];
-
-            if (f.search?.trim()) {
-                const term = f.search.toLowerCase().trim();
-                const filtered = list.filter((bk: BookingRow) =>
-                    bk.code?.toLowerCase().includes(term) ||
-                    bk.memberName?.toLowerCase().includes(term)
-                );
-                setBookings(filtered);
-            } else {
+                const list = res.data?.pageData ?? res.data ?? [];
+                
+                // 2. HAPUS LOGIKA FILTER LOKAL, LANGSUNG SET DATA DARI BACKEND
                 setBookings(list);
+                
+                if (onBookingCountChange) onBookingCountChange(f.startDate, f.endDate);
+            } else {
+                onToast(res.message ?? "Gagal memuat data booking", "error");
             }
-
-           
-            if (onBookingCountChange) onBookingCountChange(f.startDate, f.endDate);
-        } else {
-            onToast(res.message ?? "Gagal memuat data booking", "error");
-        }
         } catch (err) {
             onToast("Gagal memuat data booking", "error");
         } finally {
