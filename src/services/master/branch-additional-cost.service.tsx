@@ -27,7 +27,8 @@ export function GetBranchAdditionalCostDetailService(
   branchId: number,
 ) {
   return request<any>({
-    url: rest.master.branchAdditionalCosts.show.replace(":ID", id.toString()),
+    // PERBAIKAN: Gunakan regex /:id/i agar case-insensitive
+    url: rest.master.branchAdditionalCosts.show.replace(/:id/i, id.toString()),
     data: { branchId },
     method: "GET",
   });
@@ -52,8 +53,9 @@ export function UpdateBranchAdditionalCostService(
   branchId: number,
   data: Partial<IBranchAdditionalCostPayload>,
 ) {
+  // PERBAIKAN: Gunakan regex /:id/i
   let url = rest.master.branchAdditionalCosts.update
-    .replace(":ID", id.toString())
+    .replace(/:id/i, id.toString())
     .replace(":branchId", branchId.toString());
 
   return request<any>({
@@ -67,8 +69,9 @@ export function DeleteBranchAdditionalCostService(
   id: number,
   branchId: number,
 ) {
+  // PERBAIKAN: Gunakan regex /:id/i
   let url = rest.master.branchAdditionalCosts.delete
-    .replace(":ID", id.toString())
+    .replace(/:id/i, id.toString())
     .replace(":branchId", branchId.toString());
 
   return request<any>({
@@ -82,9 +85,10 @@ export function UpdateBranchAdditionalCostStatusService(
   branchId: number,
   isActive: boolean,
 ) {
+  // PERBAIKAN: Gunakan regex /:id/i
   return request<any>({
     url: rest.master.branchAdditionalCosts.updateStatus
-      .replace(":id", id.toString())
+      .replace(/:id/i, id.toString())
       .replace(":branchId", branchId.toString()),
     data: { isActive },
     method: "PATCH",
