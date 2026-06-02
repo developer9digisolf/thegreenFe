@@ -289,7 +289,7 @@ export default function MemberDetailView({ memberId }: MemberDetailViewProps) {
             <Field label="Tanggal Bergabung" icon={<CalendarOutlined />}>
               {dayjs(member.joinDate).format("DD MMMM YYYY")}
             </Field>
-            <Field label="Status">{getStatusBadge(member.status)}</Field>
+            <Field label="Status">{member.status}</Field>
           </div>
 
           {member.address && (
