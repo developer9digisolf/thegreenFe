@@ -67,13 +67,13 @@ export default async function request<T = any, R = any>({
     axios
       .request({
         url: `${baseUrl.replace(/\/$/, "")}/${url.replace(/^\//, "")}`,
+        withCredentials: true,
         headers: {
           ...(bodyType !== "formData"
             ? { "Content-Type": "application/json;charset=UTF-8" }
             : {}),
           "ngrok-skip-browser-warning": "true",
           ...headers,
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         method,
         responseType,

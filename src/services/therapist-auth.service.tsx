@@ -16,16 +16,15 @@ async function therapistRequest<T = any>(
     method: 'GET' | 'POST' = 'GET',
     data?: any
 ): Promise<{ success: boolean; message: string; data?: T }> {
-    const token = AuthHelper.getToken() // Use main auth token
     const baseUrl = getBaseUrl()
 
     try {
         const response = await axios.request({
             url: `${baseUrl}${url}`,
             method,
+            withCredentials: true,
             headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {})
+                'Content-Type': 'application/json'
             },
             ...(method === 'GET' ? { params: data } : { data })
         })

@@ -53,7 +53,6 @@ export const AuthHelper = {
     saveAuth: (authResponse: IAuthResponse) => {
         try {
             if (typeof window !== 'undefined') {
-                localStorage.setItem('THEGREEN@TOKEN', authResponse.accessToken)
                 localStorage.setItem('THEGREEN@USER', JSON.stringify(authResponse.user))
                 
                 // Save therapist data if present
@@ -62,7 +61,6 @@ export const AuthHelper = {
                 }
                 
                 console.log('Auth saved successfully:', { 
-                    token: authResponse.accessToken?.substring(0, 20) + '...', 
                     user: authResponse.user?.username,
                     hasTherapist: !!authResponse.therapist
                 })
@@ -72,18 +70,9 @@ export const AuthHelper = {
         }
     },
 
-    // Get current token
+    // Get current token (HttpOnly cookies are not readable by client-side JavaScript, returns null)
     getToken: (): string | null => {
-        try {
-            if (typeof window !== 'undefined') {
-                const token = localStorage.getItem('THEGREEN@TOKEN')
-                return token
-            }
-            return null
-        } catch (error) {
-            console.error('Error getting token:', error)
-            return null
-        }
+        return null
     },
 
     // Get current user
@@ -120,15 +109,14 @@ export const AuthHelper = {
 
     // Check if authenticated
     isAuthenticated: (): boolean => {
-        const token = AuthHelper.getToken()
-        return !!token
+        const user = AuthHelper.getUser()
+        return !!user
     },
 
     // Clear auth data
     clearAuth: () => {
         try {
             if (typeof window !== 'undefined') {
-                localStorage.removeItem('THEGREEN@TOKEN')
                 localStorage.removeItem('THEGREEN@USER')
                 localStorage.removeItem('THEGREEN@THERAPIST')
                 console.log('Auth cleared')
