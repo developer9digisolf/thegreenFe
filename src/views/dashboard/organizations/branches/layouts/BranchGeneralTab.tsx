@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Row, Col, Card, Typography, Switch, Form, Input, InputNumber, Select, FormInstance } from "antd";
-import { Info, MapPin, DollarSign } from "lucide-react";
+import { Row, Col, Card, Typography, Switch, Form, Input, InputNumber, Select, FormInstance, Upload as AntUpload, Modal as AntModal, notification as antdNotification } from "antd";
+import { Info, MapPin, DollarSign, Image as ImageIcon, Plus } from "lucide-react";
 import { UseFormItem } from "@afx/components/form/form.layout";
 import UseInput from "@afx/components/ui/input/input.layout";
 import UseInputArea from "@afx/components/ui/input/input-area.layout";
 import dynamic from "next/dynamic";
+import { UploadImageService } from "@afx/services/image.service";
 
 const MapPicker = dynamic(() => import("@afx/components/ui/maps/MapPicker"), {
   ssr: false,
@@ -20,15 +21,82 @@ interface Props {
   forms: FormInstance;
   formType: string;
   isOpen: boolean;
+  onThumbnailChange?: (imageUrl: string | null) => void;
 }
 
-export default function BranchGeneralTab({ forms, formType, isOpen }: Props) {
+export default function BranchGeneralTab({ forms, formType, isOpen, onThumbnailChange }: Props) {
   const [mapPosition, setMapPosition] = useState<{ lat: number; lng: number } | null>(null);
   const mapKey = `map-${formType}-${isOpen ? "open" : "closed"}`;
   
   const formLat = Form.useWatch("latitude", forms);
   const formLng = Form.useWatch("longitude", forms);
   const lastMapCoords = useRef<{ lat: number; lng: number } | null>(null);
+
+  // Thumbnail state
+  const [thumbnailFileList, setThumbnailFileList] = useState<any[]>([]);
+  const [thumbnailUploading, setThumbnailUploading] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState("");
+
+  const imageUrlValue = Form.useWatch("imageUrl", forms);
+
+  // Sync imageUrl from form into thumbnail preview
+  useEffect(() => {
+    if (imageUrlValue) {
+      setThumbnailFileList([{
+        uid: "-1",
+        name: typeof imageUrlValue === "string" ? (imageUrlValue.split("/").pop() || "thumbnail") : "thumbnail",
+        status: "done",
+        url: imageUrlValue,
+      }]);
+    } else {
+      setThumbnailFileList([]);
+    }
+  }, [imageUrlValue]);
+
+  const handleThumbnailUpload = async (options: any) => {
+    const { file, onSuccess, onError } = options;
+    setThumbnailUploading(true);
+    try {
+      const res = await UploadImageService(file as File);
+      if (res.success && res.data) {
+        const url = typeof res.data === "string"
+          ? res.data
+          : res.data.url || res.data.imageUrl || res.data.fileUrl || "";
+        if (url) {
+          forms.setFieldsValue({ imageUrl: url });
+          onThumbnailChange?.(url);
+          onSuccess({ ...res, url });
+        } else {
+          onError(new Error("URL tidak ditemukan dalam respons upload"));
+          antdNotification.error({ message: "URL thumbnail tidak ditemukan" });
+        }
+      } else {
+        onError(new Error(res.message || "Upload gagal"));
+        antdNotification.error({ message: res.message || "Gagal mengunggah thumbnail" });
+      }
+    } catch (err: any) {
+      onError(err);
+      antdNotification.error({ message: err?.message || "Terjadi kesalahan saat mengunggah thumbnail" });
+    } finally {
+      setThumbnailUploading(false);
+    }
+  };
+
+  const handleThumbnailChange = ({ fileList }: any) => {
+    // Only keep the latest file, and extract url from response if upload just completed
+    const updated = fileList.slice(-1).map((f: any) => {
+      if (f.status === "done" && f.response?.url && !f.url) {
+        return { ...f, url: f.response.url };
+      }
+      return f;
+    });
+    setThumbnailFileList(updated);
+    if (updated.length === 0) {
+      forms.setFieldsValue({ imageUrl: null });
+      onThumbnailChange?.(null);
+    }
+  };
 
   // Sync Form values to Map Position
   useEffect(() => {
@@ -144,6 +212,68 @@ export default function BranchGeneralTab({ forms, formType, isOpen }: Props) {
           <UseFormItem name="description" label="Deskripsi" {...itemLayouts}>
             <UseInputArea standart={false} disabled={formType === "detail"} placeholder="Deskripsi singkat cabang..." rows={3} />
           </UseFormItem>
+
+          {/* Thumbnail */}
+          <div className="mt-4">
+            {/* Hidden form field agar imageUrl terdaftar di form dan Form.useWatch bisa bekerja */}
+            <Form.Item name="imageUrl" noStyle><Input type="hidden" /></Form.Item>
+
+            <Typography.Text className="text-sm font-medium text-slate-600 block mb-2">Foto Thumbnail Cabang</Typography.Text>
+
+            <div className="flex items-start gap-4">
+              {/* Preview thumbnail yang sudah ada */}
+              {thumbnailFileList.length > 0 && thumbnailFileList[0].url && (
+                <div className="relative group w-[104px] h-[104px] rounded-xl overflow-hidden border-2 border-slate-100 flex-shrink-0">
+                  <img
+                    src={thumbnailFileList[0].url}
+                    alt="thumbnail"
+                    className="w-full h-full object-cover cursor-pointer"
+                    onClick={() => { setPreviewImage(thumbnailFileList[0].url); setPreviewOpen(true); }}
+                  />
+                  {/* {formType !== "detail" && (
+                    <div
+                      className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                      onClick={() => {
+                        forms.setFieldsValue({ imageUrl: null });
+                        setThumbnailFileList([]);
+                        onThumbnailChange?.(null);
+                      }}
+                    >
+                      <span className="text-white text-xs font-bold">Hapus</span>
+                    </div>
+                  )} */}
+                </div>
+              )}
+
+              {/* Tombol upload — selalu tampil saat bukan detail, atau saat belum ada thumbnail */}
+              {formType !== "detail" && (
+                <AntUpload
+                  listType="picture-card"
+                  fileList={[]}
+                  showUploadList={false}
+                  customRequest={handleThumbnailUpload}
+                  onChange={handleThumbnailChange}
+                  maxCount={1}
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={thumbnailUploading}
+                  className="thumbnail-uploader"
+                >
+                  <div className="flex flex-col items-center justify-center gap-1">
+                    <Plus size={18} className="text-emerald-500" />
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      {thumbnailUploading ? "Mengunggah..." : thumbnailFileList.length > 0 ? "Ganti Foto" : "Unggah"}
+                    </div>
+                  </div>
+                </AntUpload>
+              )}
+            </div>
+
+            <Typography.Text className="text-xs text-slate-400 block mt-2">JPG, PNG, WEBP. Maks. 5MB. Foto ini tampil sebagai thumbnail utama cabang.</Typography.Text>
+          </div>
+
+          <AntModal open={previewOpen} footer={null} onCancel={() => setPreviewOpen(false)} centered>
+            <img alt="preview thumbnail" style={{ width: "100%", borderRadius: "12px", marginTop: 16 }} src={previewImage} />
+          </AntModal>
         </Card>
       </Col>
 

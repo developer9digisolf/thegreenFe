@@ -53,6 +53,11 @@ export const AuthHelper = {
     saveAuth: (authResponse: IAuthResponse) => {
         try {
             if (typeof window !== 'undefined') {
+                // Save JWT token so it's included in every request
+                if (authResponse.accessToken) {
+                    localStorage.setItem('THEGREEN@TOKEN', authResponse.accessToken)
+                }
+                
                 localStorage.setItem('THEGREEN@USER', JSON.stringify(authResponse.user))
                 
                 // Save therapist data if present
@@ -62,7 +67,8 @@ export const AuthHelper = {
                 
                 console.log('Auth saved successfully:', { 
                     user: authResponse.user?.username,
-                    hasTherapist: !!authResponse.therapist
+                    hasTherapist: !!authResponse.therapist,
+                    hasToken: !!authResponse.accessToken
                 })
             }
         } catch (error) {
@@ -117,6 +123,7 @@ export const AuthHelper = {
     clearAuth: () => {
         try {
             if (typeof window !== 'undefined') {
+                localStorage.removeItem('THEGREEN@TOKEN')
                 localStorage.removeItem('THEGREEN@USER')
                 localStorage.removeItem('THEGREEN@THERAPIST')
                 console.log('Auth cleared')

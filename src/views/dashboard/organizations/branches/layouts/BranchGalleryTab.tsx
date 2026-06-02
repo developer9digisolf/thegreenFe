@@ -87,9 +87,9 @@ export default function BranchGalleryTab({ branch, forms, formType, isOpen, hand
       .map((f: any) => f.url)
       .filter((url: string) => !!url);
 
+    // Gallery only manages imageGaleries, not imageUrl (thumbnail)
     forms.setFieldsValue({
       imageGaleries: urls,
-      imageUrl: urls.length > 0 ? urls[0] : null,
     });
 
     if (handleUpdateGallery && (formType === "detail" || formType === "update")) {
@@ -103,7 +103,6 @@ export default function BranchGalleryTab({ branch, forms, formType, isOpen, hand
           lastSavedUrls.current = urls;
           handleUpdateGallery({
             imageGaleries: urls,
-            imageUrl: urls.length > 0 ? urls[0] : null,
           });
         }
       }

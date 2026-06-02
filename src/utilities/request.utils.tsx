@@ -16,6 +16,7 @@ interface IResponsePayloads<T = any> {
   pagination?: any;
   meta?: any;
   rawData?: any;
+  status?: number;
 }
 
 // Get token directly from localStorage
@@ -73,6 +74,7 @@ export default async function request<T = any, R = any>({
             ? { "Content-Type": "application/json;charset=UTF-8" }
             : {}),
           "ngrok-skip-browser-warning": "true",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
           ...headers,
         },
         method,
@@ -143,32 +145,15 @@ export default async function request<T = any, R = any>({
           });
         }
 
-        // Handle 401 Unauthorized - redirect to login
+        // Handle 401 Unauthorized - let AuthContext handle the logout logic
         if (status === 401) {
-          // In development, we skip auto-logout redirect for debugging purposes
-          if (process.env.NODE_ENV === "development") {
-            console.warn(
-              "[Auth] 401 Unauthorized detected. Skipping auto-logout redirect for debugging.",
-            );
-          } else {
-            // Clear auth data
-            if (typeof window !== "undefined") {
-              localStorage.removeItem("THEGREEN@TOKEN");
-              localStorage.removeItem("THEGREEN@USER");
-
-              // Only redirect if not already on login page
-              if (!window.location.pathname.includes("/auth/login")) {
-                window.location.href = "/auth/login";
-              }
-            }
-          }
-
           return reject({
             success: false,
             message:
               errPayload?.meta?.message ||
               "Sesi Anda telah berakhir. Silakan login kembali.",
             data: null,
+            status: 401,
           });
         }
 

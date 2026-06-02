@@ -78,15 +78,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } else {
                 throw new Error("Invalid session data")
             }
-        } catch (err) {
-            console.error('Failed to fetch user profile, logging out:', err)
-            if (typeof window !== 'undefined' && !window.location.pathname.includes('/auth/login')) {
-                logout()
+        } catch (err: any) {
+            console.error('Failed to fetch user profile:', err)
+            
+            // Only logout on authentication errors (401 status), not network or server errors
+            const isAuthError = err?.status === 401 || 
+                                err?.message?.includes('Sesi Anda telah berakhir')
+            
+            if (isAuthError) {
+                console.warn('Auth error detected (401), logging out')
+                if (typeof window !== 'undefined' && !window.location.pathname.includes('/auth/login')) {
+                    logout()
+                } else {
+                    setAuthState(prev => ({
+                        ...prev,
+                        isAuthenticated: false,
+                        user: null,
+                        loading: false
+                    }))
+                }
             } else {
+                // Network or server error - keep user logged in with cached data
+                console.warn('Non-auth error on auth/me, keeping user logged in with cached data')
                 setAuthState(prev => ({
                     ...prev,
-                    isAuthenticated: false,
-                    user: null,
                     loading: false
                 }))
             }
