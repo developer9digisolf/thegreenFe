@@ -624,254 +624,363 @@ export default function MembersView() {
                     {
                       validator: (_, value) => {
                         if (!value) return Promise.resolve();
-                        const fullNumber = normalizePhoneNumber(
-                          `+${countryCode}${value}`,
-                        );
-                        // For Indonesian numbers enforce the 08xxx pattern
+
+                        const cleanValue = value.replace(/\s/g, "");
+
                         if (countryCode === "62") {
-                          const indonesianPhoneRegex = /^\+628\d{8,11}$/;
-                          if (!indonesianPhoneRegex.test(fullNumber)) {
+                          // Boleh input 08xxxx atau 8xxxx
+                          const localNumber = cleanValue.startsWith("0")
+                            ? cleanValue.slice(1)
+                            : cleanValue;
+
+                          const fullNumber = `+62${localNumber}`;
+
+                          if (!/^\+628\d{6,13}$/.test(fullNumber)) {
                             return Promise.reject(
                               new Error(
-                                "Format nomor HP tidak valid. Contoh: 812xxxxxxxx",
+                                "Format nomor HP tidak valid. Gunakan format 08xxxxxxxx atau 8xxxxxxxx",
                               ),
                             );
                           }
-                        } else if (!/^\d{5,15}$/.test(value.replace(/\s/g, ""))) {
-                          return Promise.reject(
-                            new Error("Nomor telepon tidak valid"),
-                          );
+                        } else {
+                          if (!/^\d{5,15}$/.test(cleanValue)) {
+                            return Promise.reject(
+                              new Error("Nomor telepon tidak valid"),
+                            );
+                          }
                         }
+
                         return Promise.resolve();
                       },
                     },
                   ]}
                 >
-                  {/* Wrapper that combines the custom dropdown + text input */}
                   <div
-                    style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}
+                    ref={dropdownRef}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      height: "46px",
+                      border:
+                        formType === "detail"
+                          ? "none"
+                          : isDropdownOpen
+                            ? "2px solid #10b981"
+                            : "2px solid #f1f5f9",
+                      borderRadius: "12px",
+                      background: formType === "detail" ? "#efefef" : "#fafafa",
+                      overflow: "visible",
+                      position: "relative",
+                      transition: "border-color 0.2s",
+                      boxShadow: isDropdownOpen
+                        ? "0 0 0 3px rgba(16,185,129,0.1)"
+                        : "none",
+                    }}
                   >
-                    {/* ── Custom Searchable Country Code Dropdown ── */}
+                    {/* ── Flag + Code Trigger ── */}
                     <div
-                      ref={dropdownRef}
-                      style={{ position: "relative", flexShrink: 0, width: "130px" }}
+                      onClick={() => {
+                        if (formType === "detail") return;
+                        setIsDropdownOpen(!isDropdownOpen);
+                        setSearchQuery("");
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        padding: "0 12px 0 16px",
+                        height: "100%",
+                        cursor:
+                          formType === "detail" ? "not-allowed" : "pointer",
+                        opacity: formType === "detail" ? 0.6 : 1,
+                        flexShrink: 0,
+                        userSelect: "none",
+                      }}
                     >
-                      {/* Trigger button */}
-                      <div
-                        onClick={() => {
-                          if (formType === "detail") return;
-                          setIsDropdownOpen(!isDropdownOpen);
-                          setSearchQuery("");
-                        }}
+                      {/* Flag — small rounded rect */}
+                      <span
                         style={{
-                          height: "46px",
-                          padding: "0 12px",
-                          borderRadius: "12px",
-                          border: "2px solid",
-                          borderColor: isDropdownOpen ? "#10b981" : "#f1f5f9",
-                          background: isDropdownOpen ? "#ffffff" : "#fafafa",
-                          cursor: formType === "detail" ? "not-allowed" : "pointer",
-                          opacity: formType === "detail" ? 0.6 : 1,
+                          fontSize: "16px",
+                          lineHeight: 1,
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "space-between",
-                          gap: "6px",
-                          userSelect: "none",
-                          transition: "border-color 0.2s, background 0.2s",
+                        }}
+                      >
+                        {(() => {
+                          const iso =
+                            countryCode === "62"
+                              ? "ID"
+                              : (countryOptions.find(
+                                  (c) => c.code === countryCode,
+                                )?.iso ?? "");
+                          return iso
+                            ? iso
+                                .toUpperCase()
+                                .split("")
+                                .map((c) =>
+                                  String.fromCodePoint(
+                                    c.charCodeAt(0) + 127397,
+                                  ),
+                                )
+                                .join("")
+                            : "🌐";
+                        })()}
+                      </span>
+
+                      {/* Code */}
+                      <span
+                        style={{
                           fontSize: "13px",
-                          fontWeight: 700,
+                          fontWeight: 600,
                           color: "#334155",
                         }}
                       >
-                        <span
-                          style={{
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                            flex: 1,
-                          }}
-                        >
-                          {activeCountryLabel}
-                        </span>
-                        <i
-                          className={`fa-solid fa-chevron-${isDropdownOpen ? "up" : "down"}`}
-                          style={{ fontSize: "11px", color: "#94a3b8", flexShrink: 0 }}
+                        +{countryCode}
+                      </span>
+
+                      {/* Chevron */}
+                      <svg
+                        width="10"
+                        height="10"
+                        viewBox="0 0 10 10"
+                        fill="none"
+                        style={{ flexShrink: 0 }}
+                      >
+                        <path
+                          d={isDropdownOpen ? "M2 7L5 4L8 7" : "M2 3L5 6L8 3"}
+                          stroke="#94a3b8"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
-                      </div>
-
-                      {/* Floating dropdown menu */}
-                      {isDropdownOpen && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            top: "calc(100% + 6px)",
-                            left: 0,
-                            width: "260px",
-                            background: "#ffffff",
-                            border: "1px solid #e2e8f0",
-                            borderRadius: "16px",
-                            boxShadow: "0 12px 32px rgba(0,0,0,0.12)",
-                            zIndex: 1100,
-                            overflow: "hidden",
-                            display: "flex",
-                            flexDirection: "column",
-                          }}
-                        >
-                          {/* Search input */}
-                          <div
-                            style={{
-                              padding: "10px",
-                              background: "#f8fafc",
-                              borderBottom: "1px solid #f1f5f9",
-                            }}
-                          >
-                            <div style={{ position: "relative" }}>
-                              <i
-                                className="fa-solid fa-magnifying-glass"
-                                style={{
-                                  position: "absolute",
-                                  left: "10px",
-                                  top: "50%",
-                                  transform: "translateY(-50%)",
-                                  color: "#94a3b8",
-                                  fontSize: "11px",
-                                }}
-                              />
-                              <input
-                                type="text"
-                                placeholder="Cari negara / kode..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                autoFocus
-                                style={{
-                                  width: "100%",
-                                  padding: "8px 8px 8px 30px",
-                                  borderRadius: "10px",
-                                  border: "1.5px solid #e2e8f0",
-                                  background: "#ffffff",
-                                  fontSize: "12px",
-                                  outline: "none",
-                                  color: "#334155",
-                                  boxSizing: "border-box",
-                                }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Country list */}
-                          <div style={{ maxHeight: "220px", overflowY: "auto" }}>
-                            {/* Indonesia pinned at top */}
-                            {(!searchQuery ||
-                              "id 62 indonesia".includes(
-                                searchQuery.toLowerCase(),
-                              )) && (
-                              <div
-                                onClick={() => {
-                                  setCountryCode("62");
-                                  setIsDropdownOpen(false);
-                                }}
-                                style={{
-                                  padding: "10px 14px",
-                                  cursor: "pointer",
-                                  fontSize: "13px",
-                                  fontWeight: countryCode === "62" ? 800 : 600,
-                                  background:
-                                    countryCode === "62"
-                                      ? "#ecfdf5"
-                                      : "transparent",
-                                  color:
-                                    countryCode === "62"
-                                      ? "#10b981"
-                                      : "#334155",
-                                  borderBottom: "1px solid #f1f5f9",
-                                  transition: "background 0.15s",
-                                }}
-                                onMouseEnter={(e) => {
-                                  if (countryCode !== "62")
-                                    (e.currentTarget as HTMLDivElement).style.background =
-                                      "#f8fafc";
-                                }}
-                                onMouseLeave={(e) => {
-                                  if (countryCode !== "62")
-                                    (e.currentTarget as HTMLDivElement).style.background =
-                                      "transparent";
-                                }}
-                              >
-                                🇮🇩 ID (+62)
-                              </div>
-                            )}
-
-                            {filteredCountries.length === 0 ? (
-                              <div
-                                style={{
-                                  padding: "20px",
-                                  textAlign: "center",
-                                  fontSize: "12px",
-                                  color: "#94a3b8",
-                                }}
-                              >
-                                Negara tidak ditemukan
-                              </div>
-                            ) : (
-                              filteredCountries.map((c, i) => {
-                                if (c.iso === "ID") return null; // skip duplicate ID
-                                return (
-                                  <div
-                                    key={`${c.iso}-${i}`}
-                                    onClick={() => {
-                                      setCountryCode(c.code);
-                                      setIsDropdownOpen(false);
-                                    }}
-                                    style={{
-                                      padding: "10px 14px",
-                                      cursor: "pointer",
-                                      fontSize: "13px",
-                                      fontWeight:
-                                        countryCode === c.code ? 700 : 400,
-                                      background:
-                                        countryCode === c.code
-                                          ? "#ecfdf5"
-                                          : "transparent",
-                                      color:
-                                        countryCode === c.code
-                                          ? "#10b981"
-                                          : "#334155",
-                                      transition: "background 0.15s",
-                                    }}
-                                    onMouseEnter={(e) => {
-                                      if (countryCode !== c.code)
-                                        (
-                                          e.currentTarget as HTMLDivElement
-                                        ).style.background = "#f8fafc";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      if (countryCode !== c.code)
-                                        (
-                                          e.currentTarget as HTMLDivElement
-                                        ).style.background = "transparent";
-                                    }}
-                                  >
-                                    {c.label}
-                                  </div>
-                                );
-                              })
-                            )}
-                          </div>
-                        </div>
-                      )}
+                      </svg>
                     </div>
-                    {/* ── End Custom Dropdown ── */}
 
-                    {/* Local phone number input — rendered outside UseFormItem's default child slot,
-                        so we use Form.Item's children-as-render-prop pattern via the wrapping div trick.
-                        The actual <input> below is bound to the form via the parent UseFormItem name="phone". */}
-                    <UseInput
+                    {/* ── Divider ── */}
+                    <div
+                      style={{
+                        width: "1px",
+                        height: "22px",
+                        background: "#f1f5f9",
+                        flexShrink: 0,
+                      }}
+                    />
+
+                    {/* ── Phone Input ── */}
+                    <input
+                      type="tel"
                       placeholder={
-                        countryCode === "62" ? "812xxxxxxxx" : "Nomor lokal"
+                        countryCode === "62" ? "081234567890" : "Nomor lokal"
                       }
                       disabled={formType === "detail"}
-                      style={{ flex: 1, height: "46px" }}
+                      onChange={(e) => {
+                        // sync value back to antd form field
+                        const event = Object.create(e);
+                        event.target = { value: e.target.value };
+                      }}
+                      style={{
+                        flex: 1,
+                        height: "100%",
+                        border: "none",
+                        background: "transparent",
+                        outline: "none",
+                        borderRadius: 0,
+                        padding: "0 16px",
+                        fontSize: "14px",
+                        color: "#334155",
+                        fontFamily: "inherit",
+                      }}
                     />
+
+                    {/* ── Floating Dropdown ── */}
+                    {isDropdownOpen && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "calc(100% + 8px)",
+                          left: 0,
+                          width: "260px",
+                          background: "#ffffff",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "16px",
+                          boxShadow: "0 12px 32px rgba(0,0,0,0.10)",
+                          zIndex: 1100,
+                          overflow: "hidden",
+                          display: "flex",
+                          flexDirection: "column",
+                        }}
+                      >
+                        {/* Search */}
+                        <div
+                          style={{
+                            padding: "10px",
+                            background: "#f8fafc",
+                            borderBottom: "1px solid #f1f5f9",
+                          }}
+                        >
+                          <div style={{ position: "relative" }}>
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 12 12"
+                              fill="none"
+                              style={{
+                                position: "absolute",
+                                left: "10px",
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                              }}
+                            >
+                              <circle
+                                cx="5"
+                                cy="5"
+                                r="3.5"
+                                stroke="#94a3b8"
+                                strokeWidth="1.5"
+                              />
+                              <path
+                                d="M8 8L10.5 10.5"
+                                stroke="#94a3b8"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                            <input
+                              type="text"
+                              placeholder="Cari negara / kode..."
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              autoFocus
+                              style={{
+                                width: "100%",
+                                padding: "8px 8px 8px 30px",
+                                borderRadius: "10px",
+                                border: "1.5px solid #e2e8f0",
+                                background: "#ffffff",
+                                fontSize: "12px",
+                                outline: "none",
+                                color: "#334155",
+                                boxSizing: "border-box",
+                                fontFamily: "inherit",
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Country List */}
+                        <div style={{ maxHeight: "220px", overflowY: "auto" }}>
+                          {/* Indonesia pinned */}
+                          {(!searchQuery ||
+                            "id 62 indonesia".includes(
+                              searchQuery.toLowerCase(),
+                            )) && (
+                            <div
+                              onClick={() => {
+                                setCountryCode("62");
+                                setIsDropdownOpen(false);
+                              }}
+                              style={{
+                                padding: "10px 14px",
+                                cursor: "pointer",
+                                fontSize: "13px",
+                                fontWeight: countryCode === "62" ? 700 : 500,
+                                background:
+                                  countryCode === "62"
+                                    ? "#ecfdf5"
+                                    : "transparent",
+                                color:
+                                  countryCode === "62" ? "#10b981" : "#334155",
+                                borderBottom: "1px solid #f1f5f9",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                                transition: "background 0.15s",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (countryCode !== "62")
+                                  (
+                                    e.currentTarget as HTMLDivElement
+                                  ).style.background = "#f8fafc";
+                              }}
+                              onMouseLeave={(e) => {
+                                if (countryCode !== "62")
+                                  (
+                                    e.currentTarget as HTMLDivElement
+                                  ).style.background = "transparent";
+                              }}
+                            >
+                              <span>🇮🇩</span>
+                              <span>ID (+62)</span>
+                            </div>
+                          )}
+
+                          {filteredCountries.length === 0 ? (
+                            <div
+                              style={{
+                                padding: "20px",
+                                textAlign: "center",
+                                fontSize: "12px",
+                                color: "#94a3b8",
+                              }}
+                            >
+                              Negara tidak ditemukan
+                            </div>
+                          ) : (
+                            filteredCountries.map((c, i) => {
+                              if (c.iso === "ID") return null;
+                              const isActive = countryCode === c.code;
+                              const flagEmoji = c.iso
+                                .toUpperCase()
+                                .split("")
+                                .map((ch) =>
+                                  String.fromCodePoint(
+                                    ch.charCodeAt(0) + 127397,
+                                  ),
+                                )
+                                .join("");
+                              return (
+                                <div
+                                  key={`${c.iso}-${i}`}
+                                  onClick={() => {
+                                    setCountryCode(c.code);
+                                    setIsDropdownOpen(false);
+                                  }}
+                                  style={{
+                                    padding: "10px 14px",
+                                    cursor: "pointer",
+                                    fontSize: "13px",
+                                    fontWeight: isActive ? 700 : 400,
+                                    background: isActive
+                                      ? "#ecfdf5"
+                                      : "transparent",
+                                    color: isActive ? "#10b981" : "#334155",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                    transition: "background 0.15s",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    if (!isActive)
+                                      (
+                                        e.currentTarget as HTMLDivElement
+                                      ).style.background = "#f8fafc";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (!isActive)
+                                      (
+                                        e.currentTarget as HTMLDivElement
+                                      ).style.background = "transparent";
+                                  }}
+                                >
+                                  <span>{flagEmoji}</span>
+                                  <span>{c.label}</span>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </UseFormItem>
               </Col>
