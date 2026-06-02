@@ -95,15 +95,20 @@ const BranchesModels: IModelDefinitions<IStateBranch, IActionBranch> = {
         }
       },
       async updateBranch(id, data, callback) {
+        const silent = (data as any).__silent === true;
+        const cleanData = { ...data } as any;
+        delete cleanData.__silent;
         try {
-          const res = await UpdateBranchService(id, data);
+          const res = await UpdateBranchService(id, cleanData);
           callback(res?.meta?.code);
-          notification.success({
-            title: "Success",
-            description: res?.message,
-            duration: 2,
-            key: "FUNC-UPDATE_BRANCHES",
-          });
+          if (!silent) {
+            notification.success({
+              title: "Success",
+              description: res?.message,
+              duration: 2,
+              key: "FUNC-UPDATE_BRANCHES",
+            });
+          }
         } catch (err: any) {
           callback(402);
           notification.warning({

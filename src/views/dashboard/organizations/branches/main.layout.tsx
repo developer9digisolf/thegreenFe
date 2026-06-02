@@ -165,14 +165,43 @@ export default function BranchView() {
       });
   };
 
+  const handleUpdateThumbnail = (imageUrl: string | null) => {
+    if (branch?.id) {
+      const payload = {
+        imageUrl: imageUrl ? getPathFromUrl(imageUrl) : null,
+        __silent: true,
+      };
+
+      useActions<"updateBranch">(
+        "updateBranch",
+        [
+          branch.id,
+          payload as any,
+          (code: any) => {
+            const isSuccess =
+              !code || String(code) === "20000" || String(code).startsWith("2");
+            if (isSuccess) {
+              useActions<"getBranch">("getBranch", [branch.id], true);
+              getBranches();
+            }
+          },
+        ],
+        true,
+      );
+    }
+  };
+
   const handleUpdateGallery = (values: any) => {
     if (branch?.id) {
       const galleryUrls =
         values.imageGaleries || forms.getFieldValue("imageGaleries") || [];
+      // imageUrl (thumbnail) is now managed separately from gallery
+      const currentImageUrl = forms.getFieldValue("imageUrl");
 
-      // Send ONLY ImageGaleries for the gallery update request
       const payload = {
+        imageUrl: currentImageUrl ? getPathFromUrl(currentImageUrl) : null,
         ImageGaleries: galleryUrls.map((url: any) => getPathFromUrl(url)),
+        __silent: true,
       };
 
       console.log(
@@ -279,6 +308,7 @@ export default function BranchView() {
           setFormType={(v: any) => setFormType(v)}
           handleSubmit={handleSubmit}
           handleUpdateGallery={handleUpdateGallery}
+          handleUpdateThumbnail={handleUpdateThumbnail}
         />
       )}
 

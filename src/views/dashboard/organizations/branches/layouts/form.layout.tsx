@@ -123,11 +123,10 @@ export function FormBranch(props: IPropsFormBranch) {
                 });
               }}
             >
-              {/* Field tersembunyi yang datanya diisi oleh Gallery */}
-              <Form.Item name="imageUrl" noStyle><Input type="hidden" /></Form.Item>
+              {/* imageGaleries dikelola oleh BranchGalleryTab */}
               <Form.Item name="imageGaleries" noStyle><Input type="hidden" /></Form.Item>
 
-              <BranchGeneralTab forms={props.forms} formType={props.formType} isOpen={props.open} />
+              <BranchGeneralTab forms={props.forms} formType={props.formType} isOpen={props.open} onThumbnailChange={props.handleUpdateThumbnail} />
               
               {/* Render actions submit button di dalam <Form> */}
               {renderFormActions()}

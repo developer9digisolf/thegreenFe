@@ -80,4 +80,5 @@ export interface IPropsFormBranch {
   setFormType: (type: string) => void;
   handleSubmit: (values: IReqFormBranch) => void;
   handleUpdateGallery?: (values: Partial<IReqFormBranch>) => void;
+  handleUpdateThumbnail?: (imageUrl: string | null) => void;
 }

@@ -35,17 +35,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [authState, setAuthState] = useState<IAuthState>(() => {
         // Initial state from localStorage if on client
         if (typeof window !== 'undefined') {
-            const token = AuthHelper.getToken()
             const user = AuthHelper.getUser()
             return {
-                isAuthenticated: !!(token && user),
+                isAuthenticated: !!user,
                 user: user || null,
-                token: token || null,
-                loading: false
+                token: null,
+                loading: true // Keep it loading until verified by checkAuth
             }
         }
         return initialAuthState
     })
+
+    const logout = useCallback(() => {
+        AuthHelper.clearAuth()
+        setAuthState({
+            isAuthenticated: false,
+            user: null,
+            token: null,
+            loading: false
+        })
+        router.push('/auth/login')
+    }, [router])
 
     const fetchUserProfile = useCallback(async () => {
         try {
@@ -61,44 +71,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 
                 setAuthState(prev => ({
                     ...prev,
-                    user: updatedUser
+                    isAuthenticated: true,
+                    user: updatedUser,
+                    loading: false
+                }))
+            } else {
+                throw new Error("Invalid session data")
+            }
+        } catch (err: any) {
+            console.error('Failed to fetch user profile:', err)
+            
+            // Only logout on authentication errors (401 status), not network or server errors
+            const isAuthError = err?.status === 401 || 
+                                err?.message?.includes('Sesi Anda telah berakhir')
+            
+            if (isAuthError) {
+                console.warn('Auth error detected (401), logging out')
+                if (typeof window !== 'undefined' && !window.location.pathname.includes('/auth/login')) {
+                    logout()
+                } else {
+                    setAuthState(prev => ({
+                        ...prev,
+                        isAuthenticated: false,
+                        user: null,
+                        loading: false
+                    }))
+                }
+            } else {
+                // Network or server error - keep user logged in with cached data
+                console.warn('Non-auth error on auth/me, keeping user logged in with cached data')
+                setAuthState(prev => ({
+                    ...prev,
+                    loading: false
                 }))
             }
-        } catch (err) {
-            console.error('Failed to fetch user profile:', err)
         }
-    }, [])
+    }, [logout])
 
     const checkAuth = useCallback(() => {
         if (typeof window === 'undefined') return
 
-        const token = AuthHelper.getToken()
         const user = AuthHelper.getUser()
 
-        setAuthState(prev => ({
-            ...prev,
-            isAuthenticated: !!(token && user),
-            user: user || null,
-            token: token || null,
-            loading: false
-        }))
-        
-        // If authenticated, fetch full profile to get companies/branches
-        if (token && user) {
+        if (user) {
+            setAuthState(prev => ({
+                ...prev,
+                user: user,
+                isAuthenticated: true,
+                token: null
+            }))
             fetchUserProfile()
+        } else {
+            setAuthState({
+                isAuthenticated: false,
+                user: null,
+                token: null,
+                loading: false
+            })
         }
     }, [fetchUserProfile])
-
-    const logout = useCallback(() => {
-        AuthHelper.clearAuth()
-        setAuthState({
-            isAuthenticated: false,
-            user: null,
-            token: null,
-            loading: false
-        })
-        router.push('/auth/login')
-    }, [router])
 
     const refreshUser = useCallback(() => {
         checkAuth()

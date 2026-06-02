@@ -26,3 +26,10 @@ export function UploadMultipleImageService(files: File[]) {
     bodyType: "formData",
   });
 }
+
+export function DeleteImageService(id: string | number) {
+  return request<any>({
+    url: `images/${id}`,
+    method: "DELETE",
+  });
+}

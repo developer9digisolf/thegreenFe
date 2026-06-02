@@ -1199,10 +1199,13 @@ export default function POSPage() {
                     <button
                         className="action-btn primary"
                         onClick={() => {
-                            // Validasi: Wajib pilih member untuk SEMUA jenis item di keranjang
-                            // (termasuk Layanan, Paket Voucher, dan Top Up Kredit)
-                            if (!pos.selectedMember) {
-                                showToast("Pilih Member terlebih dahulu sebelum melakukan pembayaran", "error");
+                            // Paket Voucher dan Top Up Kredit wajib member (dicek di handleProcessPayment)
+                            // Layanan biasa boleh tanpa member
+                            const hasPackagesOrCredits = pos.cartItems.some(
+                                (item: any) => item.itemType === 1 || item.itemType === 2
+                            );
+                            if (hasPackagesOrCredits && !pos.selectedMember) {
+                                showToast("Pilih Member terlebih dahulu untuk pembelian Paket atau Top Up Kredit", "error");
                                 return;
                             }
                             payment.setPaymentAmount(pos.cartGrandTotal.toString());
