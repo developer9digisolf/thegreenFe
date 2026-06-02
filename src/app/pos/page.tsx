@@ -834,8 +834,10 @@ export default function POSPage() {
                                                             textOverflow: "ellipsis", 
                                                             whiteSpace: "nowrap" 
                                                         }}>
-                                                            {/* MENGUBAH BAGIAN INI: Menampilkan phone, kalau kosong tampilkan email, kalau kosong juga "No phone / email" */}
-                                                            {member.phone || member.email || "No phone / email"}
+                                                            {/* Tampilkan countryCode + phone jika ada, fallback ke email, lalu "No phone / email" */}
+                                                            {member.phone
+                                                                ? `+${member.countryCode ?? "62"} ${member.phone}`
+                                                                : member.email || "No phone / email"}
                                                         </div>
                                                     </div>
                                                     {isActive && (

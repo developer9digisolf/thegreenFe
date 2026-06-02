@@ -38,9 +38,18 @@ export default function ModalPayment({
 }: Props) {
     const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
     const canProcess = !isProcessing && payments.length > 0 && totalPaid >= order.grandTotal;
-    
-    // Hitung kembalian (jika total bayar > tagihan, hitung selisihnya. Jika tidak, 0)
-    const totalKembalian = Math.max(0, totalPaid - order.grandTotal);
+
+    // Cek apakah semua payment entries menggunakan metode cash
+    const isCashOnly =
+        payments.length > 0 &&
+        payments.every((p) => {
+            const pm = paymentMethods.find((m) => m.id === p.paymentMethodId);
+            return pm?.isCash ?? false;
+        });
+
+    // Kembalian hanya relevan untuk pembayaran cash
+    const kembalian = isCashOnly ? Math.max(0, totalPaid - order.grandTotal) : 0;
+    const hasKembalian = isCashOnly && kembalian > 0;
 
     return (
         <div
@@ -286,7 +295,7 @@ export default function ModalPayment({
                             </div>
                         ))}
                         
-                        {/* ── BAGIAN YANG DIPERBARUI: Total Dibayar & Kembalian ── */}
+                        {/* ── Total Dibayar & Kembalian ── */}
                         <div
                             style={{
                                 display: "flex",
@@ -304,12 +313,41 @@ export default function ModalPayment({
                                     {formatCurrency(totalPaid)}
                                 </span>
                             </div>
-                            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                                <span style={{ color: "var(--text-muted)" }}>Total Kembalian</span>
-                                <span style={{ color: "var(--text-primary)", fontWeight: 700 }}>
-                                    {formatCurrency(totalKembalian)}
-                                </span>
-                            </div>
+
+                            {/* Kembalian — hanya tampil jika metode cash & ada kelebihan bayar */}
+                            {hasKembalian && (
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center",
+                                        background: "var(--spa-green-bg)",
+                                        border: "1.5px solid var(--spa-green)",
+                                        borderRadius: "10px",
+                                        padding: "10px 14px",
+                                        marginTop: "4px",
+                                    }}
+                                >
+                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                        <i
+                                            className="fa-solid fa-money-bill-wave"
+                                            style={{ color: "var(--spa-green)", fontSize: "16px" }}
+                                        ></i>
+                                        <span style={{ color: "var(--spa-green)", fontWeight: 700 }}>
+                                            Kembalian
+                                        </span>
+                                    </div>
+                                    <span
+                                        style={{
+                                            color: "var(--spa-green)",
+                                            fontWeight: 800,
+                                            fontSize: "18px",
+                                        }}
+                                    >
+                                        {formatCurrency(kembalian)}
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

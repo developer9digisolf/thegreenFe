@@ -38,6 +38,7 @@ export interface IMember {
   code: string;
   name: string;
   phone: string;
+  countryCode?: string;
   email?: string;
   address?: string;
   gender?: GenderType;
