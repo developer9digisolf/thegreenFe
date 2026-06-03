@@ -18,6 +18,9 @@ interface Props {
     onProcess: () => void;
     onClose: () => void;
     isProcessing: boolean;
+    originalSaleId?: number | null;
+    adjustmentReason?: string;
+    setAdjustmentReason?: (v: string) => void;
 }
 
 export default function ModalPayment({
@@ -35,9 +38,15 @@ export default function ModalPayment({
     onProcess,
     onClose,
     isProcessing,
+    originalSaleId = null,
+    adjustmentReason = "",
+    setAdjustmentReason,
 }: Props) {
     const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
-    const canProcess = !isProcessing && payments.length > 0 && totalPaid >= order.grandTotal;
+    const isAdjustmentReasonValid = !originalSaleId || (adjustmentReason && adjustmentReason.trim().length > 0);
+    // Jika ini mode adjustment dengan grand total 0 (tidak ada item baru), payment entry tidak wajib
+    const isZeroAdjustment = !!originalSaleId && order.grandTotal === 0;
+    const canProcess = !isProcessing && (isZeroAdjustment || (payments.length > 0 && totalPaid >= order.grandTotal)) && isAdjustmentReasonValid;
 
     // Cek apakah semua payment entries menggunakan metode cash
     const isCashOnly =
@@ -352,6 +361,48 @@ export default function ModalPayment({
                     </div>
                 )}
 
+                {/* Alasan Penyesuaian (Update) */}
+                {originalSaleId && setAdjustmentReason && (
+                    <div
+                        style={{
+                            marginBottom: "24px",
+                            background: "rgba(245,158,11,0.05)",
+                            border: "1.5px dashed #f59e0b",
+                            padding: "16px",
+                            borderRadius: "16px",
+                        }}
+                    >
+                        <label
+                            style={{
+                                display: "block",
+                                marginBottom: "8px",
+                                fontWeight: 700,
+                                fontSize: "13px",
+                                color: "#d97706",
+                            }}
+                        >
+                            Alasan Penyesuaian (Wajib) *
+                        </label>
+                        <input
+                            type="text"
+                            value={adjustmentReason}
+                            onChange={(e) => setAdjustmentReason(e.target.value)}
+                            placeholder="Masukkan alasan (misal: salah pesan)"
+                            className="search-input"
+                            style={{
+                                width: "100%",
+                                padding: "12px",
+                                borderRadius: "10px",
+                                border: "1.5px solid #f59e0b",
+                                background: "var(--bg-card)",
+                                color: "var(--text-primary)",
+                                outline: "none",
+                            }}
+                            required
+                        />
+                    </div>
+                )}
+
                 {/* Process button */}
                 <button
                     className="action-btn primary"
@@ -368,7 +419,10 @@ export default function ModalPayment({
                         <i className="fa-solid fa-spinner fa-spin"></i>
                     ) : (
                         <>
-                            <i className="fa-solid fa-check-circle"></i> Proses Pembayaran
+                            {originalSaleId
+                                ? <><i className="fa-solid fa-pen-to-square"></i> Simpan Penyesuaian</>
+                                : <><i className="fa-solid fa-check-circle"></i> Proses Pembayaran</>
+                            }
                         </>
                     )}
                 </button>

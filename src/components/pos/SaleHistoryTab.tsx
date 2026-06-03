@@ -35,6 +35,7 @@ interface Props {
     branchId?: number | null;
     onToast: (msg: string, type?: "success" | "error" | "info") => void;
     onBookingCountChange?: () => void;
+    onEditSale?: (sale: any) => void;
 }
 
 // ============================================
@@ -65,6 +66,7 @@ const PAYMENT_STATUS_STYLE: Record<string | number, { bg: string; color: string;
     "Cancelled": { bg: "rgba(100,116,139,0.1)", color: "#64748b", label: "Dibatalkan" },
     5: { bg: "rgba(100,116,139,0.1)", color: "#64748b", label: "Expired" },
     "Expired": { bg: "rgba(100,116,139,0.1)", color: "#64748b", label: "Expired" },
+    "Adjust": { bg: "rgba(100,116,139,0.1)", color: "#64748b", label: "Adjust" },
 };
 
 function Pill({ label, bg, color }: { label: string; bg: string; color: string }) {
@@ -350,7 +352,7 @@ function SaleTable({ sales, loading, onRowClick, selectedSaleId, isPanelOpen }: 
     );
 }
 
-function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign }: any) {
+function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEditSale }: any) {
     if (!isOpen) return null;
 
     const getItemName = (item: any) => {
@@ -489,6 +491,71 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign }: any)
                         </>
                     )}
                 </div>
+                {onEditSale && sale && (
+                    <div style={{ padding: "16px 24px", borderTop: "1px solid var(--border-color)", display: "flex", gap: "12px", background: "var(--bg-card)", flexShrink: 0 }}>
+                        {String(sale.paymentStatus) === "Adjust" || sale.paymentStatusName === "Adjust" || sale.paymentStatusDisplay === "Adjust" ? (
+                            <button
+                                disabled
+                                style={{
+                                    flex: 1,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: "8px",
+                                    padding: "12px 20px",
+                                    fontSize: "14px",
+                                    fontWeight: 700,
+                                    borderRadius: "12px",
+                                    background: "var(--border-color)",
+                                    color: "var(--text-muted)",
+                                    border: "none",
+                                    cursor: "not-allowed",
+                                    opacity: 0.6
+                                }}
+                            >
+                                <i className="fa-solid fa-ban" />
+                                Transaksi Sudah Disesuaikan (Adjust)
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => {
+                                    if (confirm("Apakah Anda yakin ingin mengubah transaksi ini? Data di keranjang saat ini akan digantikan.")) {
+                                        onEditSale(sale);
+                                        onClose();
+                                    }
+                                }}
+                                style={{
+                                    flex: 1,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: "8px",
+                                    padding: "12px 20px",
+                                    fontSize: "14px",
+                                    fontWeight: 700,
+                                    borderRadius: "12px",
+                                    background: "var(--gradient-spa)",
+                                    color: "white",
+                                    border: "none",
+                                    cursor: "pointer",
+                                    boxShadow: "0 4px 12px rgba(61,107,95,0.2)",
+                                    transition: "all 0.2s ease"
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = "translateY(-1px)";
+                                    e.currentTarget.style.boxShadow = "0 6px 16px rgba(61,107,95,0.3)";
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = "translateY(0)";
+                                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(61,107,95,0.2)";
+                                }}
+                            >
+                                <i className="fa-solid fa-pen-to-square" />
+                                Ubah Transaksi (Update)
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
         </>
     );
@@ -664,7 +731,7 @@ function SessionSuccessModal({ session, onClose }: { session: any; onClose: () =
 // ============================================
 // 4. MAIN ORCHESTRATOR COMPONENT
 // ============================================
-export default function SaleHistoryTab({ branchId, onToast, onBookingCountChange }: Props) {
+export default function SaleHistoryTab({ branchId, onToast, onBookingCountChange, onEditSale }: Props) {
     const { post } = useApi();
 
     const getDefaultDates = () => {
@@ -831,6 +898,7 @@ export default function SaleHistoryTab({ branchId, onToast, onBookingCountChange
                 sale={selectedSale}
                 loading={false}
                 onOpenAssign={handleOpenAssign}
+                onEditSale={onEditSale}
             />
             <SaleAssignModal
                 target={assignTarget}

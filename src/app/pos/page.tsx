@@ -553,6 +553,8 @@ export default function POSPage() {
             return;
         }
 
+        // amountPaid dikirim sebagai total penuh item baru — backend yg hitung selisih
+        // (delta = grandTotal baru - grandTotal lama, diproses di sisi server)
         const payload = {
             SaleType: mode === "voucher" ? 1 : mode === "credit" ? 2 : 0,
             BranchId: activeBranchId,
@@ -560,6 +562,8 @@ export default function POSPage() {
             PaymentMethodId: payment.payments[0]?.paymentMethodId ?? null,
             notes: payment.paymentReference ?? "",
             amountPaid: pos.cartGrandTotal,
+            OriginalSaleId: pos.originalSaleId ?? null,
+            AdjustmentReason: pos.originalSaleId ? pos.adjustmentReason : null,
             Items: pos.cartItems.map((item: any) => ({
                 ItemType: item.itemType,
                 BranchServiceVariantId: item.branchServiceVariantId ?? item.serviceVariantId ?? null,
@@ -588,6 +592,32 @@ export default function POSPage() {
             setIsCheckoutProcessing(false);
         }
     };
+
+    const handleEditSale = useCallback((sale: any) => {
+        const isAdjusted = 
+            String(sale?.paymentStatus) === "Adjust" || 
+            sale?.paymentStatusName === "Adjust" || 
+            sale?.paymentStatusDisplay === "Adjust";
+        if (isAdjusted) {
+            showToast("Transaksi yang sudah disesuaikan (Adjust) tidak dapat diubah lagi", "error");
+            return;
+        }
+
+        pos.loadSaleForUpdate(sale);
+        
+        // Map saleType back to mode tab
+        // saleType: 0 = Service/Walk-in (session), 1 = Voucher (voucher), 2 = Credit (credit)
+        const sType = sale.saleType;
+        if (sType === 0 || sType === "walkIn" || sType === "Walk-in") {
+            setMode("session");
+        } else if (sType === 1 || sType === "package" || sType === "Paket") {
+            setMode("voucher");
+        } else if (sType === 2 || sType === "credit" || sType === "creditPurchase" || sType === "Top-up Kredit") {
+            setMode("credit");
+        }
+        
+        showToast(`Memuat transaksi ${sale.saleCode} untuk disesuaikan`, "info");
+    }, [pos, showToast]);
 
     const handleBack = useCallback(() => {
         if (session.branches.length > 1) session.setGateState("SELECT_BRANCH");
@@ -1087,6 +1117,7 @@ export default function POSPage() {
                                     }
                                     onToast={showToast}
                                     onBookingCountChange={fetchBookingCount}
+                                    onEditSale={handleEditSale}
                                 />
                             </div>
                         )}
@@ -1134,6 +1165,87 @@ export default function POSPage() {
                         {pos.cartItems?.length ?? 0} item • {pos.cartTotalDuration ?? 0} menit
                     </div>
                 </div>
+
+                {pos.originalSaleId && pos.originalSaleData && (
+                    <div style={{
+                        margin: "12px 16px 0",
+                        background: "rgba(245,158,11,0.07)",
+                        border: "1.5px dashed #f59e0b",
+                        borderRadius: "14px",
+                        overflow: "hidden",
+                    }}>
+                        {/* Header banner */}
+                        <div style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "10px 14px",
+                            borderBottom: "1px dashed rgba(245,158,11,0.3)",
+                        }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <i className="fa-solid fa-pen-to-square fa-beat" style={{ color: "#d97706", animationDuration: "2.5s", fontSize: "13px" }} />
+                                <span style={{ fontSize: "12px", fontWeight: 700, color: "#d97706" }}>
+                                    Menyesuaikan Transaksi
+                                </span>
+                            </div>
+                            <button
+                                onClick={pos.clearCart}
+                                title="Batal — kembali ke mode normal"
+                                style={{
+                                    background: "rgba(239,68,68,0.1)",
+                                    border: "none",
+                                    color: "var(--accent-red)",
+                                    cursor: "pointer",
+                                    padding: "4px 8px",
+                                    borderRadius: "8px",
+                                    fontSize: "11px",
+                                    fontWeight: 600,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                }}
+                            >
+                                <i className="fa-solid fa-xmark" />
+                                Batal
+                            </button>
+                        </div>
+
+                        {/* Info sale asli */}
+                        <div style={{ padding: "10px 14px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                                <span style={{ fontSize: "11px", fontWeight: 700, color: "#92400e", fontFamily: "monospace", letterSpacing: "0.5px" }}>
+                                    {pos.originalSaleData.saleCode}
+                                </span>
+                                <span style={{ fontSize: "12px", fontWeight: 700, color: "#d97706" }}>
+                                    {formatCurrency(pos.originalSaleData.grandTotal)}
+                                </span>
+                            </div>
+
+                            {/* Daftar item lama */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginBottom: "8px" }}>
+                                {pos.originalSaleData.items.map((it, idx) => (
+                                    <div key={idx} style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#92400e" }}>
+                                        <span style={{ opacity: 0.8 }}>{it.quantity}× {it.itemName}</span>
+                                        <span style={{ opacity: 0.7 }}>{formatCurrency(it.unitPrice * it.quantity)}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Petunjuk */}
+                            <div style={{
+                                background: "rgba(245,158,11,0.12)",
+                                borderRadius: "8px",
+                                padding: "6px 10px",
+                                fontSize: "10px",
+                                color: "#92400e",
+                                lineHeight: 1.5,
+                            }}>
+                                <i className="fa-solid fa-circle-info" style={{ marginRight: "5px" }} />
+                                Tambahkan <strong>item pengganti / tambahan</strong> ke keranjang. Hanya selisihnya yang akan ditagih.
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <div className="cart-items" style={{ flex: 1, overflowY: "auto", minHeight: 0, paddingRight: "8px" }}>
                     {!hasCartItems ? (
@@ -1186,10 +1298,39 @@ export default function POSPage() {
                             </span>
                         </div>
                     )}
-                    <div className="summary-row total">
-                        <span className="summary-label">Total</span>
-                        <span className="summary-value">{formatCurrency(pos.cartGrandTotal ?? 0)}</span>
-                    </div>
+                    {/* Saat mode adjustment: tampilkan breakdown sudah dibayar vs tagihan tambahan */}
+                    {pos.originalSaleId && pos.originalSaleData ? (() => {
+                        const alreadyPaid = pos.originalSaleData.grandTotal;
+                        const delta = Math.max(0, pos.cartGrandTotal - alreadyPaid);
+                        return (
+                            <>
+                                <div className="summary-row total">
+                                    <span className="summary-label">Total Baru</span>
+                                    <span className="summary-value">{formatCurrency(pos.cartGrandTotal ?? 0)}</span>
+                                </div>
+                                <div className="summary-row" style={{ borderTop: "1px dashed rgba(245,158,11,0.4)", paddingTop: "8px", marginTop: "4px" }}>
+                                    <span className="summary-label" style={{ color: "var(--text-muted)", fontSize: "12px" }}>
+                                        <i className="fa-solid fa-circle-check" style={{ color: "#16a34a", marginRight: "5px" }} />
+                                        Sudah Dibayar
+                                    </span>
+                                    <span className="summary-value" style={{ color: "var(--text-muted)", fontSize: "12px" }}>- {formatCurrency(alreadyPaid)}</span>
+                                </div>
+                                <div className="summary-row" style={{ background: delta > 0 ? "rgba(245,158,11,0.08)" : "rgba(22,163,74,0.08)", margin: "0 -4px", padding: "8px 4px", borderRadius: "10px" }}>
+                                    <span className="summary-label" style={{ fontWeight: 700, color: delta > 0 ? "#d97706" : "#16a34a", fontSize: "13px" }}>
+                                        {delta > 0 ? "⚡ Tagihan Tambahan" : "✓ Lunas"}
+                                    </span>
+                                    <span className="summary-value" style={{ fontWeight: 800, color: delta > 0 ? "#d97706" : "#16a34a", fontSize: "15px" }}>
+                                        {formatCurrency(delta)}
+                                    </span>
+                                </div>
+                            </>
+                        );
+                    })() : (
+                        <div className="summary-row total">
+                            <span className="summary-label">Total</span>
+                            <span className="summary-value">{formatCurrency(pos.cartGrandTotal ?? 0)}</span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="cart-actions" style={{ flexShrink: 0 }}>
@@ -1210,13 +1351,17 @@ export default function POSPage() {
                                 showToast("Pilih Member terlebih dahulu untuk pembelian Paket atau Top Up Kredit", "error");
                                 return;
                             }
+                            // Prefill dengan total penuh item baru — backend hitung delta
                             payment.setPaymentAmount(pos.cartGrandTotal.toString());
                             payment.openPaymentModal();
                         }}
-                        disabled={!hasCartItems}
-                        style={{ opacity: !hasCartItems ? 0.5 : 1 }}
+                        disabled={!hasCartItems && !pos.originalSaleId}
+                        style={{ opacity: (!hasCartItems && !pos.originalSaleId) ? 0.5 : 1 }}
                     >
-                        <i className="fa-solid fa-credit-card" /> Bayar
+                        {pos.originalSaleId
+                            ? <><i className="fa-solid fa-pen-to-square" /> Simpan Penyesuaian</>
+                            : <><i className="fa-solid fa-credit-card" /> Bayar</>
+                        }
                     </button>
                 </div>
             </aside>
@@ -1426,6 +1571,9 @@ export default function POSPage() {
                     onProcess={handleProcessPayment}
                     onClose={payment.closePaymentModal}
                     isProcessing={isCheckoutProcessing}
+                    originalSaleId={pos.originalSaleId}
+                    adjustmentReason={pos.adjustmentReason}
+                    setAdjustmentReason={pos.setAdjustmentReason}
                 />
             )}
 

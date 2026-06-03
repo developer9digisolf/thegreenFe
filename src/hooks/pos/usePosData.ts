@@ -31,6 +31,18 @@ export interface CartItem {
     icon?:           string;
 }
 
+export interface OriginalSaleSnapshot {
+    id:          number;
+    saleCode:    string;
+    grandTotal:  number;
+    memberName:  string | null;
+    items:       Array<{
+        itemName: string;
+        quantity: number;
+        unitPrice: number;
+    }>;
+}
+
 export interface UsePosDataReturn {
     // Init
     initData:         PosInitData | null;
@@ -72,6 +84,13 @@ export interface UsePosDataReturn {
     updateCartItemQuantity:  (key: string, delta: number) => void;
     removeCartItem:          (key: string) => void;
     clearCart:               () => void;
+
+    originalSaleId:          number | null;
+    setOriginalSaleId:       (id: number | null) => void;
+    originalSaleData:        OriginalSaleSnapshot | null;  // snapshot sale asli untuk tampilan
+    adjustmentReason:        string;
+    setAdjustmentReason:     (v: string) => void;
+    loadSaleForUpdate:       (sale: any) => void;
 
     getFilteredServices: (selectedCategory: number | null, search: string) => ServiceVariant[];
 }
@@ -127,6 +146,9 @@ export function usePosData(
     const [selectedTherapist, setSelectedTherapist]   = useState<number | null>(null);
     const [cartItems, setCartItems]                   = useState<CartItem[]>([]);
     const [cartDiscount, setCartDiscount]             = useState(0);
+    const [originalSaleId, setOriginalSaleId]         = useState<number | null>(null);
+    const [originalSaleData, setOriginalSaleData]     = useState<OriginalSaleSnapshot | null>(null);
+    const [adjustmentReason, setAdjustmentReason]     = useState("");
 
     // ── Computed cart values ───────────────────────────────────────────────────
     const cartSubtotal      = useMemo(() => cartItems.reduce((acc, i) => acc + i.unitPrice * i.quantity, 0), [cartItems]);
@@ -387,7 +409,53 @@ export function usePosData(
         setCartDiscount(0);
         setSelectedMember(null);
         setSelectedTherapist(null);
+        setOriginalSaleId(null);
+        setOriginalSaleData(null);
+        setAdjustmentReason("");
     }, []);
+
+    const loadSaleForUpdate = useCallback((sale: any) => {
+        // ── Kosongkan cart — item baru akan diisi kasir secara manual ──────────
+        // Jangan re-parsing item lama ke cart agar tidak double-count.
+        // Server sudah menyimpan item lama via OriginalSaleId; payload Items
+        // yang dikirim nanti hanya berisi item TAMBAHAN / PENGGANTI.
+        setCartItems([]);
+        setCartDiscount(0);
+        setOriginalSaleId(sale.id);
+        setAdjustmentReason("");
+
+        // ── Simpan snapshot sale asli untuk ditampilkan di sidebar ─────────────
+        const snapshotItems = (sale.items ?? []).map((item: any) => ({
+            itemName: item.packageName ?? item.serviceVariantName ?? item.creditPackageName ?? item.itemName ?? "Item",
+            quantity: item.quantity ?? 1,
+            unitPrice: item.unitPrice ?? 0,
+        }));
+        setOriginalSaleData({
+            id:         sale.id,
+            saleCode:   sale.saleCode ?? `#${sale.id}`,
+            grandTotal: sale.grandTotal ?? sale.totalAmount ?? 0,
+            memberName: sale.memberName ?? null,
+            items:      snapshotItems,
+        });
+
+        // ── Set member dari sale lama (sebagai konteks) ────────────────────────
+        if (sale.memberId) {
+            const found = memberResults.find(m => m.id === sale.memberId);
+            if (found) {
+                setSelectedMember(found);
+            } else {
+                setSelectedMember({
+                    id: sale.memberId,
+                    code: "",
+                    name: sale.memberName ?? "Guest",
+                    phone: sale.memberPhone ?? "",
+                    status: "Active",
+                });
+            }
+        } else {
+            setSelectedMember(null);
+        }
+    }, [memberResults]);
 
     // ── Filter services di frontend (untuk search realtime) ────────────────────
     // Catatan: filter by kategori sudah ditangani backend via loadServicesByCategory.
@@ -422,5 +490,9 @@ export function usePosData(
         addServiceToCart, addPackageToCart, addCreditPackageToCart,
         updateCartItemQuantity, removeCartItem, clearCart,
         getFilteredServices,
+        originalSaleId, setOriginalSaleId,
+        originalSaleData,
+        adjustmentReason, setAdjustmentReason,
+        loadSaleForUpdate,
     };
 }
