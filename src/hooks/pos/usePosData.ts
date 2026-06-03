@@ -35,6 +35,7 @@ export interface OriginalSaleSnapshot {
     id:          number;
     saleCode:    string;
     grandTotal:  number;
+    amountPaid:  number;
     memberName:  string | null;
     items:       Array<{
         itemName: string;
@@ -434,6 +435,7 @@ export function usePosData(
             id:         sale.id,
             saleCode:   sale.saleCode ?? `#${sale.id}`,
             grandTotal: sale.grandTotal ?? sale.totalAmount ?? 0,
+            amountPaid: sale.amountPaid ?? 0,
             memberName: sale.memberName ?? null,
             items:      snapshotItems,
         });

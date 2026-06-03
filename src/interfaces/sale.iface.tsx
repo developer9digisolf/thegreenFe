@@ -59,6 +59,7 @@ export interface SaleData {
 
     createdAt: string;
     updatedAt: string;
+    referenceSale?: SaleData | null;
 }
 
 export interface SalesResponse {

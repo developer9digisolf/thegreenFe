@@ -13,10 +13,11 @@ import { GetRoomsService, GetTherapistsTodayService } from "@afx/services/pos.se
 // ============================================
 export interface SaleRow {
     id: number; saleCode: string; saleType: number; saleTypeName?: string;
-    memberName?: string; memberPhone?: string; grandTotal: number;
+    memberName?: string; memberPhone?: string; grandTotal: number; amountPaid?: number;
     discountAmount?: number; paymentStatus?: number; paymentStatusName?: string;
     createdAt?: string; items?: SaleItem[]; bookings?: SaleBooking[];
     sessionCode?: string; // Tambahkan ini jika dibutuhkan oleh backend
+    referenceSale?: any;
 }
 export interface SaleItem {
     id: number; itemName: string; itemType: number; duration: number;
@@ -290,7 +291,7 @@ function SaleTable({ sales, loading, onRowClick, selectedSaleId, isPanelOpen }: 
         </div>
     );
 
-    const grandTotalAll = sales.reduce((s: number, d: any) => s + (d.grandTotal ?? 0), 0);
+    const grandTotalAll = sales.reduce((s: number, d: any) => s + (d.amountPaid ?? 0), 0);
 
     return (
         <div style={{ background: "var(--bg-card)", borderRadius: "12px", border: "1px solid var(--border-color)", overflow: "hidden" }}>
@@ -327,6 +328,12 @@ function SaleTable({ sales, loading, onRowClick, selectedSaleId, isPanelOpen }: 
                                 >
                                     <td style={{ padding: "14px 16px" }}>
                                         <div style={{ fontWeight: 700, fontSize: "13px", fontFamily: "monospace", color: isSelected ? "var(--spa-green)" : "var(--text-primary)" }}>{sale.saleCode}</div>
+                                        {sale.referenceSale && (
+                                            <div style={{ fontSize: "10px", color: "#d97706", fontWeight: 600, marginTop: "2px", display: "flex", alignItems: "center", gap: "4px" }}>
+                                                <i className="fa-solid fa-code-branch" style={{ fontSize: "9px" }} />
+                                                Ref: {sale.referenceSale.saleCode}
+                                            </div>
+                                        )}
                                         <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "3px" }}>{sale.createdAt ? new Date(sale.createdAt).toLocaleString("id-ID") : "—"}</div>
                                     </td>
                                     <td style={{ padding: "14px 16px" }}>
@@ -340,7 +347,7 @@ function SaleTable({ sales, loading, onRowClick, selectedSaleId, isPanelOpen }: 
                                             </div>
                                         </div>
                                     </td>
-                                    <td style={{ padding: "14px 16px", fontWeight: 700, color: "var(--spa-green)" }}>{formatCurrency(sale.grandTotal)}</td>
+                                    <td style={{ padding: "14px 16px", fontWeight: 700, color: "var(--spa-green)" }}>{formatCurrency(sale.amountPaid)}</td>
                                     <td style={{ padding: "14px 16px" }}><Pill label={sale.saleTypeDisplay ?? sale.saleTypeName ?? tStyle.label} bg={tStyle.bg} color={tStyle.color} /></td>
                                     <td style={{ padding: "14px 16px" }}><Pill label={paymentStatusLabel} bg={pStyle.bg} color={pStyle.color} /></td>
                                 </tr>
@@ -391,7 +398,7 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                             <div style={{ background: "var(--bg-main)", borderRadius: "12px", padding: "16px", marginBottom: "20px", display: "flex", gap: "20px", flexWrap: "wrap", alignItems: "center" }}>
                                 <div style={{ flex: 1 }}>
                                     <div style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>TOTAL</div>
-                                    <div style={{ fontSize: "20px", fontWeight: 800, color: "var(--spa-green)" }}>{formatCurrency(sale.grandTotal)}</div>
+                                    <div style={{ fontSize: "20px", fontWeight: 800, color: "var(--spa-green)" }}>{formatCurrency(sale.amountPaid)}</div>
                                     {sale.discountAmount > 0 && (
                                         <div style={{ marginTop: "4px" }}>
                                             <div style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>DISKON</div>
@@ -404,6 +411,32 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                                     <EnlargeableQRCode sessionCode={sale.sessionCode} isSmall={false} />
                                 )} */}
                             </div>
+
+                            {sale.referenceSale && (
+                                <div style={{
+                                    background: "rgba(245,158,11,0.06)",
+                                    border: "1px dashed rgba(245,158,11,0.4)",
+                                    borderRadius: "12px",
+                                    padding: "12px 16px",
+                                    marginBottom: "20px",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "4px",
+                                }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 700, color: "#d97706" }}>
+                                        <i className="fa-solid fa-code-branch" />
+                                        Transaksi Referensi (Penyesuaian)
+                                    </div>
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "13px" }}>
+                                        <span style={{ fontFamily: "monospace", fontWeight: 600, color: "#92400e" }}>
+                                            {sale.referenceSale.saleCode}
+                                        </span>
+                                        <span style={{ fontWeight: 700, color: "#d97706" }}>
+                                            {formatCurrency(sale.referenceSale.amountPaid)}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
 
                             {(!sale.items || sale.items.length === 0) && (!sale.bookings || sale.bookings.length === 0) && (
                                 <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-muted)" }}>

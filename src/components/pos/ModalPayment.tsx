@@ -19,6 +19,8 @@ interface Props {
     onClose: () => void;
     isProcessing: boolean;
     originalSaleId?: number | null;
+    alreadyPaid?: number;
+    referenceSaleCode?: string | null;
     adjustmentReason?: string;
     setAdjustmentReason?: (v: string) => void;
 }
@@ -39,14 +41,22 @@ export default function ModalPayment({
     onClose,
     isProcessing,
     originalSaleId = null,
+    alreadyPaid = 0,
+    referenceSaleCode = null,
     adjustmentReason = "",
     setAdjustmentReason,
 }: Props) {
     const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+
+    // Saat mode adjustment, target pembayaran adalah tagihan tambahan (selisih)
+    const targetTotal = originalSaleId
+        ? Math.max(0, order.grandTotal - alreadyPaid)
+        : order.grandTotal;
+
     const isAdjustmentReasonValid = !originalSaleId || (adjustmentReason && adjustmentReason.trim().length > 0);
-    // Jika ini mode adjustment dengan grand total 0 (tidak ada item baru), payment entry tidak wajib
-    const isZeroAdjustment = !!originalSaleId && order.grandTotal === 0;
-    const canProcess = !isProcessing && (isZeroAdjustment || (payments.length > 0 && totalPaid >= order.grandTotal)) && isAdjustmentReasonValid;
+    // Jika ini mode adjustment dengan tagihan tambahan 0 (tidak ada selisih), payment entry tidak wajib
+    const isZeroAdjustment = !!originalSaleId && targetTotal === 0;
+    const canProcess = !isProcessing && (isZeroAdjustment || (payments.length > 0 && totalPaid >= targetTotal)) && isAdjustmentReasonValid;
 
     // Cek apakah semua payment entries menggunakan metode cash
     const isCashOnly =
@@ -57,7 +67,7 @@ export default function ModalPayment({
         });
 
     // Kembalian hanya relevan untuk pembayaran cash
-    const kembalian = isCashOnly ? Math.max(0, totalPaid - order.grandTotal) : 0;
+    const kembalian = isCashOnly ? Math.max(0, totalPaid - targetTotal) : 0;
     const hasKembalian = isCashOnly && kembalian > 0;
 
     return (
@@ -110,24 +120,30 @@ export default function ModalPayment({
                     </button>
                 </div>
 
-                {/* Total tagihan */}
+                {/* Total tagihan / Tagihan Tambahan */}
                 <div
                     style={{
-                        background: "var(--spa-green-bg)",
+                        background: originalSaleId ? "rgba(245,158,11,0.08)" : "var(--spa-green-bg)",
+                        border: originalSaleId ? "1.5px dashed #f59e0b" : "none",
                         padding: "20px",
                         borderRadius: "16px",
                         marginBottom: "24px",
                         textAlign: "center",
                     }}
                 >
-                    <div style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "4px" }}>
-                        Total Tagihan
+                    <div style={{ fontSize: "13px", color: originalSaleId ? "#d97706" : "var(--text-muted)", marginBottom: "4px", fontWeight: originalSaleId ? 700 : 400 }}>
+                        {originalSaleId ? `⚡ Tagihan Tambahan (${referenceSaleCode ?? ""})` : "Total Tagihan"}
                     </div>
                     <div
-                        style={{ fontSize: "36px", fontWeight: 800, color: "var(--spa-green)" }}
+                        style={{ fontSize: "36px", fontWeight: 800, color: originalSaleId ? "#d97706" : "var(--spa-green)" }}
                     >
-                        {formatCurrency(order.grandTotal)}
+                        {formatCurrency(targetTotal)}
                     </div>
+                    {originalSaleId && (
+                        <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "6px" }}>
+                            Total Baru: {formatCurrency(order.grandTotal)} &nbsp;·&nbsp; Sudah Dibayar: {formatCurrency(alreadyPaid)}
+                        </div>
+                    )}
                 </div>
 
                 {/* Pilih metode */}
@@ -144,7 +160,7 @@ export default function ModalPayment({
                                 onClick={() => {
                                     setSelectedPaymentMethod(pm);
                                     setPaymentAmount(
-                                        Math.max(0, order.grandTotal - totalPaid).toString()
+                                        Math.max(0, targetTotal - totalPaid).toString()
                                     );
                                 }}
                                 style={{

@@ -553,15 +553,22 @@ export default function POSPage() {
             return;
         }
 
-        // amountPaid dikirim sebagai total penuh item baru — backend yg hitung selisih
-        // (delta = grandTotal baru - grandTotal lama, diproses di sisi server)
+        // Hitung tagihan tambahan: selisih antara total baru dan yang sudah dibayar.
+        // Jika bukan mode adjustment, gunakan grand total penuh.
+        const alreadyPaid = pos.originalSaleId && pos.originalSaleData
+            ? (pos.originalSaleData.amountPaid ?? 0)
+            : 0;
+        const additionalBill = pos.originalSaleId
+            ? Math.max(0, pos.cartGrandTotal - alreadyPaid)
+            : pos.cartGrandTotal;
+
         const payload = {
             SaleType: mode === "voucher" ? 1 : mode === "credit" ? 2 : 0,
             BranchId: activeBranchId,
             MemberId: pos.selectedMember?.id ?? null,
             PaymentMethodId: payment.payments[0]?.paymentMethodId ?? null,
             notes: payment.paymentReference ?? "",
-            amountPaid: pos.cartGrandTotal,
+            amountPaid: additionalBill,
             OriginalSaleId: pos.originalSaleId ?? null,
             AdjustmentReason: pos.originalSaleId ? pos.adjustmentReason : null,
             Items: pos.cartItems.map((item: any) => ({
@@ -1217,7 +1224,7 @@ export default function POSPage() {
                                     {pos.originalSaleData.saleCode}
                                 </span>
                                 <span style={{ fontSize: "12px", fontWeight: 700, color: "#d97706" }}>
-                                    {formatCurrency(pos.originalSaleData.grandTotal)}
+                                    {formatCurrency(pos.originalSaleData.amountPaid)}
                                 </span>
                             </div>
 
@@ -1300,7 +1307,7 @@ export default function POSPage() {
                     )}
                     {/* Saat mode adjustment: tampilkan breakdown sudah dibayar vs tagihan tambahan */}
                     {pos.originalSaleId && pos.originalSaleData ? (() => {
-                        const alreadyPaid = pos.originalSaleData.grandTotal;
+                        const alreadyPaid = pos.originalSaleData.amountPaid;
                         const delta = Math.max(0, pos.cartGrandTotal - alreadyPaid);
                         return (
                             <>
@@ -1572,6 +1579,8 @@ export default function POSPage() {
                     onClose={payment.closePaymentModal}
                     isProcessing={isCheckoutProcessing}
                     originalSaleId={pos.originalSaleId}
+                    alreadyPaid={pos.originalSaleData?.amountPaid ?? 0}
+                    referenceSaleCode={pos.originalSaleData?.saleCode}
                     adjustmentReason={pos.adjustmentReason}
                     setAdjustmentReason={pos.setAdjustmentReason}
                 />
