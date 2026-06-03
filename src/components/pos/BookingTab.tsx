@@ -228,7 +228,7 @@ function BookingFilterBar({ filter, setFilter, onSearch, onReset, loading }: any
                         <option value="Confirmed">Dikonfirmasi (Confirmed)</option>
                         <option value="InProgress">Berlangsung (InProgress)</option>
                         <option value="Completed">Selesai (Completed)</option>
-                        <option value="Cancelled">Dibatalkan (Cancelled)</option>
+                        {/* <option value="Cancelled">Dibatalkan (Cancelled)</option> */}
                     </select>
                 </div>
                 <div style={{ display: "flex", gap: "8px", alignItems: "flex-end" }}>
