@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import Swal from "sweetalert2";
 import { useApi } from "@afx/utils/useApi";
 import { formatCurrency } from "@afx/utils/format";
 import { GetSalesService } from "@afx/services/sale.service";
@@ -519,10 +520,29 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                         ) : (
                             <button
                                 onClick={() => {
-                                    if (confirm("Apakah Anda yakin ingin mengubah transaksi ini? Data di keranjang saat ini akan digantikan.")) {
-                                        onEditSale(sale);
-                                        onClose();
-                                    }
+                                    Swal.fire({
+                                        title: "Apakah Anda yakin?",
+                                        text: "Data di keranjang saat ini akan digantikan.",
+                                        icon: "warning",
+                                        showCancelButton: true,
+                                        confirmButtonColor: "#3d6b5f", // Spa theme green
+                                        cancelButtonColor: "#64748b",
+                                        confirmButtonText: "Ya, ubah",
+                                        cancelButtonText: "Batal",
+                                        background: "var(--bg-card)",
+                                        color: "var(--text-primary)",
+                                        didOpen: () => {
+                                            const container = Swal.getContainer();
+                                            if (container) {
+                                                container.style.zIndex = "9999";
+                                            }
+                                        }
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            onEditSale(sale);
+                                            onClose();
+                                        }
+                                    });
                                 }}
                                 style={{
                                     flex: 1,
