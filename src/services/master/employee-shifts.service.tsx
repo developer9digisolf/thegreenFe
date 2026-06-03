@@ -8,7 +8,9 @@ import request from "@afx/utils/request.utils";
 
 // --- One-Time Shifts ---
 
-export function GetEmployeeOneTimeShiftsService(data: IReqEmployeeOneTimeShift) {
+export function GetEmployeeOneTimeShiftsService(
+  data: IReqEmployeeOneTimeShift,
+) {
   return request<any>({
     url: rest.master.employeeOneTimeShifts.index,
     data,
@@ -16,7 +18,9 @@ export function GetEmployeeOneTimeShiftsService(data: IReqEmployeeOneTimeShift) 
   });
 }
 
-export function CreateEmployeeOneTimeShiftService(data: IReqFormEmployeeOneTimeShift) {
+export function CreateEmployeeOneTimeShiftService(
+  data: IReqFormEmployeeOneTimeShift,
+) {
   return request<any>({
     url: rest.master.employeeOneTimeShifts.create,
     data,
@@ -24,7 +28,10 @@ export function CreateEmployeeOneTimeShiftService(data: IReqFormEmployeeOneTimeS
   });
 }
 
-export function UpdateEmployeeOneTimeShiftService(id: number, data: IReqFormEmployeeOneTimeShift) {
+export function UpdateEmployeeOneTimeShiftService(
+  id: number,
+  data: IReqFormEmployeeOneTimeShift,
+) {
   return request<any>({
     url: rest.master.employeeOneTimeShifts.update.replace(":ID", id.toString()),
     data,
@@ -52,15 +59,30 @@ export function ImportEmployeeOneTimeShiftsService(data: FormData) {
 
 export function GetEmployeeRecurringShiftsService(employeeId: number) {
   return request<any>({
-    url: rest.master.employeeRecurringShifts.byEmployee.replace(":ID", employeeId.toString()),
+    url: rest.master.employeeRecurringShifts.byEmployee.replace(
+      ":ID",
+      employeeId.toString(),
+    ),
     method: "GET",
   });
 }
 
-export function CreateEmployeeRecurringShiftService(data: IReqFormEmployeeRecurringShift) {
+export function CreateEmployeeRecurringShiftService(
+  data: IReqFormEmployeeRecurringShift,
+) {
   return request<any>({
     url: rest.master.employeeRecurringShifts.create,
     data,
     method: "POST",
+  });
+}
+
+export function DeleteEmployeeRecurringShiftService(id: number) {
+  return request<any>({
+    url: rest.master.employeeRecurringShifts.delete.replace(
+      ":ID",
+      id.toString(),
+    ),
+    method: "DELETE",
   });
 }

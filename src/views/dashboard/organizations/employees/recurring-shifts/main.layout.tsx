@@ -3,13 +3,13 @@
 import { useStore } from "@afx/store/core";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { 
-  Typography, 
-  Button, 
-  Card, 
-  Table, 
-  Tag, 
-  Avatar, 
+import {
+  Typography,
+  Button,
+  Card,
+  Table,
+  Tag,
+  Avatar,
   Space,
   Select,
   Row,
@@ -20,22 +20,32 @@ import {
   Switch,
   TimePicker,
   Input,
-  Spin
+  Spin,
 } from "antd";
-import { 
-  PlusOutlined, 
-  SyncOutlined, 
-  UserOutlined, 
-  EditOutlined, 
+import {
+  PlusOutlined,
+  SyncOutlined,
+  UserOutlined,
+  EditOutlined,
   DeleteOutlined,
   ClockCircleOutlined,
   GlobalOutlined,
-  CalendarOutlined
+  CalendarOutlined,
+  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
-import { IActionEmployeeShift, IStateEmployeeShift } from "@afx/models/dashboard/master/employee-shifts.model";
-import { IActionEmployee, IStateEmployee } from "@afx/models/dashboard/master/employees.model";
-import { IActionShift, IStateShift } from "@afx/models/dashboard/master/shifts.model";
+import {
+  IActionEmployeeShift,
+  IStateEmployeeShift,
+} from "@afx/models/dashboard/master/employee-shifts.model";
+import {
+  IActionEmployee,
+  IStateEmployee,
+} from "@afx/models/dashboard/master/employees.model";
+import {
+  IActionShift,
+  IStateShift,
+} from "@afx/models/dashboard/master/shifts.model";
 
 const { Title, Text } = Typography;
 
@@ -45,36 +55,71 @@ interface RecurringShiftsViewProps {
   employeeId?: number;
 }
 
-export default function RecurringShiftsView({ employeeId }: RecurringShiftsViewProps) {
+export default function RecurringShiftsView({
+  employeeId,
+}: RecurringShiftsViewProps) {
   const {
     useActions: useShiftActions,
     state: shiftState,
-    isLoading: isLoadingShift
+    isLoading: isLoadingShift,
   } = useStore<IStateEmployeeShift, IActionEmployeeShift>("employeeShifts");
 
   const {
     useActions: useEmployeeActions,
     state: employeeState,
-    isLoading: isLoadingEmployee
+    isLoading: isLoadingEmployee,
   } = useStore<IStateEmployee, IActionEmployee>("employees");
 
   const {
     useActions: useMasterShiftActions,
     state: masterShiftState,
-    isLoading: isLoadingMasterShift
+    isLoading: isLoadingMasterShift,
   } = useStore<IStateShift, IActionShift>("shifts");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(employeeId || null);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(
+    employeeId || null,
+  );
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletingShift, setDeletingShift] = useState<{
+    id: number;
+    dayOfWeek: number;
+    shiftName: string;
+  } | null>(null);
   const [form] = Form.useForm();
   const searchParams = useSearchParams();
-  const employeeIdParam = searchParams.get("employeeId");
+  const employeeIdParam = searchParams?.get("employeeId");
 
   useEffect(() => {
-    useEmployeeActions<"getEmployees">("getEmployees", [{ page: 1, pageSize: 100 }], true);
-    useMasterShiftActions<"getShifts">("getShifts", [{ page: 1, pageSize: 100 }], true);
-    
+    useEmployeeActions<"getEmployees">(
+      "getEmployees",
+      [
+        {
+          page: 1,
+          pageSize: 100,
+          search: "",
+          sortColumn: "createdat",
+          sortDirection: "desc",
+        },
+      ],
+      true,
+    );
+
+    useMasterShiftActions<"getShifts">(
+      "getShifts",
+      [
+        {
+          page: 1,
+          pageSize: 100,
+          search: "",
+          sortColumn: "name",
+          sortDirection: "asc",
+        },
+      ],
+      true,
+    );
+
     if (employeeId) {
       setSelectedEmployeeId(employeeId);
     } else if (employeeIdParam) {
@@ -84,21 +129,88 @@ export default function RecurringShiftsView({ employeeId }: RecurringShiftsViewP
 
   useEffect(() => {
     if (selectedEmployeeId) {
-      useShiftActions<"getRecurringShifts">("getRecurringShifts", [selectedEmployeeId], true);
+      fetchRecurringShifts();
     }
   }, [selectedEmployeeId]);
 
+  const fetchRecurringShifts = () => {
+    if (selectedEmployeeId) {
+      useShiftActions<"getRecurringShifts">(
+        "getRecurringShifts",
+        [selectedEmployeeId],
+        true,
+      );
+    }
+  };
+
+  const checkSuccess = (code: any): boolean => {
+    return !code || String(code) === "20000" || String(code).startsWith("2");
+  };
+
   const handleCreate = (values: any) => {
-    useShiftActions<"createRecurringShift">("createRecurringShift", [values, (code) => {
-      const isSuccess = !code || String(code) === '20000' || String(code).startsWith('2');
-      if (isSuccess) {
-        setIsModalOpen(false);
-        form.resetFields();
-        if (selectedEmployeeId) {
-          useShiftActions<"getRecurringShifts">("getRecurringShifts", [selectedEmployeeId], true);
+    useShiftActions<"createRecurringShift">("createRecurringShift", [
+      values,
+      (code) => {
+        if (checkSuccess(code)) {
+          setIsModalOpen(false);
+          form.resetFields();
+          fetchRecurringShifts();
         }
-      }
-    }], true);
+      },
+    ]);
+  };
+
+  const handleDeleteClick = (
+    id: number,
+    dayOfWeek: number,
+    shiftName: string,
+  ) => {
+    setDeletingShift({ id, dayOfWeek, shiftName });
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deletingShift) {
+      useShiftActions<"deleteRecurringShift">("deleteRecurringShift", [
+        deletingShift.id,
+        (code) => {
+          if (checkSuccess(code)) {
+            fetchRecurringShifts();
+            setDeleteModalOpen(false);
+            setDeletingShift(null);
+          }
+        },
+      ]);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
+    setDeletingShift(null);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingId(null);
+    form.resetFields();
+  };
+
+  const openEditModal = (record: any) => {
+    setEditingId(record.id);
+    form.resetFields();
+    form.setFieldsValue({
+      employeeId: record.employeeId,
+      dayOfWeek: record.dayOfWeek,
+      shiftId: record.shiftId,
+    });
+    setIsModalOpen(true);
+  };
+
+  const openCreateModal = () => {
+    setEditingId(null);
+    form.resetFields();
+    form.setFieldsValue({ employeeId: selectedEmployeeId });
+    setIsModalOpen(true);
   };
 
   const columns = [
@@ -106,61 +218,77 @@ export default function RecurringShiftsView({ employeeId }: RecurringShiftsViewP
       title: "Hari",
       dataIndex: "dayOfWeek",
       key: "dayOfWeek",
-      render: (day: number) => <Text className="font-bold">{days[day]}</Text>
+      render: (day: number) => <Text className="font-bold">{days[day]}</Text>,
     },
     {
       title: "Shift",
       dataIndex: "shift",
       key: "shift",
-      render: (shift: any) => shift ? (
-        <Tag color="emerald" className="border-none font-bold rounded-lg px-3 py-0.5">
-          {shift.name} ({shift.startTime} - {shift.endTime})
-        </Tag>
-      ) : (
-        <Tag className="border-none font-bold rounded-lg px-3 py-0.5 bg-slate-100 text-slate-400">
-          LIBUR
-        </Tag>
-      )
+      render: (shift: any) =>
+        shift ? (
+          <Tag
+            color="emerald"
+            className="border-none font-bold rounded-lg px-3 py-0.5"
+          >
+            {shift.name} ({shift.startTime} - {shift.endTime})
+          </Tag>
+        ) : (
+          <Tag className="border-none font-bold rounded-lg px-3 py-0.5 bg-slate-100 text-slate-400">
+            LIBUR
+          </Tag>
+        ),
     },
     {
       title: "Catatan",
       dataIndex: "notes",
       key: "notes",
-      render: (notes: string) => <Text className="text-slate-400 italic text-xs">{notes || "-"}</Text>
+      render: (notes: string) => (
+        <Text className="text-slate-400 italic text-xs">{notes || "-"}</Text>
+      ),
     },
     {
       title: "Aksi",
       key: "actions",
-      width: 100,
-      align: 'center' as const,
+      width: 120,
+      align: "center" as const,
       render: (_: any, record: any) => (
-        <Space>
-          <Button 
-            type="text" 
-            icon={<EditOutlined className="text-emerald-600" />} 
-            onClick={() => {
-              setEditingId(record.id);
-              form.resetFields();
-              form.setFieldsValue({
-                employeeId: record.employeeId,
-                dayOfWeek: record.dayOfWeek,
-                shiftId: record.shiftId,
-              });
-              setIsModalOpen(true);
-            }}
-            className="hover:bg-emerald-50 rounded-lg"
-          />
+        <Space size="small">
+          <Tooltip title="Edit Pola">
+            <Button
+              type="text"
+              icon={<EditOutlined className="text-emerald-600" />}
+              onClick={() => openEditModal(record)}
+              className="hover:bg-emerald-50 rounded-lg"
+            />
+          </Tooltip>
+          <Tooltip title="Hapus Pola">
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() =>
+                handleDeleteClick(
+                  record.id,
+                  record.dayOfWeek,
+                  record.shift?.name,
+                )
+              }
+              className="hover:bg-red-50 rounded-lg"
+            />
+          </Tooltip>
         </Space>
-      )
-    }
+      ),
+    },
   ];
 
   return (
     <div className="p-6 lg:p-8 animate-in slide-in-from-bottom-4 duration-700">
-
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
         <div>
-          <Title level={2} className="!m-0 text-slate-800 font-extrabold tracking-tight">
+          <Title
+            level={2}
+            className="!m-0 text-slate-800 font-extrabold tracking-tight"
+          >
             Jadwal Rutin
           </Title>
           <Text className="text-slate-400 font-medium italic">
@@ -170,39 +298,36 @@ export default function RecurringShiftsView({ employeeId }: RecurringShiftsViewP
         <div className="flex items-center gap-4">
           {!employeeId && (
             <div className="flex flex-col">
-              <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Pilih Karyawan untuk Dilihat</Text>
-              <Select 
-                placeholder="Pilih karyawan..." 
+              <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                Pilih Karyawan untuk Dilihat
+              </Text>
+              <Select
+                placeholder="Pilih karyawan..."
                 className="w-64 premium-select-header"
                 onChange={setSelectedEmployeeId}
                 value={selectedEmployeeId}
                 loading={isLoadingEmployee("getEmployees")}
-                options={employeeState.employees.map(emp => ({
+                options={employeeState.employees.map((emp) => ({
                   value: emp.id,
-                  label: emp.fullName || emp.nickname || `Karyawan #${emp.id}`
+                  label: emp.fullName || emp.nickname || `Karyawan #${emp.id}`,
                 }))}
               />
             </div>
           )}
-          <div className={`flex gap-3 ${!employeeId ? 'pt-5' : ''}`}>
-            <Button 
-              icon={<SyncOutlined />} 
+          <div className={`flex gap-3 ${!employeeId ? "pt-5" : ""}`}>
+            <Button
+              icon={<SyncOutlined />}
               disabled={!selectedEmployeeId}
-              onClick={() => selectedEmployeeId && useShiftActions<"getRecurringShifts">("getRecurringShifts", [selectedEmployeeId], true)}
+              onClick={fetchRecurringShifts}
               className="flex items-center gap-2 h-11 px-5 rounded-xl border-slate-200 hover:border-emerald-400 hover:text-emerald-500 font-semibold"
             >
               Perbarui
             </Button>
-            <Button 
-              type="primary" 
-              icon={<PlusOutlined />} 
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
               className="flex items-center gap-2 h-11 px-6 rounded-xl bg-emerald-600 border-none font-bold shadow-lg shadow-emerald-200"
-              onClick={() => {
-                setEditingId(null);
-                form.resetFields();
-                form.setFieldsValue({ employeeId: selectedEmployeeId });
-                setIsModalOpen(true);
-              }}
+              onClick={openCreateModal}
             >
               Buat Pola
             </Button>
@@ -210,16 +335,14 @@ export default function RecurringShiftsView({ employeeId }: RecurringShiftsViewP
         </div>
       </div>
 
-
-
-      <Card 
+      <Card
         className="rounded-[2rem] border-none shadow-[0_20px_50px_rgba(0,0,0,0.04)] overflow-hidden bg-white/80 backdrop-blur-sm"
         styles={{ body: { padding: 0 } }}
       >
         <Spin spinning={isLoadingShift("getRecurringShifts")}>
-          <Table 
-            columns={columns} 
-            dataSource={shiftState.recurringShifts} 
+          <Table
+            columns={columns}
+            dataSource={shiftState.recurringShifts}
             pagination={false}
             className="premium-table"
             rowKey="id"
@@ -227,82 +350,150 @@ export default function RecurringShiftsView({ employeeId }: RecurringShiftsViewP
         </Spin>
       </Card>
 
-
-
+      {/* Create/Edit Modal */}
       <Modal
         title={
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
               <SyncOutlined />
             </div>
-            <span className="font-bold">{editingId ? 'Ubah Pola' : 'Pola Rutin Baru'}</span>
+            <span className="font-bold">
+              {editingId ? "Ubah Pola" : "Pola Rutin Baru"}
+            </span>
           </div>
         }
         open={isModalOpen}
-        onCancel={() => {
-          setIsModalOpen(false);
-          setEditingId(null);
-          form.resetFields();
-        }}
+        onCancel={closeModal}
         footer={null}
         width={500}
         centered
         className="premium-modal"
       >
-        <Form layout="vertical" form={form} onFinish={handleCreate} className="mt-6">
+        <Form
+          layout="vertical"
+          form={form}
+          onFinish={handleCreate}
+          className="mt-6"
+        >
           {employeeId ? (
             <Form.Item name="employeeId" hidden initialValue={employeeId}>
               <Input />
             </Form.Item>
           ) : (
-            <Form.Item name="employeeId" label="Pilih Karyawan" required rules={[{ required: true }]}>
-              <Select 
-                placeholder="Cari karyawan..." 
-                showSearch 
+            <Form.Item
+              name="employeeId"
+              label="Pilih Karyawan"
+              required
+              rules={[{ required: true }]}
+            >
+              <Select
+                placeholder="Cari karyawan..."
+                showSearch
                 className="premium-select"
                 loading={isLoadingEmployee("getEmployees")}
                 filterOption={(input, option) =>
-                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  (option?.label ?? "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
                 }
-                options={employeeState.employees.map(emp => ({
+                options={employeeState.employees.map((emp) => ({
                   value: emp.id,
-                  label: emp.fullName || emp.nickname || `Karyawan #${emp.id}`
+                  label: emp.fullName || emp.nickname || `Karyawan #${emp.id}`,
                 }))}
               />
             </Form.Item>
           )}
-          
-          <Form.Item name="dayOfWeek" label="Hari dalam Seminggu" required rules={[{ required: true }]}>
+
+          <Form.Item
+            name="dayOfWeek"
+            label="Hari dalam Seminggu"
+            required
+            rules={[{ required: true }]}
+          >
             <Select placeholder="Pilih hari..." className="premium-select">
-                {days.map((day, index) => (
-                    <Select.Option key={index} value={index}>{day}</Select.Option>
-                ))}
+              {days.map((day, index) => (
+                <Select.Option key={index} value={index}>
+                  {day}
+                </Select.Option>
+              ))}
             </Select>
           </Form.Item>
 
-          <Form.Item name="shiftId" label="Shift" required rules={[{ required: true }]}>
-            <Select 
-              placeholder="Pilih shift..." 
+          <Form.Item
+            name="shiftId"
+            label="Shift"
+            required
+            rules={[{ required: true }]}
+          >
+            <Select
+              placeholder="Pilih shift..."
               className="premium-select"
               loading={isLoadingMasterShift("getShifts")}
-              options={masterShiftState.shifts.map(s => ({
+              options={masterShiftState.shifts.map((s) => ({
                 value: s.id,
-                label: `${s.name} (${s.startTime} - ${s.endTime})`
+                label: `${s.name} (${s.startTime} - ${s.endTime})`,
               }))}
             />
           </Form.Item>
 
-
-
           <div className="flex justify-end gap-3">
-            <Button size="large" className="rounded-xl px-6 border-slate-200 font-bold h-12" onClick={() => {
-              setIsModalOpen(false);
-              setEditingId(null);
-              form.resetFields();
-            }}>Batal</Button>
-            <Button size="large" type="primary" htmlType="submit" loading={isLoadingShift("createRecurringShift")} className="rounded-xl px-8 bg-emerald-600 border-none font-bold h-12 shadow-lg shadow-emerald-200">Simpan Pola</Button>
+            <Button
+              size="large"
+              className="rounded-xl px-6 border-slate-200 font-bold h-12"
+              onClick={closeModal}
+            >
+              Batal
+            </Button>
+            <Button
+              size="large"
+              type="primary"
+              htmlType="submit"
+              loading={isLoadingShift("createRecurringShift")}
+              className="rounded-xl px-8 bg-emerald-600 border-none font-bold h-12 shadow-lg shadow-emerald-200"
+            >
+              Simpan Pola
+            </Button>
           </div>
         </Form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        title={
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-600">
+              <ExclamationCircleOutlined />
+            </div>
+            <span className="font-bold text-red-600">Hapus Pola Shift</span>
+          </div>
+        }
+        open={deleteModalOpen}
+        onOk={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        okText="Hapus"
+        okType="danger"
+        cancelText="Batal"
+        centered
+        className="premium-modal"
+      >
+        <div className="mt-4">
+          <p className="mb-3">
+            Apakah Anda yakin ingin menghapus pola shift ini?
+          </p>
+          <div className="bg-slate-50 p-3 rounded-lg">
+            <p className="font-medium text-sm">
+              <span className="text-slate-500">Hari:</span>{" "}
+              {deletingShift ? days[deletingShift.dayOfWeek] : ""}
+            </p>
+            <p className="font-medium text-sm">
+              <span className="text-slate-500">Shift:</span>{" "}
+              {deletingShift?.shiftName || "LIBUR"}
+            </p>
+          </div>
+          <p className="text-red-500 text-xs mt-3 font-medium">
+            Tindakan ini tidak dapat dibatalkan.
+          </p>
+        </div>
       </Modal>
 
       <style jsx global>{`

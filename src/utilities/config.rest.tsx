@@ -224,6 +224,7 @@ export const rest = {
     employeeRecurringShifts: {
       byEmployee: "master/employee-recurring-shifts/employee/:ID",
       create: "master/employee-recurring-shifts",
+      delete: "master/employee-recurring-shifts/:ID",
     },
     attendanceQRSessions: "master/attendance-qr-sessions",
     devicePairingCodesGenerate: "master/device-pairing-codes/generate",

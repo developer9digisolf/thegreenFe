@@ -15,6 +15,7 @@ import {
   ImportEmployeeOneTimeShiftsService,
   GetEmployeeRecurringShiftsService,
   CreateEmployeeRecurringShiftService,
+  DeleteEmployeeRecurringShiftService,
 } from "@afx/services/master/employee-shifts.service";
 import { IResPagination } from "@afx/interfaces/common.iface";
 
@@ -31,12 +32,13 @@ export type IActionEmployeeShift = {
   ) => void;
   deleteOneTimeShift: (id: number, callback: (code: number) => void) => void;
   importOneTimeShifts: (data: FormData, callback: (res: any) => void) => void;
-  
+
   getRecurringShifts: (employeeId: number) => void;
   createRecurringShift: (
     param: IReqFormEmployeeRecurringShift,
     callback: (code: number) => void,
   ) => void;
+  deleteRecurringShift: (id: number, callback: (code: number) => void) => void;
 };
 
 export type IStateEmployeeShift = {
@@ -45,7 +47,10 @@ export type IStateEmployeeShift = {
   pageInfoOneTime: IResPagination;
 };
 
-const EmployeeShiftsModels: IModelDefinitions<IStateEmployeeShift, IActionEmployeeShift> = {
+const EmployeeShiftsModels: IModelDefinitions<
+  IStateEmployeeShift,
+  IActionEmployeeShift
+> = {
   name: "employeeShifts",
   model: (put, getStates, getActions) => ({
     state: {
@@ -58,9 +63,9 @@ const EmployeeShiftsModels: IModelDefinitions<IStateEmployeeShift, IActionEmploy
         try {
           const res = await GetEmployeeOneTimeShiftsService(data);
           if (res?.meta?.code === 20000) {
-            put({ 
-              oneTimeShifts: res?.data || [], 
-              pageInfoOneTime: res?.pagination || {}
+            put({
+              oneTimeShifts: res?.data || [],
+              pageInfoOneTime: res?.pagination || {},
             });
           }
         } catch (err: any) {
@@ -172,6 +177,24 @@ const EmployeeShiftsModels: IModelDefinitions<IStateEmployeeShift, IActionEmploy
           callback(400);
           notification.warning({
             title: "Failed to update recurring shift",
+            description: err?.message || "Terjadi kesalahan pada server",
+            duration: 2,
+          });
+        }
+      },
+      async deleteRecurringShift(id, callback) {
+        try {
+          const res = await DeleteEmployeeRecurringShiftService(id);
+          callback(res?.meta?.code);
+          notification.success({
+            title: "Success",
+            description: "Recurring shift deleted successfully",
+            duration: 2,
+          });
+        } catch (err: any) {
+          callback(400);
+          notification.warning({
+            title: "Failed to delete recurring shift",
             description: err?.message || "Terjadi kesalahan pada server",
             duration: 2,
           });
