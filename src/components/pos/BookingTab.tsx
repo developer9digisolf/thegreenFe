@@ -19,6 +19,7 @@ export interface BookingRow {
     branchId: number;
     branchName: string;
     memberId: number;
+    gender?: number | null;
     memberName: string;
     memberPhone: string;
     therapistId: number | null;
@@ -513,7 +514,7 @@ function BookingDetailDrawer({ isOpen, onClose, booking, loading, onOpenAssign }
 }
 
 function BookingAssignModal({ target, therapists, rooms, masterLoading, onClose, onSubmit }: any) {
-    const [form, setForm] = useState({ therapistId: "", roomId: "", notes: "" });
+    const [form, setForm] = useState({ therapistId: "", roomId: "", notes: "", gender: "" });
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -521,13 +522,24 @@ function BookingAssignModal({ target, therapists, rooms, masterLoading, onClose,
             setForm({ 
                 therapistId: therapists?.[0]?.id?.toString() || "", 
                 roomId: rooms?.[0]?.id?.toString() || "", 
-                notes: "" 
+                notes: "",
+                // Set default gender jika sudah ada dari database
+                gender: target.gender != null ? target.gender.toString() : ""
             });
         }
     }, [target, therapists, rooms]);
 
+    // LOGIC KONDISI GENDER
+    const isMember = target?.memberId != null;
+    const hasKnownGender = target?.gender != null;
+    
+    // Kunci dropdown (Disabled) HANYA JIKA dia Member DAN Gendernya sudah terdata di database
+    const isGenderLocked = isMember && hasKnownGender;
+
     const handleSubmit = async () => {
-        if (!form.therapistId || !form.roomId) return;
+        // Validasi: Gender wajib diisi sebelum lanjut
+        if (!form.therapistId || !form.roomId || form.gender === "") return;
+        
         setLoading(true);
         await onSubmit(form);
         setLoading(false);
@@ -596,6 +608,44 @@ function BookingAssignModal({ target, therapists, rooms, masterLoading, onClose,
                             </select>
                         </div>
 
+                        {/* --- KOTAK GENDER --- */}
+                        <div style={{ marginBottom: "14px" }}>
+                            <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", marginBottom: "6px" }}>
+                                Gender Pelanggan *
+                            </label>
+                            <select
+                                value={form.gender}
+                                onChange={(e) => setForm({ ...form, gender: e.target.value })}
+                                className="search-input"
+                                style={{ 
+                                    width: "100%", padding: "11px 14px",
+                                    backgroundColor: isGenderLocked ? "var(--bg-main)" : "var(--bg-card)",
+                                    cursor: isGenderLocked ? "not-allowed" : "pointer",
+                                    opacity: isGenderLocked ? 0.8 : 1
+                                }}
+                                disabled={isGenderLocked}
+                            >
+                                <option value="" disabled>— Pilih Gender —</option>
+                                <option value="0">Laki-laki (Male)</option>
+                                <option value="1">Perempuan (Female)</option>
+                            </select>
+                            
+                            {/* Pesan Keterangan Tambahan untuk memperjelas UI */}
+                            {isGenderLocked && (
+                                <div style={{ fontSize: "10px", color: "var(--spa-green)", marginTop: "4px", fontWeight: 600 }}>
+                                    <i className="fa-solid fa-check-circle" style={{ marginRight: "4px" }}/>
+                                    Otomatis ditarik dari profil Member
+                                </div>
+                            )}
+                            {isMember && !hasKnownGender && (
+                                <div style={{ fontSize: "10px", color: "#d97706", marginTop: "4px", fontWeight: 600 }}>
+                                    <i className="fa-solid fa-circle-info" style={{ marginRight: "4px" }}/>
+                                    Pilih gender pertama kali untuk melengkapi profil
+                                </div>
+                            )}
+                        </div>
+                        {/* ------------------- */}
+
                         <div style={{ marginBottom: "20px" }}>
                             <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", marginBottom: "6px" }}>Catatan</label>
                             <textarea
@@ -613,7 +663,8 @@ function BookingAssignModal({ target, therapists, rooms, masterLoading, onClose,
                             <button
                                 className="action-btn primary"
                                 onClick={handleSubmit}
-                                disabled={loading || !form.therapistId || !form.roomId}
+                                // Disable form submit jika gender belum dipilih!
+                                disabled={loading || !form.therapistId || !form.roomId || form.gender === ""}
                                 style={{ flex: 2 }}
                             >
                                 {loading ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-play" />}
@@ -780,14 +831,15 @@ export default function BookingTab({ branchId, onToast, onBookingCountChange }: 
 
     // ── Submit assign ─────────────────────────────────────────────────────────
     const handleAssignSubmit = async (form: any) => {
-        if (!assignTarget) return;
-        try {
-            const payload = {
-                TherapistId: parseInt(form.therapistId),
-                RoomId: parseInt(form.roomId),
-                Notes: form.notes || null,
-                BookingCode: assignTarget.code,
-            };
+    if (!assignTarget) return;
+    try {
+        const payload = {
+            TherapistId: parseInt(form.therapistId),
+            RoomId: parseInt(form.roomId),
+            Notes: form.notes || null,
+            BookingCode: assignTarget.code,
+            Gender: parseInt(form.gender), // <--- TAMBAHKAN INI
+        };
             const res = await post("pos/bookings/create-session", payload);
 
             if (res?.success || res?.meta?.success) {

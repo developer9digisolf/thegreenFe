@@ -7,24 +7,27 @@ import { formatCurrency } from "@afx/utils/format";
 import { GetSalesService } from "@afx/services/sale.service";
 import { GetRoomsService, GetTherapistsTodayService } from "@afx/services/pos.service";
 
-
 // ============================================
 // 1. TYPES & INTERFACES
 // ============================================
 export interface SaleRow {
     id: number; saleCode: string; saleType: number; saleTypeName?: string;
+    memberId?: number | null; 
+    gender?: number | null;   
     memberName?: string; memberPhone?: string; grandTotal: number; amountPaid?: number;
     discountAmount?: number; paymentStatus?: number; paymentStatusName?: string;
     createdAt?: string; items?: SaleItem[]; bookings?: SaleBooking[];
-    sessionCode?: string; // Tambahkan ini jika dibutuhkan oleh backend
+    sessionCode?: string;
     referenceSale?: any;
 }
+
 export interface SaleItem {
     id: number; itemName: string; itemType: number; duration: number;
     quantity: number; unitPrice: number; subtotal: number;
     hasSession?: boolean; sessionStatus?: string;
     session?: { sessionCode: string; status: string };
 }
+
 export interface SaleBooking {
     id: number; bookingCode: string; serviceName: string; code?: string;
     scheduledDate?: string; scheduledTime?: string;
@@ -32,7 +35,15 @@ export interface SaleBooking {
     session?: { sessionCode: string; status: string };
 }
 
-interface AssignTarget { type: "item" | "booking"; saleItemId?: number; bookingCode?: string; label: string; }
+interface AssignTarget { 
+    type: "item" | "booking"; 
+    saleItemId?: number; 
+    bookingCode?: string; 
+    label: string; 
+    memberId?: number | null; 
+    gender?: number | null; 
+}
+
 interface Props {
     branchId?: number | null;
     onToast: (msg: string, type?: "success" | "error" | "info") => void;
@@ -54,6 +65,7 @@ const SALE_TYPE_STYLE: Record<string | number, { bg: string; color: string; labe
     3: { bg: "rgba(59,130,246,0.1)", color: "#2563eb", label: "Booking" },
     "booking": { bg: "rgba(59,130,246,0.1)", color: "#2563eb", label: "Booking" },
 };
+
 const PAYMENT_STATUS_STYLE: Record<string | number, { bg: string; color: string; label: string }> = {
     0: { bg: "rgba(239,68,68,0.1)", color: "#dc2626", label: "Belum Lunas" },
     "Pending": { bg: "rgba(239,68,68,0.1)", color: "#dc2626", label: "Belum Lunas" },
@@ -113,11 +125,9 @@ function SessionStatus({ hasSession, sessionStatus }: { hasSession?: boolean; se
 // 3. SUB-COMPONENTS
 // ============================================
 
-// --- BARU: Komponen QR Code yang bisa diklik dan diperbesar ---
 function EnlargeableQRCode({ sessionCode, isSmall = false }: { sessionCode: string, isSmall?: boolean }) {
     const [isZoomed, setIsZoomed] = useState(false);
 
-    // URL skala tergantung tempatnya dirender (isSmall true untuk di dalam list item)
     const scale = isSmall ? 1 : 2;
     const thumbnailSize = isSmall ? "48px" : "80px";
     
@@ -126,7 +136,6 @@ function EnlargeableQRCode({ sessionCode, isSmall = false }: { sessionCode: stri
 
     return (
         <>
-            {/* Tampilan Thumbnail */}
             <div 
                 onClick={() => setIsZoomed(true)}
                 title="Klik untuk memperbesar QR Code"
@@ -157,7 +166,6 @@ function EnlargeableQRCode({ sessionCode, isSmall = false }: { sessionCode: stri
                 </div>
             </div>
 
-            {/* Modal Perbesar (Lightbox) */}
             {isZoomed && (
                 <div 
                     onClick={(e) => { e.stopPropagation(); setIsZoomed(false); }} 
@@ -406,10 +414,6 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                                         </div>
                                     )}
                                 </div>
-                                {/* PENGGUNAAN KOMPONEN QR CODE BARU DISINI */}
-                                {/* {sale.sessionCode && (
-                                    <EnlargeableQRCode sessionCode={sale.sessionCode} isSmall={false} />
-                                )} */}
                             </div>
 
                             {sale.referenceSale && (
@@ -470,14 +474,19 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                                                     {isService && (
                                                         !item.hasSession ? (
                                                             <button
-                                                                onClick={() => onOpenAssign({ type: "item", saleItemId: item.id, label: getItemName(item) })}
+                                                                onClick={() => onOpenAssign({ 
+                                                                    type: "item", 
+                                                                    saleItemId: item.id, 
+                                                                    label: getItemName(item),
+                                                                    memberId: sale.memberId, 
+                                                                    gender: sale.gender     
+                                                                })}
                                                                 style={{ padding: "7px 14px", fontSize: "12px", fontWeight: 700, background: "var(--spa-green-bg)", color: "var(--spa-green)", border: "1px solid var(--spa-green-border)", borderRadius: "8px", cursor: "pointer", whiteSpace: "nowrap" }}
                                                             >
                                                                 <i className="fa-solid fa-play" /> Buat Sesi
                                                             </button>
                                                         ) : (
                                                             item.session?.sessionCode && (
-                                                                /* PENGGUNAAN KOMPONEN QR CODE BARU DISINI UNTUK ITEM */
                                                                 <EnlargeableQRCode sessionCode={item.session.sessionCode} isSmall={true} />
                                                             )
                                                         )
@@ -506,14 +515,19 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                                                 </div>
                                                 {!bk.hasSession ? (
                                                     <button
-                                                        onClick={() => onOpenAssign({ type: "booking", bookingCode: bk.code, label: bk.serviceName || `Booking ${bk.code}` })}
+                                                        onClick={() => onOpenAssign({ 
+                                                            type: "booking", 
+                                                            bookingCode: bk.code, 
+                                                            label: bk.serviceName || `Booking ${bk.code}`,
+                                                            memberId: sale.memberId, 
+                                                            gender: sale.gender     
+                                                        })}
                                                         style={{ padding: "7px 14px", fontSize: "12px", fontWeight: 700, background: "rgba(59,130,246,0.08)", color: "#2563eb", border: "1px solid rgba(59,130,246,0.3)", borderRadius: "8px", cursor: "pointer", whiteSpace: "nowrap" }}
                                                     >
                                                         <i className="fa-solid fa-user-plus" /> Assign
                                                     </button>
                                                 ) : (
                                                     bk.session?.sessionCode && (
-                                                        /* PENGGUNAAN KOMPONEN QR CODE BARU DISINI UNTUK BOOKING */
                                                         <EnlargeableQRCode sessionCode={bk.session.sessionCode} isSmall={true} />
                                                     )
                                                 )}
@@ -558,7 +572,7 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                                         text: "Data di keranjang saat ini akan digantikan.",
                                         icon: "warning",
                                         showCancelButton: true,
-                                        confirmButtonColor: "#3d6b5f", // Spa theme green
+                                        confirmButtonColor: "#3d6b5f", 
                                         cancelButtonColor: "#64748b",
                                         confirmButtonText: "Ya, ubah",
                                         cancelButtonText: "Batal",
@@ -615,7 +629,7 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
 }
 
 function SaleAssignModal({ target, therapists, rooms, masterLoading, onClose, onSubmit }: any) {
-    const [form, setForm] = useState({ therapistId: "", roomId: "", notes: "" });
+    const [form, setForm] = useState({ therapistId: "", roomId: "", notes: "", gender: "" });
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -623,13 +637,20 @@ function SaleAssignModal({ target, therapists, rooms, masterLoading, onClose, on
             setForm({ 
                 therapistId: therapists?.[0]?.id?.toString() || "", 
                 roomId: rooms?.[0]?.id?.toString() || "", 
-                notes: "" 
+                notes: "",
+                gender: target.gender != null ? target.gender.toString() : ""
             });
         }
     }, [target, therapists, rooms]);
 
+    const isMember = target?.memberId != null;
+    const hasKnownGender = target?.gender != null;
+    
+    const isGenderLocked = isMember && hasKnownGender;
+
     const handleSubmit = async () => {
-        if (!form.therapistId || !form.roomId) return;
+        if (!form.therapistId || !form.roomId || form.gender === "") return;
+        
         setLoading(true);
         await onSubmit(form);
         setLoading(false);
@@ -698,15 +719,50 @@ function SaleAssignModal({ target, therapists, rooms, masterLoading, onClose, on
                             </select>
                         </div>
 
+                        <div style={{ marginBottom: "14px" }}>
+                            <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", marginBottom: "6px" }}>
+                                Gender Pelanggan *
+                            </label>
+                            <select
+                                value={form.gender}
+                                onChange={(e) => setForm({ ...form, gender: e.target.value })}
+                                className="search-input"
+                                style={{ 
+                                    width: "100%", padding: "11px 14px",
+                                    backgroundColor: isGenderLocked ? "var(--bg-main)" : "var(--bg-card)",
+                                    cursor: isGenderLocked ? "not-allowed" : "pointer",
+                                    opacity: isGenderLocked ? 0.8 : 1
+                                }}
+                                disabled={isGenderLocked}
+                            >
+                                <option value="" disabled>— Pilih Gender —</option>
+                                <option value="0">Laki-laki (Male)</option>
+                                <option value="1">Perempuan (Female)</option>
+                            </select>
+                            
+                            {isGenderLocked && (
+                                <div style={{ fontSize: "10px", color: "var(--spa-green)", marginTop: "4px", fontWeight: 600 }}>
+                                    <i className="fa-solid fa-check-circle" style={{ marginRight: "4px" }}/>
+                                    Otomatis ditarik dari profil Member
+                                </div>
+                            )}
+                            {isMember && !hasKnownGender && (
+                                <div style={{ fontSize: "10px", color: "#d97706", marginTop: "4px", fontWeight: 600 }}>
+                                    <i className="fa-solid fa-circle-info" style={{ marginRight: "4px" }}/>
+                                    Pilih gender pertama kali untuk melengkapi profil
+                                </div>
+                            )}
+                        </div>
+
                         <div style={{ marginBottom: "20px" }}>
-                            <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", marginBottom: "6px" }}>Catatan</label>
+                            <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", marginBottom: "6px" }}>Catatan (Opsional)</label>
                             <textarea
                                 value={form.notes}
                                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
                                 rows={2}
                                 className="search-input"
                                 style={{ width: "100%", padding: "11px 14px", resize: "none" }}
-                                placeholder="Contoh: Member ingin pijatan lembut di bahu"
+                                placeholder="Contoh: Pelanggan ingin pijatan lembut"
                             />
                         </div>
 
@@ -715,7 +771,7 @@ function SaleAssignModal({ target, therapists, rooms, masterLoading, onClose, on
                             <button
                                 className="action-btn primary"
                                 onClick={handleSubmit}
-                                disabled={loading || !form.therapistId || !form.roomId}
+                                disabled={loading || !form.therapistId || !form.roomId || form.gender === ""}
                                 style={{ flex: 2 }}
                             >
                                 {loading ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-play" />}
@@ -785,12 +841,12 @@ function SessionSuccessModal({ session, onClose }: { session: any; onClose: () =
 // 4. MAIN ORCHESTRATOR COMPONENT
 // ============================================
 export default function SaleHistoryTab({ branchId, onToast, onBookingCountChange, onEditSale }: Props) {
-    const { post } = useApi();
+    const { post, get, put } = useApi(); 
 
     const getDefaultDates = () => {
         const now = new Date();
         const tomorrow = new Date(now);
-        tomorrow.setDate(now.getDate() + 1); // Tambah 1 hari agar inclusive hari ini
+        tomorrow.setDate(now.getDate() + 1);
         const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
         
         const formatDate = (date: Date) => date.toISOString().split("T")[0];
@@ -816,17 +872,14 @@ export default function SaleHistoryTab({ branchId, onToast, onBookingCountChange
     const fetchSales = useCallback(async (overrideFilter?: any) => {
         const f = (overrideFilter && !overrideFilter.nativeEvent) ? overrideFilter : filter;
         setLoading(true);
-        
-        console.log("SaleHistoryTab: fetching with branchId:", branchId, "and filter:", f);
 
         try {
-            // Jika sedang melakukan pencarian (search), abaikan filter lain agar lebih global
             const isSearching = !!f.search?.trim();
 
             const res = await GetSalesService({
                 branchId: branchId || undefined,
                 page: 1,
-                pageSize: 100, // perbesar limit agar lebih banyak data muncul
+                pageSize: 100,
                 search: f.search || undefined,
                 SaleType: isSearching ? undefined : (f.SaleType >= 0 ? f.SaleType : undefined),
                 startDate: isSearching ? undefined : (f.startDate || undefined),
@@ -835,7 +888,12 @@ export default function SaleHistoryTab({ branchId, onToast, onBookingCountChange
             });
             
             if (res.success) {
-                setSales(res.data?.items ?? res.data ?? []);
+                // Modifikasi data yang diterima: Jika memberId null, pastikan gender null
+                const formattedSales = (res.data?.items ?? res.data ?? []).map((sale: any) => ({
+                    ...sale,
+                    gender: sale.memberId != null ? sale.gender : null 
+                }));
+                setSales(formattedSales);
             } else {
                 onToast(res.message ?? "Gagal memuat data", "error");
             }
@@ -847,11 +905,27 @@ export default function SaleHistoryTab({ branchId, onToast, onBookingCountChange
         }
     }, [branchId, filter, onToast]);
 
-    // ── FIX: Fetch detail saat row diklik ─────────────────────────────────────
-    const openDetail = useCallback((sale: SaleRow) => {
-        setSelectedSale(sale);
+    // ── Fetch detail saat row diklik ─────────────────────────────────────
+    const openDetail = useCallback(async (sale: SaleRow) => {
+        // Ambil data member terbaru jika dia adalah member
+        let currentGender = sale.gender;
+        if (sale.memberId) {
+            try {
+                const memberRes = await get(`pos/members/${sale.memberId}`); 
+                if (memberRes.success || memberRes.meta?.success) {
+                    currentGender = memberRes.data?.gender ?? null;
+                }
+            } catch (e) {
+                console.error("Gagal menarik update data member", e);
+            }
+        }
+
+        setSelectedSale({
+            ...sale,
+            gender: currentGender
+        });
         setPanelOpen(true);
-    }, []);
+    }, [get]);
 
     // ── Fetch master data therapist & room ────────────────────────────────────
     const fetchMasterData = useCallback(async () => {
@@ -874,51 +948,67 @@ export default function SaleHistoryTab({ branchId, onToast, onBookingCountChange
 
     const handleOpenAssign = useCallback(async (target: AssignTarget) => {
         setAssignTarget(target);
-        await fetchMasterData(); // refresh setiap kali modal assign dibuka
+        await fetchMasterData();
     }, [fetchMasterData]);
 
     // ── Submit assign ─────────────────────────────────────────────────────────
     const handleAssignSubmit = async (form: any) => {
         if (!assignTarget) return;
         try {
+            const selectedGender = parseInt(form.gender);
+    
+            // 1. LOGIKA AUTO-KNOW (UPDATE GENDER MEMBER)
+            // Jika dia adalah Member (punya memberId) TAPI sebelumnya belum punya gender
+            if (assignTarget.memberId != null && assignTarget.gender == null) {
+                try {
+                    // Tembak API PUT untuk mengupdate gender member secara permanen
+                    await put(`pos/members/${assignTarget.memberId}`, { 
+                        gender: selectedGender 
+                    });
+                    console.log("Gender member berhasil diupdate!");
+                } catch (err) {
+                    console.error("Gagal mengupdate profil member secara otomatis", err);
+                    // Opsional: Anda bisa memunculkan toast error di sini, 
+                    // tapi sebaiknya biarkan proses pembuatan sesi tetap berlanjut
+                }
+            }
+    
+            // 2. LOGIKA PEMBUATAN SESI UTAMA
             const payload = {
                 TherapistId: parseInt(form.therapistId),
                 RoomId: parseInt(form.roomId),
                 Notes: form.notes || null,
+                Gender: selectedGender, 
             };
+    
             const res = assignTarget.type === "item"
-                    ? await post("pos/sessions/create-from-sale-item", { ...payload, SaleItemId: assignTarget.saleItemId })
-                    : await post("pos/bookings/create-session", { ...payload, BookingCode: assignTarget.bookingCode });
-
+                ? await post("pos/sessions/create-from-sale-item", { ...payload, SaleItemId: assignTarget.saleItemId })
+                : await post("pos/bookings/create-session", { ...payload, BookingCode: assignTarget.bookingCode });
+    
             if (res?.success || res?.meta?.success) {
                 onToast("Sesi berhasil dibuat!", "success");
                 setAssignTarget(null);
                 fetchMasterData();
                 
-                // Ambil data sesi dari response untuk ditampilkan di modal barcode
                 if (res.data) setCreatedSession(res.data);
-
-                // Update status item/booking di drawer tanpa fetch ulang
-                setSelectedSale((prev) => {
-                    if (!prev) return prev;
-                    return assignTarget.type === "item"
-                        ? { ...prev, items: prev.items?.map((it) => it.id === assignTarget.saleItemId ? { ...it, hasSession: true, sessionStatus: "InProgress" } : it) }
-                        : { ...prev, bookings: prev.bookings?.map((bk) => bk.bookingCode === assignTarget.bookingCode ? { ...bk, hasSession: true, sessionStatus: "InProgress" } : bk) };
-                });
-
-                // Trigger badge refresh
+    
+                if (selectedSale) {
+                    openDetail(selectedSale);
+                }
+    
                 if (onBookingCountChange) onBookingCountChange();
             } else {
                 const backendMsg = res?.message || res?.meta?.message;
                 const errorMsg = backendMsg && backendMsg !== "Request failed"
                     ? backendMsg 
-                    : "Therapist yang dipilih sedang melayani treatment lain atau tidak tersedia. Silakan pilih therapist lainnya.";
+                    : "Therapist yang dipilih sedang melayani treatment lain atau tidak tersedia.";
                 onToast(errorMsg, "error");
             }
         } catch {
             onToast("Kesalahan jaringan", "error");
         }
     };
+    
 
     useEffect(() => {
         if (branchId) fetchSales();
@@ -947,7 +1037,7 @@ export default function SaleHistoryTab({ branchId, onToast, onBookingCountChange
             />
             <SaleDetailDrawer
                 isOpen={panelOpen}
-                onClose={() => { setPanelOpen(false); setSelectedSale(null); }}
+                onClose={() => { setPanelOpen(false); setSelectedSale(null); fetchSales(); /* Refresh table saat drawer ditutup */ }}
                 sale={selectedSale}
                 loading={false}
                 onOpenAssign={handleOpenAssign}
