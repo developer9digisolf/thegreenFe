@@ -653,25 +653,36 @@ function SaleAssignModal({ target, therapists, rooms, masterLoading, onClose, on
 
     useEffect(() => {
         if (target) {
+            // Mencegah error jika API backend mengirimkan teks "null" alih-alih tipe data null
+            let initialGender = "";
+            if (target.gender !== null && target.gender !== undefined && target.gender !== "null") {
+                initialGender = target.gender.toString();
+            }
+
             setForm({ 
                 therapistId: therapists?.[0]?.id?.toString() || "", 
                 roomId: rooms?.[0]?.id?.toString() || "", 
                 notes: "",
-                gender: target.gender != null ? target.gender.toString() : ""
+                gender: initialGender
             });
         }
     }, [target, therapists, rooms]);
 
     const isMember = target?.memberId != null;
-    const hasKnownGender = target?.gender != null;
+    const hasKnownGender = target?.gender != null && target?.gender !== "null";
     
     const isGenderLocked = isMember && hasKnownGender;
 
     const handleSubmit = async () => {
+        // Cegah klik jika form kosong
         if (!form.therapistId || !form.roomId || form.gender === "") return;
         
         setLoading(true);
-        await onSubmit(form);
+        // Konversi dan kirim data secara aman
+        await onSubmit({
+            ...form,
+            gender: parseInt(form.gender)
+        });
         setLoading(false);
     };
 
@@ -974,47 +985,47 @@ export default function SaleHistoryTab({ branchId, onToast, onBookingCountChange
     const handleAssignSubmit = async (form: any) => {
         if (!assignTarget) return;
         try {
-            const selectedGender = parseInt(form.gender);
-    
-            // 1. LOGIKA AUTO-KNOW (UPDATE GENDER MEMBER)
-            // Jika dia adalah Member (punya memberId) TAPI sebelumnya belum punya gender
+            // 1. PASTIKAN GENDER ADALAH ANGKA (Bukan NaN/Null)
+            let selectedGender = parseInt(form.gender);
+            if (isNaN(selectedGender)) {
+                selectedGender = form.gender === "1" || form.gender === 1 ? 1 : 0; // Fallback aman
+            }
+            
+            // 2. LOGIKA AUTO-KNOW (UPDATE GENDER MEMBER)
             if (assignTarget.memberId != null && assignTarget.gender == null) {
                 try {
-                    // Tembak API PUT untuk mengupdate gender member secara permanen
                     await put(`pos/members/${assignTarget.memberId}`, { 
                         gender: selectedGender 
                     });
-                    console.log("Gender member berhasil diupdate!");
+                    console.log("Gender member berhasil diupdate ke DB!");
                 } catch (err) {
-                    console.error("Gagal mengupdate profil member secara otomatis", err);
-                    // Opsional: Anda bisa memunculkan toast error di sini, 
-                    // tapi sebaiknya biarkan proses pembuatan sesi tetap berlanjut
+                    console.error("Gagal mengupdate profil member", err);
                 }
             }
-    
-            // 2. LOGIKA PEMBUATAN SESI UTAMA
+
+            // 3. LOGIKA PEMBUATAN SESI UTAMA
             const payload = {
                 TherapistId: parseInt(form.therapistId),
                 RoomId: parseInt(form.roomId),
                 Notes: form.notes || null,
-                Gender: selectedGender, 
+                Gender: selectedGender, // <--- KUNCI PERBAIKAN: Gunakan selectedGender, BUKAN form.gender
             };
-    
+
             const res = assignTarget.type === "item"
                 ? await post("pos/sessions/create-from-sale-item", { ...payload, SaleItemId: assignTarget.saleItemId })
                 : await post("pos/bookings/create-session", { ...payload, BookingCode: assignTarget.bookingCode });
-    
+
             if (res?.success || res?.meta?.success) {
                 onToast("Sesi berhasil dibuat!", "success");
                 setAssignTarget(null);
                 fetchMasterData();
                 
                 if (res.data) setCreatedSession(res.data);
-    
+
                 if (selectedSale) {
                     openDetail(selectedSale);
                 }
-    
+
                 if (onBookingCountChange) onBookingCountChange();
             } else {
                 const backendMsg = res?.message || res?.meta?.message;
