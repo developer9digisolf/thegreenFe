@@ -378,7 +378,11 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
     sale.paymentStatus === 2 ||
     sale.paymentStatus === "Paid" ||
     sale.paymentStatus === "Lunas";
-    
+
+    const canAdjust = sale?.items?.some((item: { itemType: string; }) =>
+        item.itemType === "service"
+    );
+
     return (
         <>
             <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.25)", zIndex: 1100, backdropFilter: "blur(2px)" }} />
@@ -474,13 +478,11 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                                                     </div>
                                                     {isService && (
                                                             !item.hasSession && isPaid ? (
-                                                                <button
-                                                                    onClick={() => onOpenAssign({
-                                                                        type: "item",
-                                                                        saleItemId: item.id,
-                                                                        label: getItemName(item)
-                                                                    })}
-                                                                >
+                                                                                  <button
+                                                                onClick={() => onOpenAssign({ type: "item", saleItemId: item.id, label: getItemName(item) })}
+                                                                style={{ padding: "7px 14px", fontSize: "12px", fontWeight: 700, background: "var(--spa-green-bg)", color: "var(--spa-green)", border: "1px solid var(--spa-green-border)", borderRadius: "8px", cursor: "pointer", whiteSpace: "nowrap" }}
+                                                            >
+
                                                                     Buat Sesi
                                                                 </button>
                                                             ) : (
@@ -533,7 +535,7 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                         </>
                     )}
                 </div>
-                {onEditSale && sale && (
+                {onEditSale && sale && canAdjust && (
                     <div style={{ padding: "16px 24px", borderTop: "1px solid var(--border-color)", display: "flex", gap: "12px", background: "var(--bg-card)", flexShrink: 0 }}>
                         {String(sale.paymentStatus) === "Adjust" || sale.paymentStatusName === "Adjust" || sale.paymentStatusDisplay === "Adjust" ? (
                             <button
