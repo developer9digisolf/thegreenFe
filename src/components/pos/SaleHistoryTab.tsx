@@ -374,6 +374,11 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
         return item.itemName || item.serviceName || item.packageName || item.creditPackageName || "Item";
     };
 
+    const isPaid =
+    sale.paymentStatus === 2 ||
+    sale.paymentStatus === "Paid" ||
+    sale.paymentStatus === "Lunas";
+    
     return (
         <>
             <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.25)", zIndex: 1100, backdropFilter: "blur(2px)" }} />
@@ -468,14 +473,17 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                                                         )}
                                                     </div>
                                                     {isService && (
-                                                        !item.hasSession ? (
-                                                            <button
-                                                                onClick={() => onOpenAssign({ type: "item", saleItemId: item.id, label: getItemName(item) })}
-                                                                style={{ padding: "7px 14px", fontSize: "12px", fontWeight: 700, background: "var(--spa-green-bg)", color: "var(--spa-green)", border: "1px solid var(--spa-green-border)", borderRadius: "8px", cursor: "pointer", whiteSpace: "nowrap" }}
-                                                            >
-                                                                <i className="fa-solid fa-play" /> Buat Sesi
-                                                            </button>
-                                                        ) : (
+                                                            !item.hasSession && isPaid ? (
+                                                                <button
+                                                                    onClick={() => onOpenAssign({
+                                                                        type: "item",
+                                                                        saleItemId: item.id,
+                                                                        label: getItemName(item)
+                                                                    })}
+                                                                >
+                                                                    Buat Sesi
+                                                                </button>
+                                                            ) : (
                                                             item.session?.sessionCode && (
                                                                 /* PENGGUNAAN KOMPONEN QR CODE BARU DISINI UNTUK ITEM */
                                                                 <EnlargeableQRCode sessionCode={item.session.sessionCode} isSmall={true} />
@@ -504,7 +512,7 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                                                         <SessionStatus hasSession={bk.hasSession} sessionStatus={bk.session?.status ?? bk.sessionStatus} />
                                                     </div>
                                                 </div>
-                                                {!bk.hasSession ? (
+                                                {!bk.hasSession && isPaid ? (
                                                     <button
                                                         onClick={() => onOpenAssign({ type: "booking", bookingCode: bk.code, label: bk.serviceName || `Booking ${bk.code}` })}
                                                         style={{ padding: "7px 14px", fontSize: "12px", fontWeight: 700, background: "rgba(59,130,246,0.08)", color: "#2563eb", border: "1px solid rgba(59,130,246,0.3)", borderRadius: "8px", cursor: "pointer", whiteSpace: "nowrap" }}
