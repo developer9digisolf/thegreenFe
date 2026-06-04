@@ -382,6 +382,15 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
         return item.itemName || item.serviceName || item.packageName || item.creditPackageName || "Item";
     };
 
+    const isPaid =
+    sale.paymentStatus === 2 ||
+    sale.paymentStatus === "Paid" ||
+    sale.paymentStatus === "Lunas";
+
+    const canAdjust = sale?.items?.some((item: { itemType: string; }) =>
+        item.itemType === "service"
+    );
+
     return (
         <>
             <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.25)", zIndex: 1100, backdropFilter: "blur(2px)" }} />
@@ -472,7 +481,7 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                                                         )}
                                                     </div>
                                                     {isService && (
-                                                        !item.hasSession ? (
+                                                        !item.hasSession && isPaid ? (
                                                             <button
                                                                 onClick={() => onOpenAssign({ 
                                                                     type: "item", 
@@ -481,7 +490,17 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                                                                     memberId: sale.memberId, 
                                                                     gender: sale.gender     
                                                                 })}
-                                                                style={{ padding: "7px 14px", fontSize: "12px", fontWeight: 700, background: "var(--spa-green-bg)", color: "var(--spa-green)", border: "1px solid var(--spa-green-border)", borderRadius: "8px", cursor: "pointer", whiteSpace: "nowrap" }}
+                                                                style={{ 
+                                                                    padding: "7px 14px", 
+                                                                    fontSize: "12px", 
+                                                                    fontWeight: 700, 
+                                                                    background: "var(--spa-green-bg)", 
+                                                                    color: "var(--spa-green)", 
+                                                                    border: "1px solid var(--spa-green-border)", 
+                                                                    borderRadius: "8px", 
+                                                                    cursor: "pointer", 
+                                                                    whiteSpace: "nowrap" 
+                                                                }}
                                                             >
                                                                 <i className="fa-solid fa-play" /> Buat Sesi
                                                             </button>
@@ -490,7 +509,7 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                                                                 <EnlargeableQRCode sessionCode={item.session.sessionCode} isSmall={true} />
                                                             )
                                                         )
-                                                    )}
+)}
                                                 </div>
                                             );
                                         })}
@@ -513,7 +532,7 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                                                         <SessionStatus hasSession={bk.hasSession} sessionStatus={bk.session?.status ?? bk.sessionStatus} />
                                                     </div>
                                                 </div>
-                                                {!bk.hasSession ? (
+                                                {!bk.hasSession && isPaid ? (
                                                     <button
                                                         onClick={() => onOpenAssign({ 
                                                             type: "booking", 
@@ -539,7 +558,7 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                         </>
                     )}
                 </div>
-                {onEditSale && sale && (
+                {onEditSale && sale && canAdjust && (
                     <div style={{ padding: "16px 24px", borderTop: "1px solid var(--border-color)", display: "flex", gap: "12px", background: "var(--bg-card)", flexShrink: 0 }}>
                         {String(sale.paymentStatus) === "Adjust" || sale.paymentStatusName === "Adjust" || sale.paymentStatusDisplay === "Adjust" ? (
                             <button
