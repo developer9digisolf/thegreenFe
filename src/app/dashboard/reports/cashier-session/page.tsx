@@ -328,7 +328,14 @@ export default function CashierSessionReportPage() {
       key: "sessionCode",
       sorter: true,
       render: (code: string) => (
-        <Text className="font-mono font-bold text-slate-800">{code}</Text>
+        <button
+          onClick={() =>
+            router.push(`/dashboard/reports/cashier-session/${code}/sales`)
+          }
+          className="font-mono font-bold text-emerald-600 hover:text-emerald-700 transition-colors bg-transparent border-none cursor-pointer p-0 text-left"
+        >
+          {code}
+        </button>
       ),
     },
     {

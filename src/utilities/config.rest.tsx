@@ -140,6 +140,8 @@ export const rest = {
 
   // Cashier Session Reports
   cashierSessionReport: "cashier-session/reports",
+  cashierSessionReportSales: "cashier-session/reports/sales",
+  cashierSessionReportSalesExport: "cashier-session/reports/sales/export",
 
   master: {
     companies: {
