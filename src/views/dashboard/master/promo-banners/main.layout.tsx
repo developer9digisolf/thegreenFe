@@ -12,7 +12,7 @@ import {
   Button,
   Row,
   Col,
-  message,
+  App,
 } from "antd";
 import { useEffect, useState, useRef } from "react";
 import { UploadPromoBannerImageService } from "@afx/services/master/promo-banner.service";
@@ -44,6 +44,8 @@ export default function PromoBannerView() {
     state: promoBannerState,
     isLoading,
   } = useStore<IStatePromoBanner, IActionPromoBanner>("promoBanners");
+
+  const { message } = App.useApp();
 
   const { packages, creditPackages } = promoBannerState;
 
@@ -365,38 +367,46 @@ export default function PromoBannerView() {
             {/* Row 3: Gambar (full width) */}
             <Row gutter={16}>
               <Col span={24}>
-                <Form.Item
-                  name="imageUrl"
-                  label="Gambar"
-                  rules={[{ required: true, message: "Gambar wajib diupload" }]}
-                >
-                  <Input hidden />
-                  <div className="space-y-2">
-                    <Dragger {...uploadProps}>
-                      <p className="ant-upload-drag-icon">
-                        <InboxOutlined />
-                      </p>
-                      <p className="ant-upload-text">
-                        Klik atau drag file ke area ini untuk upload
-                      </p>
-                      <p className="ant-upload-hint">
-                        Mendukung upload satu gambar. Ukuran maksimal 5MB.
-                      </p>
-                    </Dragger>
-                    {form.getFieldValue("imageUrl") && (
-                      <div className="mt-2">
-                        <img
-                          src={form.getFieldValue("imageUrl")}
-                          alt="Preview"
-                          style={{
-                            maxWidth: "100%",
-                            maxHeight: 200,
-                            borderRadius: 8,
-                          }}
-                        />
+                <Form.Item noStyle shouldUpdate>
+                  {() => (
+                    <>
+                      <Form.Item
+                        name="imageUrl"
+                        label="Gambar"
+                        rules={[
+                          { required: true, message: "Gambar wajib diupload" },
+                        ]}
+                      >
+                        <Input hidden />
+                      </Form.Item>
+                      <div className="space-y-2">
+                        <Dragger {...uploadProps}>
+                          <p className="ant-upload-drag-icon">
+                            <InboxOutlined />
+                          </p>
+                          <p className="ant-upload-text">
+                            Klik atau drag file ke area ini untuk upload
+                          </p>
+                          <p className="ant-upload-hint">
+                            Mendukung upload satu gambar. Ukuran maksimal 5MB.
+                          </p>
+                        </Dragger>
+                        {form.getFieldValue("imageUrl") && (
+                          <div className="mt-2">
+                            <img
+                              src={form.getFieldValue("imageUrl")}
+                              alt="Preview"
+                              style={{
+                                maxWidth: "100%",
+                                maxHeight: 200,
+                                borderRadius: 8,
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
+                    </>
+                  )}
                 </Form.Item>
               </Col>
             </Row>

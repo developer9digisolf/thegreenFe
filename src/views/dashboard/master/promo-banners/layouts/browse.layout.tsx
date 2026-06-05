@@ -106,7 +106,7 @@ export const BrowsePromoBanner = ({
               height={60}
               style={{ borderRadius: 8, objectFit: "cover" }}
               preview={{
-                mask: <PlusOutlined />,
+                cover: <PlusOutlined />,
               }}
             />
           ) : (
