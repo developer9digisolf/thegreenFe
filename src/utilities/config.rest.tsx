@@ -269,5 +269,12 @@ export const rest = {
       delete: "master/additional-costs/:ID",
       active: "master/additional-costs",
     },
+    promoBanners: {
+      index: "master/promo-banners",
+      show: "master/promo-banners/:ID",
+      create: "master/promo-banners",
+      update: "master/promo-banners/:ID",
+      delete: "master/promo-banners/:ID",
+    },
   },
 };

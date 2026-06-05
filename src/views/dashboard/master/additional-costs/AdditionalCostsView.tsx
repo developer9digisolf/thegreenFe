@@ -8,13 +8,13 @@ import {
   Modal,
   Form,
   notification,
-  Row,
-  Col,
   Select,
   Spin,
   Dropdown,
   MenuProps,
   Switch,
+  Input,
+  InputNumber,
 } from "antd";
 import {
   MoreOutlined,
@@ -43,14 +43,8 @@ import {
   ConfirmActionModal,
   ActionPresets,
 } from "@afx/components/modals/ConfirmActionModal.layout";
-import { UseForm, UseFormItem } from "@afx/components/form/form.layout";
-import UseInput from "@afx/components/ui/input/input.layout";
-import UseInputArea from "@afx/components/ui/input/input-area.layout";
 
-const itemLayouts = {
-  wrapperCol: { span: 24 },
-  labelCol: { span: 24 },
-};
+const { TextArea } = Input;
 
 export default function AdditionalCostsView() {
   const [loading, setLoading] = useState(false);
@@ -98,10 +92,6 @@ export default function AdditionalCostsView() {
       if (search) params.search = search;
 
       const res = await AdditionalCostGetAllService(params);
-      console.log("[AdditionalCostsView] API Response:", res);
-      console.log("[AdditionalCostsView] Data:", res.data);
-      console.log("[AdditionalCostsView] Pagination:", res.pagination);
-      console.log("[AdditionalCostsView] Raw Data:", res.rawData);
 
       if (res.success) {
         setAdditionalCosts(res.data);
@@ -138,10 +128,7 @@ export default function AdditionalCostsView() {
     setFormType("create");
     setSelectedCost(null);
     forms.resetFields();
-    forms.setFieldsValue({
-      isPercentage: false,
-      sortOrder: 0,
-    });
+    forms.setFieldsValue({ isPercentage: false, sortOrder: 0 });
     setOpenForm(true);
   };
 
@@ -185,6 +172,12 @@ export default function AdditionalCostsView() {
     }
   };
 
+  const handleCloseForm = () => {
+    setOpenForm(false);
+    setSelectedCost(null);
+    forms.resetFields();
+  };
+
   const handleSave = async () => {
     try {
       const values = await forms.validateFields();
@@ -205,7 +198,7 @@ export default function AdditionalCostsView() {
           notification.success({
             title: "Biaya tambahan berhasil ditambahkan",
           });
-          setOpenForm(false);
+          handleCloseForm();
           fetchData(1);
         } else {
           notification.error({
@@ -229,10 +222,8 @@ export default function AdditionalCostsView() {
           updatePayload,
         );
         if (res.success) {
-          notification.success({
-            title: "Biaya tambahan berhasil diperbarui",
-          });
-          setOpenForm(false);
+          notification.success({ title: "Biaya tambahan berhasil diperbarui" });
+          handleCloseForm();
           fetchData();
         } else {
           notification.error({
@@ -286,13 +277,12 @@ export default function AdditionalCostsView() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
       minimumFractionDigits: 0,
     }).format(amount);
-  };
 
   const getCostTypeLabel = (costType: string) => {
     const labels: Record<string, string> = {
@@ -385,9 +375,7 @@ export default function AdditionalCostsView() {
         <div className="flex items-center gap-2">
           <div
             className="font-bold bg-slate-50 py-1 px-3 rounded-lg border border-slate-100"
-            style={{
-              color: record.isPercentage ? "#059669" : "#d97706",
-            }}
+            style={{ color: record.isPercentage ? "#059669" : "#d97706" }}
           >
             {record.isPercentage
               ? `${record.defaultPrice}%`
@@ -453,8 +441,11 @@ export default function AdditionalCostsView() {
     },
   ];
 
+  const isDetail = formType === "detail";
+
   return (
     <div className="p-4 lg:p-8">
+      {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
         <div>
           <Typography.Title
@@ -478,6 +469,7 @@ export default function AdditionalCostsView() {
         </Button>
       </div>
 
+      {/* Table */}
       <div className="bg-white rounded-[2.5rem] p-6 lg:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100">
         <UseDynamicTable
           columns={columns}
@@ -503,255 +495,159 @@ export default function AdditionalCostsView() {
         />
       </div>
 
+      {/* Form Modal */}
       <Modal
-        width={700}
-        open={openForm}
-        onCancel={() => !saving && setOpenForm(false)}
-        footer={null}
-        centered
-        destroyOnHidden
         title={
-          <div className="flex items-center gap-4 p-2">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-500/20">
-              <DollarOutlined style={{ fontSize: 24 }} />
-            </div>
-            <div className="flex flex-col">
-              <Typography className="text-xl font-bold text-slate-800 m-0 leading-tight">
-                {formType === "create"
-                  ? "Tambah"
-                  : formType === "detail"
-                    ? "Detail"
-                    : "Update"}{" "}
-                Biaya Tambahan
-              </Typography>
-              <p className="text-xs text-slate-400 font-medium m-0 mt-1">
-                Kelola informasi biaya tambahan
-              </p>
-            </div>
-          </div>
+          formType === "create"
+            ? "Tambah Biaya Tambahan"
+            : formType === "detail"
+              ? "Detail Biaya Tambahan"
+              : "Edit Biaya Tambahan"
         }
-        className="custom-modal"
+        open={openForm}
+        onCancel={() => !saving && handleCloseForm()}
+        footer={null}
+        width={700}
+        destroyOnHidden
       >
         <Spin spinning={saving || (loading && formType !== "create")}>
-          <UseForm
-            form={forms}
-            initialValues={
-              selectedCost || { isPercentage: false, sortOrder: 0 }
-            }
-          >
-            <Row gutter={[24, 0]} className="mt-6">
-              <Col span={24}>
-                <div className="bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100 mb-6">
-                  <Typography.Title
-                    level={5}
-                    className="!mb-4 text-slate-800 flex items-center gap-2"
-                  >
-                    <div className="w-2 h-6 bg-emerald-500 rounded-full" />
-                    Informasi Dasar
-                  </Typography.Title>
-                  <Row gutter={[16, 0]}>
-                    <Col span={24} md={12}>
-                      <UseFormItem
-                        name="name"
-                        label="Nama Biaya"
-                        {...itemLayouts}
-                        rules={[
-                          { required: true, message: "Nama wajib diisi" },
-                        ]}
-                      >
-                        <UseInput
-                          placeholder="Contoh: Service Fee"
-                          disabled={formType === "detail"}
-                        />
-                      </UseFormItem>
-                    </Col>
-                    <Col span={24} md={12}>
-                      <UseFormItem
-                        name="code"
-                        label="Kode"
-                        {...itemLayouts}
-                        rules={[
-                          { required: true, message: "Kode wajib diisi" },
-                          {
-                            pattern: /^[A-Z0-9_]+$/,
-                            message:
-                              "Kode harus huruf kapital, angka, dan underscore",
-                          },
-                        ]}
-                      >
-                        <UseInput
-                          placeholder="SERVICE_FEE"
-                          disabled={formType === "detail"}
-                        />
-                      </UseFormItem>
-                    </Col>
-                    <Col span={24} md={12}>
-                      <UseFormItem
-                        name="costType"
-                        label="Tipe Biaya"
-                        {...itemLayouts}
-                        rules={[
-                          {
-                            required: true,
-                            message: "Tipe biaya wajib dipilih",
-                          },
-                        ]}
-                      >
-                        <Select
-                          className="w-full h-[46px] custom-select"
-                          placeholder="Pilih Tipe Biaya"
-                          disabled={formType === "detail"}
-                          options={Object.entries(AdditionalCostTypeEnum).map(
-                            ([key, value]) => ({
-                              label: key
-                                .replace(/([A-Z])/g, " $1")
-                                .trim()
-                                .replace(/^./, (str) => str.toUpperCase()),
-                              value,
-                            }),
-                          )}
-                        />
-                      </UseFormItem>
-                    </Col>
-                    <Col span={24} md={12}>
-                      <UseFormItem
-                        name="sortOrder"
-                        label="Urutan Tampil"
-                        {...itemLayouts}
-                      >
-                        <UseInput
-                          type="number"
-                          placeholder="0"
-                          disabled={formType === "detail"}
-                        />
-                      </UseFormItem>
-                    </Col>
-                    <Col span={24}>
-                      <UseFormItem
-                        name="description"
-                        label="Deskripsi"
-                        {...itemLayouts}
-                      >
-                        <UseInputArea
-                          placeholder="Deskripsi biaya tambahan..."
-                          disabled={formType === "detail"}
-                          rows={2}
-                        />
-                      </UseFormItem>
-                    </Col>
-                  </Row>
-                </div>
-              </Col>
-              <Col span={24}>
-                <div className="bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100 mb-6">
-                  <Typography.Title
-                    level={5}
-                    className="!mb-4 text-slate-800 flex items-center gap-2"
-                  >
-                    <div className="w-2 h-6 bg-blue-500 rounded-full" />
-                    Konfigurasi Harga
-                  </Typography.Title>
-                  <Row gutter={[16, 0]}>
-                    <Col span={24} md={12}>
-                      <UseFormItem
-                        name="isPercentage"
-                        label="Tipe Harga"
-                        {...itemLayouts}
-                        valuePropName="checked"
-                      >
-                        <Switch
-                          checkedChildren="Persentase"
-                          unCheckedChildren="Nominal"
-                          disabled={formType === "detail"}
-                        />
-                      </UseFormItem>
-                    </Col>
-                    <Col span={24} md={12}>
-                      <UseFormItem
-                        name="defaultPrice"
-                        label="Nilai Default"
-                        {...itemLayouts}
-                        rules={[
-                          {
-                            required: true,
-                            message: "Nilai default wajib diisi",
-                          },
-                        ]}
-                      >
-                        <UseInput
-                          type="number"
-                          placeholder="0"
-                          disabled={formType === "detail"}
-                        />
-                      </UseFormItem>
-                    </Col>
-                  </Row>
-                </div>
-              </Col>
-              {formType !== "create" && (
-                <Col span={24}>
-                  <div className="bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100 mb-6">
-                    <Typography.Title
-                      level={5}
-                      className="!mb-4 text-slate-800 flex items-center gap-2"
-                    >
-                      <div className="w-2 h-6 bg-amber-500 rounded-full" />
-                      Status
-                    </Typography.Title>
-                    <UseFormItem
-                      name="isActive"
-                      label="Status Aktif"
-                      {...itemLayouts}
-                      valuePropName="checked"
-                    >
-                      <Switch
-                        checkedChildren="Aktif"
-                        unCheckedChildren="Nonaktif"
-                        disabled={formType === "detail"}
-                      />
-                    </UseFormItem>
-                  </div>
-                </Col>
-              )}
-              <Col
-                span={24}
-                className="mt-12 flex justify-end gap-3 pt-8 border-t border-slate-100"
+          <Form form={forms} layout="vertical" onFinish={handleSave}>
+            {/* Baris 1: Nama Biaya & Kode */}
+            <div className="grid grid-cols-2 gap-4">
+              <Form.Item
+                name="name"
+                label="Nama Biaya"
+                rules={[{ required: true, message: "Nama wajib diisi" }]}
               >
-                {formType !== "detail" ? (
-                  <>
-                    <Button
-                      size="large"
-                      className="rounded-xl px-8 border-none bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 h-12"
-                      onClick={() => setOpenForm(false)}
-                    >
-                      Batal
-                    </Button>
-                    <Button
-                      type="primary"
-                      size="large"
-                      className="rounded-xl px-10 bg-emerald-500 hover:bg-emerald-600 border-none font-bold text-white h-12 shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
-                      onClick={handleSave}
-                      loading={saving}
-                    >
-                      Simpan Biaya Tambahan
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    type="primary"
-                    size="large"
-                    className="rounded-xl px-10 bg-emerald-500 hover:bg-emerald-600 border-none font-bold text-white h-12 shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
-                    onClick={() => setFormType("update")}
-                  >
+                <Input placeholder="Contoh: Service Fee" disabled={isDetail} />
+              </Form.Item>
+              <Form.Item
+                name="code"
+                label="Kode"
+                rules={[
+                  { required: true, message: "Kode wajib diisi" },
+                  {
+                    pattern: /^[A-Z0-9_]+$/,
+                    message: "Kode harus huruf kapital, angka, dan underscore",
+                  },
+                ]}
+              >
+                <Input placeholder="SERVICE_FEE" disabled={isDetail} />
+              </Form.Item>
+            </div>
+
+            {/* Baris 2: Tipe Biaya & Urutan Tampil */}
+            <div className="grid grid-cols-2 gap-4">
+              <Form.Item
+                name="costType"
+                label="Tipe Biaya"
+                rules={[
+                  { required: true, message: "Tipe biaya wajib dipilih" },
+                ]}
+              >
+                <Select
+                  placeholder="Pilih Tipe Biaya"
+                  disabled={isDetail}
+                  options={Object.entries(AdditionalCostTypeEnum).map(
+                    ([key, value]) => ({
+                      label: key
+                        .replace(/([A-Z])/g, " $1")
+                        .trim()
+                        .replace(/^./, (str) => str.toUpperCase()),
+                      value,
+                    }),
+                  )}
+                />
+              </Form.Item>
+              <Form.Item
+                name="sortOrder"
+                label="Urutan Tampil"
+                initialValue={0}
+              >
+                <InputNumber
+                  min={0}
+                  style={{ width: "100%" }}
+                  placeholder="0"
+                  disabled={isDetail}
+                />
+              </Form.Item>
+            </div>
+
+            {/* Baris 3: Deskripsi */}
+            <Form.Item name="description" label="Deskripsi">
+              <TextArea
+                rows={3}
+                placeholder="Deskripsi biaya tambahan..."
+                disabled={isDetail}
+              />
+            </Form.Item>
+
+            {/* Baris 4: Tipe Harga & Nilai Default */}
+            <div className="grid grid-cols-2 gap-4">
+              <Form.Item
+                name="isPercentage"
+                label="Tipe Harga"
+                valuePropName="checked"
+              >
+                <Switch
+                  checkedChildren="Persentase"
+                  unCheckedChildren="Nominal"
+                  disabled={isDetail}
+                />
+              </Form.Item>
+              <Form.Item
+                name="defaultPrice"
+                label="Nilai Default"
+                rules={[
+                  { required: true, message: "Nilai default wajib diisi" },
+                ]}
+              >
+                <InputNumber
+                  min={0}
+                  style={{ width: "100%" }}
+                  placeholder="0"
+                  disabled={isDetail}
+                />
+              </Form.Item>
+            </div>
+
+            {/* Baris 5: Status Aktif (hanya edit/detail) */}
+            {formType !== "create" && (
+              <Form.Item
+                name="isActive"
+                label="Status Aktif"
+                valuePropName="checked"
+              >
+                <Switch
+                  checkedChildren="Aktif"
+                  unCheckedChildren="Nonaktif"
+                  disabled={isDetail}
+                />
+              </Form.Item>
+            )}
+
+            {/* Footer Buttons */}
+            <Form.Item className="mb-0">
+              <div className="flex justify-end gap-2">
+                {isDetail ? (
+                  <Button type="primary" onClick={() => setFormType("update")}>
                     Edit Data
                   </Button>
+                ) : (
+                  <>
+                    <Button onClick={handleCloseForm}>Batal</Button>
+                    <Button type="primary" htmlType="submit" loading={saving}>
+                      {formType === "create" ? "Simpan" : "Update"}
+                    </Button>
+                  </>
                 )}
-              </Col>
-            </Row>
-          </UseForm>
+              </div>
+            </Form.Item>
+          </Form>
         </Spin>
       </Modal>
 
+      {/* Delete Confirm Modal */}
       {deleteModal.open && (
         <ConfirmActionModal
           config={ActionPresets.delete(deleteModal.name)}
@@ -760,30 +656,6 @@ export default function AdditionalCostsView() {
           loading={loading}
         />
       )}
-
-      <style jsx global>{`
-        .custom-select .ant-select-selector,
-        .custom-select-large .ant-select-selector {
-          height: 46px !important;
-          border-radius: 12px !important;
-          border: 2px solid #f1f5f9 !important;
-          background-color: #fafafa !important;
-          display: flex !important;
-          align-items: center !important;
-        }
-        .custom-select .ant-select-selection-item,
-        .custom-select-large .ant-select-selection-item {
-          line-height: 42px !important;
-          font-weight: 500 !important;
-        }
-        .custom-modal .ant-modal-content {
-          border-radius: 2.5rem !important;
-          padding: 2rem !important;
-        }
-        .custom-modal .ant-modal-header {
-          margin-bottom: 2rem !important;
-        }
-      `}</style>
     </div>
   );
 }

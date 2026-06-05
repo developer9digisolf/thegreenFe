@@ -162,6 +162,12 @@ const menuConfig: MenuSection[] = [
             icon: "fa-solid fa-dollar-sign",
             path: "/dashboard/master/additional-costs",
           },
+          {
+            key: "promo-banner",
+            label: "Promo Banner",
+            icon: "fa-solid fa-image",
+            path: "/dashboard/master/promo-banners",
+          },
         ],
       },
       {
