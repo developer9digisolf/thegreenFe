@@ -28,6 +28,7 @@ interface Props {
     onContinueSession: (branch: Branch) => void;
     toast: Toast | null;
     onBack: () => void;
+    onLogout: () => void;
 }
 
 // ============================================
@@ -135,6 +136,7 @@ export default function GatekeeperScreen({
     onContinueSession,
     toast,
     onBack,
+    onLogout,
 }: Props) {
     const [conflictBranch, setConflictBranch] = useState<Branch | null>(null);
 
@@ -273,6 +275,15 @@ export default function GatekeeperScreen({
                                 );
                             })}
                         </div>
+
+                        <button
+                            type="button"
+                            className="action-btn secondary"
+                            onClick={onLogout}
+                            style={{ width: "100%", marginTop: "20px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+                        >
+                            <i className="fa-solid fa-right-from-bracket" /> Logout
+                        </button>
                     </div>
                 )}
 
@@ -313,86 +324,121 @@ export default function GatekeeperScreen({
                         </div>
                     </div>
                 )}
-
-                {/* ── FORCE_CLOSE ───────────────────────────────────────────── */}
-                {/*
-                  * [FIX] Kondisi render sebelumnya: gateState === "FORCE_CLOSE" && activeSession
-                  * Masalah: activeSession bisa null → panel blank tanpa error apapun.
-                  *
-                  * Sekarang: pakai `forceCloseSession` yang sudah punya fallback chain
-                  * (activeSessionsMap → activeSession → branch field).
-                  * Panel selalu bisa render selama gateState = FORCE_CLOSE.
-                  */}
                 {gateState === "FORCE_CLOSE" && (
                     <div>
-                        <GatekeeperIcon icon="fa-solid fa-lock" variant="red" />
-                        <h2 style={{ marginBottom: "10px", fontSize: "22px", color: "var(--accent-red)" }}>
-                            Tutup Sesi Lama
+                        <GatekeeperIcon icon="fa-solid fa-cash-register" />
+                        <h2 style={{ marginBottom: "10px", fontSize: "22px", color: "var(--spa-green)" }}>
+                            Buka Sesi Kasir
                         </h2>
-
-                        {/* Info sesi — tampil jika ada data, tidak crash jika tidak ada */}
-                        {forceCloseSession ? (
-                            <div style={{ background: "var(--bg-main)", padding: "16px", borderRadius: "12px", marginBottom: "20px", textAlign: "left" }}>
-                                <p style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "4px" }}>
-                                    Sesi aktif saat ini:
-                                </p>
-                                <div style={{ fontWeight: 700 }}>{forceCloseSession.userName ?? "Kasir"}</div>
-                                <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                                    ID: {forceCloseSession.sessionCode ?? forceCloseSession.id ?? "—"}
-                                </div>
-                            </div>
-                        ) : (
-                            <p style={{ color: "var(--text-muted)", fontSize: "13px", marginBottom: "20px" }}>
-                                Tutup sesi yang sedang berjalan sebelum melanjutkan.
-                            </p>
-                        )}
-
-                        <p style={{ color: "var(--text-primary)", fontSize: "14px", marginBottom: "24px", lineHeight: 1.5 }}>
-                            Hitung jumlah uang fisik di laci, lalu tutup sesi sebelum memulai shift baru.
+                        <p style={{ color: "var(--text-muted)", fontSize: "13px", marginBottom: "20px" }}>
+                            Sesi lama di cabang <b>{selectedBranch?.branchName}</b> masih aktif. Harap masukkan kas penutupan sesi lama dan kas awal sesi baru Anda.
                         </p>
 
-                        <div style={{ textAlign: "left", marginBottom: "24px" }}>
-                            <label style={{ display: "block", marginBottom: "8px", fontWeight: 600, fontSize: "13px" }}>
-                                Kas Aktual Fisik (Rp)
-                            </label>
-                            <input
-                                type="number"
-                                value={closingCash}
-                                onChange={(e) => setClosingCash(e.target.value)}
-                                placeholder="Total uang di laci"
-                                className="search-input"
-                                autoFocus
-                                style={{ width: "100%", padding: "16px", fontSize: "20px", textAlign: "right", fontWeight: 700, marginBottom: "16px" }}
-                            />
-                            <label style={{ display: "block", marginBottom: "8px", fontWeight: 600, fontSize: "13px" }}>
-                                Catatan (Opsional)
-                            </label>
-                            <input
-                                type="text"
-                                value={cashMovementReason}
-                                onChange={(e) => setCashMovementReason(e.target.value)}
-                                placeholder="Contoh: Menutup paksa sesi pagi"
-                                className="search-input"
-                                style={{ width: "100%", padding: "14px", fontSize: "14px" }}
-                            />
+                        {/* Info Sesi Aktif Lama */}
+                        {forceCloseSession && (
+                            <div style={{ background: "var(--bg-main)", padding: "12px", borderRadius: "12px", marginBottom: "16px", textAlign: "left", fontSize: "12px", border: "1px solid var(--border-color)" }}>
+                                <div style={{ color: "var(--text-muted)", fontWeight: 700, fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Sesi lama yang belum ditutup:</div>
+                                <div style={{ fontWeight: 700, color: "var(--accent-red)", marginTop: "2px" }}>
+                                    {forceCloseSession.userName ?? "Kasir"} ({forceCloseSession.sessionCode ?? forceCloseSession.id ?? "—"})
+                                </div>
+                            </div>
+                        )}
+
+                        <div style={{ textAlign: "left", marginBottom: "20px", display: "flex", flexDirection: "column", gap: "16px" }}>
+                            {/* 1. Kas Aktual Sesi Lama */}
+                            <div>
+                                <label style={{ display: "block", marginBottom: "6px", fontWeight: 700, fontSize: "13px", color: "var(--accent-red)" }}>
+                                    1. Kas Aktual Fisik Sesi Lama (Rp) *
+                                </label>
+                                <input
+                                    type="number"
+                                    value={closingCash}
+                                    onChange={(e) => setClosingCash(e.target.value)}
+                                    placeholder="Masukkan uang penutupan sesi lama"
+                                    className="search-input"
+                                    style={{ width: "100%", padding: "12px", fontSize: "16px", textAlign: "right", fontWeight: 700 }}
+                                />
+                            </div>
+
+                            {/* 2. Kas Awal Sesi Baru */}
+                            <div>
+                                <label style={{ display: "block", marginBottom: "6px", fontWeight: 700, fontSize: "13px", color: "var(--spa-green)" }}>
+                                    2. Kas Awal Sesi Baru (Rp) *
+                                </label>
+                                <input
+                                    type="number"
+                                    value={openingCash}
+                                    onChange={(e) => setOpeningCash(e.target.value)}
+                                    placeholder="Masukkan uang modal awal"
+                                    className="search-input"
+                                    style={{ width: "100%", padding: "12px", fontSize: "16px", textAlign: "right", fontWeight: 700 }}
+                                />
+                                <div style={{ display: "flex", gap: "6px", marginTop: "8px", flexWrap: "wrap", justifyContent: "center" }}>
+                                    {[200_000, 500_000, 1_000_000].map((amount) => {
+                                        const isSelected = openingCash === amount.toString();
+                                        return (
+                                            <button
+                                                key={amount}
+                                                type="button"
+                                                onClick={() => setOpeningCash(amount.toString())}
+                                                style={{
+                                                    padding: "6px 12px", fontSize: "11px", fontWeight: 600,
+                                                    borderRadius: "6px", cursor: "pointer", transition: "all 0.2s",
+                                                    background: isSelected ? "var(--spa-green-bg)" : "var(--bg-main)",
+                                                    color: isSelected ? "var(--spa-green)" : "var(--text-secondary)",
+                                                    border: isSelected ? "2px solid var(--spa-green)" : "2px solid var(--border-color)",
+                                                }}
+                                            >
+                                                {formatCurrency(amount)}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* 3. Catatan Penutupan */}
+                            <div>
+                                <label style={{ display: "block", marginBottom: "6px", fontWeight: 600, fontSize: "12px" }}>
+                                    Catatan Penutupan Sesi Lama (Opsional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={cashMovementReason}
+                                    onChange={(e) => setCashMovementReason(e.target.value)}
+                                    placeholder="Contoh: Tutup sesi shift sebelumnya"
+                                    className="search-input"
+                                    style={{ width: "100%", padding: "10px", fontSize: "13px" }}
+                                />
+                            </div>
                         </div>
 
-                        <button
-                            className="action-btn primary"
-                            onClick={onForceClose}
-                            disabled={isProcessing || !closingCash}
-                            style={{
-                                width: "100%",
-                                background: "var(--accent-red)",
-                                opacity: (isProcessing || !closingCash) ? 0.6 : 1,
-                            }}
-                        >
-                            {isProcessing ? (
-                                <i className="fa-solid fa-spinner fa-spin" />
+                        <div style={{ display: "flex", gap: "10px" }}>
+                            {branches.length > 1 ? (
+                                <button type="button" className="action-btn secondary" style={{ flex: 1 }} onClick={onBack}>
+                                    <i className="fa-solid fa-arrow-left" /> Kembali
+                                </button>
                             ) : (
-                                <><i className="fa-solid fa-power-off" /> Tutup Sesi Lama</>
+                                <button type="button" className="action-btn secondary" style={{ flex: 1 }} onClick={onLogout}>
+                                    <i className="fa-solid fa-right-from-bracket" /> Logout
+                                </button>
                             )}
-                        </button>
+                            <button
+                                className="action-btn primary"
+                                onClick={onForceClose}
+                                disabled={isProcessing || !closingCash || !openingCash}
+                                style={{
+                                    flex: 2,
+                                    background: "var(--gradient-spa)",
+                                    opacity: (isProcessing || !closingCash || !openingCash) ? 0.6 : 1,
+                                }}
+                            >
+                                {isProcessing ? (
+                                    <i className="fa-solid fa-spinner fa-spin" />
+                                ) : (
+                                    <><i className="fa-solid fa-play" /> Tutup & Mulai Sesi</>
+                                )}
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -442,9 +488,15 @@ export default function GatekeeperScreen({
                         </div>
 
                         <div style={{ display: "flex", gap: "12px" }}>
-                            <button type="button" className="action-btn secondary" style={{ flex: 1 }} onClick={onBack}>
-                                <i className="fa-solid fa-arrow-left" /> Kembali
-                            </button>
+                            {branches.length > 1 ? (
+                                <button type="button" className="action-btn secondary" style={{ flex: 1 }} onClick={onBack}>
+                                    <i className="fa-solid fa-arrow-left" /> Kembali
+                                </button>
+                            ) : (
+                                <button type="button" className="action-btn secondary" style={{ flex: 1 }} onClick={onLogout}>
+                                    <i className="fa-solid fa-right-from-bracket" /> Logout
+                                </button>
+                            )}
                             <button
                                 className="action-btn primary"
                                 onClick={onOpenSession}

@@ -31,6 +31,7 @@ interface UsePosSessionReturn {
      */
     handleForceCloseSession: () => Promise<boolean>;
     handleOpenSession: (onReady: (branchId: number) => void) => Promise<void>;
+    resetSessionState: () => void;
 }
 
 // ============================================
@@ -85,19 +86,42 @@ export function usePosSession(
 
             setActiveSessionsMap(sessionsMap);
 
-            if (userBranches.length === 1) {
+            // Check if there is an active session belonging to the current cashier on any branch
+            let userActiveSession: any = null;
+            let userActiveBranch: Branch | null = null;
+
+            for (const branch of userBranches) {
+                const activeSess = sessionsMap[branch.branchId];
+                if (activeSess) {
+                    const sUid = activeSess.userId ?? activeSess.user_id ?? activeSess.user?.id;
+                    const uId = userData.id ?? userData.userId ?? userData.user_id;
+                    const isSameUser = sUid !== undefined && uId !== undefined && Number(sUid) === Number(uId);
+                    if (isSameUser) {
+                        userActiveSession = activeSess;
+                        userActiveBranch = branch;
+                        break;
+                    }
+                }
+            }
+
+            if (userActiveSession && userActiveBranch) {
+                setSelectedBranch(userActiveBranch);
+                setActiveSession(userActiveSession);
+                setGateState("READY");
+            } else if (userBranches.length === 1) {
                 const single = userBranches[0];
                 setSelectedBranch(single);
 
-                if (sessionsMap[single.branchId]) {
-                    // [FIX] Set activeSession untuk single-branch agar FORCE_CLOSE panel punya data
-                    setActiveSession(sessionsMap[single.branchId]);
+                const activeSess = sessionsMap[single.branchId];
+                if (activeSess) {
+                    // Since it's not the same user (checked above), it must be someone else's session
+                    setActiveSession(activeSess);
                     setGateState("FORCE_CLOSE");
                 } else {
                     setGateState("OPEN_SESSION");
                 }
             } else {
-                // Multi-branch: biarkan user pilih, activeSession di-set saat pilih cabang
+                // Multi-branch: let cashier select, activeSession is set upon selecting a branch
                 setGateState("SELECT_BRANCH");
             }
 
@@ -131,11 +155,21 @@ export function usePosSession(
         try {
             const res = await get(`cashier-sessions/branch/${branch.branchId}/active`);
             if (res.success && res.data) {
-                // [FIX] Selalu set activeSession saat masuk FORCE_CLOSE
-                // agar panel FORCE_CLOSE punya data lengkap (id, userName, sessionCode)
                 setActiveSession(res.data);
                 setActiveSessionsMap((prev) => ({ ...prev, [branch.branchId]: res.data }));
-                setGateState("FORCE_CLOSE");
+                
+                // Check if active session belongs to the logged-in cashier
+                const authDataStr = localStorage.getItem("THEGREEN@USER");
+                const userData = authDataStr ? JSON.parse(authDataStr) : null;
+                const sUid = res.data.userId ?? res.data.user_id ?? res.data.user?.id;
+                const uId = userData?.id ?? userData?.userId ?? userData?.user_id;
+                const isSameUser = sUid !== undefined && uId !== undefined && Number(sUid) === Number(uId);
+
+                if (isSameUser) {
+                    setGateState("READY");
+                } else {
+                    setGateState("FORCE_CLOSE");
+                }
             } else {
                 setActiveSession(null);
                 setGateState("OPEN_SESSION");
@@ -276,6 +310,22 @@ export function usePosSession(
         }
     };
 
+    const resetSessionState = () => {
+        setActiveSession(null);
+        if (selectedBranch) {
+            setActiveSessionsMap((prev) => ({
+                ...prev,
+                [selectedBranch.branchId]: null,
+            }));
+        }
+        if (branches.length > 1) {
+            setSelectedBranch(null);
+            setGateState("SELECT_BRANCH");
+        } else {
+            setGateState("OPEN_SESSION");
+        }
+    };
+
     return {
         gateState,
         setGateState,
@@ -294,5 +344,6 @@ export function usePosSession(
         handleSelectBranch,
         handleForceCloseSession,
         handleOpenSession,
+        resetSessionState,
     };
 }

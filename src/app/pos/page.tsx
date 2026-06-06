@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useAuth } from "@afx/contexts/AuthContext";
 import { useApi } from "@afx/utils/useApi";
 import { formatCurrency } from "@afx/utils/format";
 import type { Toast } from "@afx/interfaces/pos.iface";
@@ -278,6 +279,7 @@ function RedeemConfirmModal({ voucher, therapists, rooms, masterLoading, isProce
 
 export default function POSPage() {
     const { get, post } = useApi();
+    const { logout } = useAuth();
 
     // ── Core hooks ─────────────────────────────────────────────────────────
     const session = usePosSession(showToastCb);
@@ -343,6 +345,13 @@ export default function POSPage() {
     const hasOpenSession  = !!currentActiveSession;
     const filteredServices = pos.getFilteredServices(null, serviceSearch);
     const hasCartItems    = pos.cartItems?.length > 0;
+
+    // ── Load POS Init Data automatically when Session is READY ────────────
+    useEffect(() => {
+        if (session.gateState === "READY" && activeBranchId && !pos.initData && !pos.loading) {
+            pos.loadInitData(activeBranchId);
+        }
+    }, [session.gateState, activeBranchId, pos.initData, pos.loading, pos.loadInitData]);
 
     // ── Preload Therapists & Rooms when Redeem tab opens ──────────────────
     useEffect(() => {
@@ -522,6 +531,7 @@ export default function POSPage() {
                 setShowCloseSessionModal(false);
                 setActualClosingCash("");
                 pos.clearCart();
+                session.resetSessionState(); // Clear session hook states immediately
                 showToast("Sesi ditutup, memuat ulang sistem...", "success");
                 setTimeout(() => window.location.reload(), 1000);
             } else {
@@ -628,7 +638,7 @@ export default function POSPage() {
 
     const handleBack = useCallback(() => {
         if (session.branches.length > 1) session.setGateState("SELECT_BRANCH");
-        else window.location.href = "/dashboard";
+        else window.location.href = "/pos";
     }, [session]);
 
     // ── Gatekeeper Guard ───────────────────────────────────────────────────
@@ -652,8 +662,12 @@ export default function POSPage() {
                 onForceClose={async () => {
                     const success = await session.handleForceCloseSession();
                     if (success) {
-                        showToast("Sesi berhasil ditutup. Memuat ulang sistem...", "success");
-                        setTimeout(() => window.location.reload(), 1200);
+                        session.setGateState("OPEN_SESSION");
+                        await session.handleOpenSession(async (branchId) => {
+                            session.setGateState("READY");
+                            await pos.loadInitData(branchId);
+                            showToast("Sesi lama ditutup & Sesi baru berhasil dibuka.", "success");
+                        });
                     }
                 }}
                 onOpenSession={async () => {
@@ -668,9 +682,8 @@ export default function POSPage() {
                     await session.handleOpenSession(async (branchId: number) => {
                         session.setGateState("READY"); // ← pindah ke sini, sebelum loadInitData
                         await pos.loadInitData(branchId);
+                        showToast("Sesi baru berhasil dibuka.", "success");
                     });
-
-                    showToast("Sesi baru berhasil dibuka.", "success");
                 }}
                 onContinueSession={async (branch: any) => {
                     const bId = branch.branchId ?? branch.id;
@@ -681,6 +694,7 @@ export default function POSPage() {
                 }}
                 toast={toast}
                 onBack={handleBack}
+                onLogout={logout}
             />
         );
     }
@@ -719,7 +733,7 @@ export default function POSPage() {
             <div className="pos-main">
                 {/* ── HEADER ──────────────────────────────────────────────── */}
                 <header className="pos-header">
-                    <Link href="/dashboard" className="pos-logo">
+                    <Link href="/pos" className="pos-logo">
                         <div className="pos-logo-icon1">
                             <img
                                 src="/logo.png"
