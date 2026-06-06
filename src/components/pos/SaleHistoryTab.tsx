@@ -387,9 +387,7 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
     sale.paymentStatus === "Paid" ||
     sale.paymentStatus === "Lunas";
 
-    const canAdjust = sale?.items?.some((item: { itemType: string; }) =>
-        item.itemType === "service"
-    );
+    const canAdjust = (sale?.items && sale.items.length > 0) || (sale?.bookings && sale.bookings.length > 0);
 
     return (
         <>
@@ -465,7 +463,7 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                                     </div>
                                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                                         {sale.items.map((item: any) => {
-                                            const isService = item.itemType === "service" || item.itemTypeName === "Service";
+                                            const isService = item.itemType === "service" || item.itemTypeName === "Service" || item.itemType === "servicePackage" || item.itemTypeName === "ServicePackage";
                                             return (
                                                 <div key={item.id} style={{ background: "var(--bg-main)", borderRadius: "12px", padding: "14px 16px", border: "1px solid var(--border-color)", display: "flex", alignItems: "center", gap: "12px" }}>
                                                     <div style={{ flex: 1 }}>
@@ -481,7 +479,7 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                                                         )}
                                                     </div>
                                                     {isService && (
-                                                        !item.hasSession && isPaid ? (
+                                                        !item.hasSession && isPaid && (sale.saleType === 0 || String(sale.saleType).toLowerCase() === "walkin" || String(sale.saleType).toLowerCase() === "walk-in") ? (
                                                             <button
                                                                 onClick={() => onOpenAssign({ 
                                                                     type: "item", 
@@ -559,88 +557,71 @@ function SaleDetailDrawer({ isOpen, onClose, sale, loading, onOpenAssign, onEdit
                     )}
                 </div>
                 {onEditSale && sale && canAdjust && (
-                    <div style={{ padding: "16px 24px", borderTop: "1px solid var(--border-color)", display: "flex", gap: "12px", background: "var(--bg-card)", flexShrink: 0 }}>
-                        {String(sale.paymentStatus) === "Adjust" || sale.paymentStatusName === "Adjust" || sale.paymentStatusDisplay === "Adjust" ? (
-                            <button
-                                disabled
-                                style={{
-                                    flex: 1,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    gap: "8px",
-                                    padding: "12px 20px",
-                                    fontSize: "14px",
-                                    fontWeight: 700,
-                                    borderRadius: "12px",
-                                    background: "var(--border-color)",
-                                    color: "var(--text-muted)",
-                                    border: "none",
-                                    cursor: "not-allowed",
-                                    opacity: 0.6
-                                }}
-                            >
-                                <i className="fa-solid fa-ban" />
-                                Transaksi Sudah Disesuaikan (Adjust)
-                            </button>
-                        ) : (
-                            <button
-                                onClick={() => {
-                                    Swal.fire({
-                                        title: "Apakah Anda yakin?",
-                                        text: "Data di keranjang saat ini akan digantikan.",
-                                        icon: "warning",
-                                        showCancelButton: true,
-                                        confirmButtonColor: "#3d6b5f", 
-                                        cancelButtonColor: "#64748b",
-                                        confirmButtonText: "Ya, ubah",
-                                        cancelButtonText: "Batal",
-                                        background: "var(--bg-card)",
-                                        color: "var(--text-primary)",
-                                        didOpen: () => {
-                                            const container = Swal.getContainer();
-                                            if (container) {
-                                                container.style.zIndex = "9999";
+                    (() => {
+                        const isAdjust = String(sale.paymentStatus) === "Adjust" || 
+                                         sale.paymentStatusName === "Adjust" || 
+                                         sale.paymentStatusDisplay === "Adjust";
+                        if (isAdjust) return null;
+                        return (
+                            <div style={{ padding: "16px 24px", borderTop: "1px solid var(--border-color)", display: "flex", gap: "12px", background: "var(--bg-card)", flexShrink: 0 }}>
+                                <button
+                                    onClick={() => {
+                                        Swal.fire({
+                                            title: "Apakah Anda yakin?",
+                                            text: "Data di keranjang saat ini akan digantikan.",
+                                            icon: "warning",
+                                            showCancelButton: true,
+                                            confirmButtonColor: "#3d6b5f", 
+                                            cancelButtonColor: "#64748b",
+                                            confirmButtonText: "Ya, ubah",
+                                            cancelButtonText: "Batal",
+                                            background: "var(--bg-card)",
+                                            color: "var(--text-primary)",
+                                            didOpen: () => {
+                                                const container = Swal.getContainer();
+                                                if (container) {
+                                                    container.style.zIndex = "9999";
+                                                }
                                             }
-                                        }
-                                    }).then((result) => {
-                                        if (result.isConfirmed) {
-                                            onEditSale(sale);
-                                            onClose();
-                                        }
-                                    });
-                                }}
-                                style={{
-                                    flex: 1,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    gap: "8px",
-                                    padding: "12px 20px",
-                                    fontSize: "14px",
-                                    fontWeight: 700,
-                                    borderRadius: "12px",
-                                    background: "var(--gradient-spa)",
-                                    color: "white",
-                                    border: "none",
-                                    cursor: "pointer",
-                                    boxShadow: "0 4px 12px rgba(61,107,95,0.2)",
-                                    transition: "all 0.2s ease"
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.transform = "translateY(-1px)";
-                                    e.currentTarget.style.boxShadow = "0 6px 16px rgba(61,107,95,0.3)";
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = "translateY(0)";
-                                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(61,107,95,0.2)";
-                                }}
-                            >
-                                <i className="fa-solid fa-pen-to-square" />
-                                Ubah Transaksi (Update)
-                            </button>
-                        )}
-                    </div>
+                                        }).then((result) => {
+                                            if (result.isConfirmed) {
+                                                onEditSale(sale);
+                                                onClose();
+                                            }
+                                        });
+                                    }}
+                                    style={{
+                                        flex: 1,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        gap: "8px",
+                                        padding: "12px 20px",
+                                        fontSize: "14px",
+                                        fontWeight: 700,
+                                        borderRadius: "12px",
+                                        background: "var(--gradient-spa)",
+                                        color: "white",
+                                        border: "none",
+                                        cursor: "pointer",
+                                        boxShadow: "0 4px 12px rgba(61,107,95,0.2)",
+                                        transition: "all 0.2s ease"
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.transform = "translateY(-1px)";
+                                        e.currentTarget.style.boxShadow = "0 6px 16px rgba(61,107,95,0.3)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.transform = "translateY(0)";
+                                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(61,107,95,0.2)";
+                                    }}
+                                >
+                                    <i className="fa-solid fa-pen-to-square" />
+                                    Ubah Transaksi (Update)
+                                </button>
+                            </div>
+                        );
+                    })()
                 )}
             </div>
         </>
